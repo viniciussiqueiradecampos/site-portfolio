@@ -84,6 +84,8 @@ export default function Home() {
     };
 
 
+    // Lenis Disabled for stability check
+    /*
     useEffect(() => {
         const lenis = new Lenis({
             duration: 1.2,
@@ -95,6 +97,7 @@ export default function Home() {
         requestAnimationFrame(raf);
         return () => lenis.destroy();
     }, []);
+    */
 
     // --- HERO ANIMATIONS ---
     const [isMobile, setIsMobile] = useState(false);
