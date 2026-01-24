@@ -10,13 +10,8 @@ import CV from './routes/CV';
 import Projects from './routes/Projects';
 import AdminLogin from './routes/AdminLogin';
 import AdminDashboard from './routes/AdminDashboard';
-import AdminContent from './routes/AdminContent';
-import AdminProjects from './routes/AdminProjects';
-import AdminCV from './routes/AdminCV';
-import AdminSettings from './routes/AdminSettings';
 import TestSupabase from './routes/TestSupabase';
 import ScrollToTop from './ScrollToTop';
-import CareerDashboard from './routes/CareerDashboard';
 
 // Custom Cursor Component (Local)
 const CustomCursor = () => {
@@ -66,11 +61,6 @@ function App() {
         {/* Admin Routes (No Layout) */}
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/content" element={<AdminContent />} />
-        <Route path="/admin/projects" element={<AdminProjects />} />
-        <Route path="/admin/cv" element={<AdminCV />} />
-        <Route path="/admin/settings" element={<AdminSettings />} />
-        <Route path="/career-dashboard" element={<Layout><CareerDashboard /></Layout>} />
 
         {/* Public Routes (With Layout) */}
         <Route path="/" element={<Layout><Home /></Layout>} />

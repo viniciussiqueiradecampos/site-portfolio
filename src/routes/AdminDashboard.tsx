@@ -4,24 +4,22 @@ import {
     contentAPI,
     projectsAPI,
     cvAPI,
-    jobListingsAPI,
     apiConfigAPI,
     type Project,
     type CVSection,
-    type JobListing,
     type APIConfiguration
 } from '../lib/supabase';
-import { jobSyncService } from '../lib/job-sync';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Save, Plus, Trash2, Briefcase, Settings, RefreshCw, X, Image as ImageIcon } from 'lucide-react';
-import LeadDiscovery from '../components/LeadDiscovery';
-import CRMSystem from '../components/CRMSystem';
+import {
+    LogOut, Save, Plus, Trash2, Settings, X,
+    Image as ImageIcon, LayoutDashboard, FolderKanban,
+    FileText, Palette, ChevronRight
+} from 'lucide-react';
 import { storageAPI } from '../lib/storage';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    const [user] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'cv' | 'career' | 'discovery' | 'crm'>('content');
+    const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'cv' | 'settings'>('content');
 
     // Content State
     const [heroTitle, setHeroTitle] = useState('');
@@ -32,28 +30,37 @@ export default function AdminDashboard() {
     // Projects State
     const [projects, setProjects] = useState<Project[]>([]);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
+    const [availableTags, setAvailableTags] = useState<string[]>([]);
 
     // CV State
     const [cvSections, setCvSections] = useState<CVSection[]>([]);
     const [editingCV, setEditingCV] = useState<CVSection | null>(null);
 
-    // Career State
-    const [jobs, setJobs] = useState<JobListing[]>([]);
-    const [editingJob, setEditingJob] = useState<JobListing | null>(null);
+    // Settings State
     const [apiConfigs, setApiConfigs] = useState<APIConfiguration[]>([]);
+    const [branding, setBranding] = useState({
+        logoText1: 'VINICIUS',
+        logoText2: 'CAMPOS',
+        accentColor: '#F2A73D',
+        bgColor: '#050505'
+    });
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        // Authentication disabled for direct access
-        // checkUser();
         loadContent();
         loadProjects();
         loadCV();
-        loadCareerData();
+        loadSettings();
     }, []);
 
+    useEffect(() => {
+        // Update available tags from projects
+        const tags = new Set<string>();
+        projects.forEach(p => p.tags.forEach(t => tags.add(t)));
+        setAvailableTags(Array.from(tags).sort());
+    }, [projects]);
 
     const loadContent = async () => {
         const title = await contentAPI.getByKey('hero.title');
@@ -77,12 +84,21 @@ export default function AdminDashboard() {
         setCvSections(data);
     };
 
-    const loadCareerData = async () => {
-        const jobsData = await jobListingsAPI.getAll();
-        setJobs(jobsData);
-
+    const loadSettings = async () => {
         const configsData = await apiConfigAPI.getAll();
         setApiConfigs(configsData);
+
+        const l1 = await contentAPI.getByKey('general.logo_text1');
+        const l2 = await contentAPI.getByKey('general.logo_text2');
+        const ac = await contentAPI.getByKey('general.accent_color');
+        const bg = await contentAPI.getByKey('general.bg_color');
+
+        setBranding({
+            logoText1: l1?.value || 'VINICIUS',
+            logoText2: l2?.value || 'CAMPOS',
+            accentColor: ac?.value || '#F2A73D',
+            bgColor: bg?.value || '#050505'
+        });
     };
 
     const handleLogout = async () => {
@@ -93,57 +109,15 @@ export default function AdminDashboard() {
     const saveContent = async () => {
         setSaving(true);
         try {
-            const results = await Promise.all([
+            await Promise.all([
                 contentAPI.update('hero.title', heroTitle, 'hero'),
                 contentAPI.update('hero.description', heroDesc, 'hero'),
                 contentAPI.update('storytelling.main', storyText, 'storytelling'),
                 contentAPI.update('cv.pdf_url', cvUrl, 'cv')
             ]);
-
-            const failed = results.filter(r => !r.ok);
-            if (failed.length === 0) {
-                setMessage('✅ CONTEÚDO SALVO COM SUCESSO! (v1.2)');
-            } else {
-                const errorMsgs = failed.map(f => f.msg).join(', ');
-                setMessage(`⚠️ ERRO: ${failed.length} campos falharam. Erro: ${errorMsgs}`);
-            }
+            setMessage('✅ Conteúdo salvo com sucesso!');
         } catch (err) {
-            console.error('Critical save error:', err);
-            setMessage('❌ ERRO CRÍTICO NA CONEXÃO.');
-        } finally {
-            setSaving(false);
-            setTimeout(() => setMessage(''), 6000);
-        }
-    };
-
-    const restoreDemoContent = async () => {
-        if (!confirm('This will populate the database with demo content. Irreversible. Continue?')) return;
-        setSaving(true);
-        try {
-            await contentAPI.update('hero.title', 'figma • UI DESIGN • AI • WEB DESIGN', 'hero');
-            await contentAPI.update('hero.description', 'Senior Designer focused on high-performance interfaces.', 'hero');
-            await contentAPI.update('storytelling.main', 'Experience designing products for ambitious companies', 'storytelling');
-
-            // Seed 1 project
-            await projectsAPI.create({
-                title: 'Demo Project',
-                description: 'A beautiful demo project description.',
-                image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070',
-                tags: ['UI/UX', 'Mobile'],
-                live_url: 'https://example.com',
-                button_text: 'VIEW LIVE PROJECT',
-                button_icon: 'ExternalLink',
-                order_index: 0,
-                visible: true,
-                gallery_images: []
-            });
-
-            await loadContent();
-            await loadProjects();
-            setMessage('Database seeded successfully!');
-        } catch (err) {
-            console.error('Seed error:', err);
-            setMessage('Error seeding database.');
+            setMessage('❌ Erro ao salvar conteúdo.');
         } finally {
             setSaving(false);
             setTimeout(() => setMessage(''), 3000);
@@ -152,38 +126,89 @@ export default function AdminDashboard() {
 
     const saveProject = async () => {
         if (!editingProject) return;
-
         setSaving(true);
         try {
-            // Ensure arrays are initialized and strip metadata
             const { id, created_at, updated_at, ...projectData } = editingProject as any;
-
-            const cleanData = {
-                ...projectData,
-                tags: projectData.tags || [],
-                gallery_images: projectData.gallery_images || []
-            };
-
-            if (editingProject.id && editingProject.id !== '') {
-                const ok = await projectsAPI.update(editingProject.id, cleanData);
-                if (!ok) throw new Error('Update failed');
+            if (id && id !== '') {
+                await projectsAPI.update(id, projectData);
             } else {
-                const ok = await projectsAPI.create(cleanData);
-                if (!ok) throw new Error('Create failed');
+                await projectsAPI.create(projectData);
             }
             await loadProjects();
             setEditingProject(null);
-            setMessage('Project saved successfully!');
+            setMessage('✅ Projeto salvo!');
         } catch (err) {
-            console.error('Save project error:', err);
-            setMessage('Error saving project. Check console.');
+            setMessage('❌ Erro ao salvar projeto.');
         } finally {
             setSaving(false);
             setTimeout(() => setMessage(''), 3000);
         }
     };
 
-    const handleProjectCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const deleteProject = async (id: string) => {
+        if (confirm('Excluir este projeto?')) {
+            await projectsAPI.delete(id);
+            await loadProjects();
+        }
+    };
+
+    const saveCV = async () => {
+        if (!editingCV) return;
+        setSaving(true);
+        try {
+            const { id, created_at, updated_at, ...cvData } = editingCV as any;
+            if (id && id !== '') {
+                await cvAPI.update(id, cvData);
+            } else {
+                await cvAPI.create(cvData);
+            }
+            await loadCV();
+            setEditingCV(null);
+            setMessage('✅ Seção do CV salva!');
+        } catch (err) {
+            setMessage('❌ Erro ao salvar CV.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
+        }
+    };
+
+    const deleteCV = async (id: string) => {
+        if (confirm('Excluir esta seção?')) {
+            await cvAPI.delete(id);
+            await loadCV();
+        }
+    };
+
+    const saveSettings = async () => {
+        setSaving(true);
+        try {
+            for (const config of apiConfigs) {
+                await apiConfigAPI.update(config.id, { api_key: config.api_key, is_active: config.is_active });
+            }
+            await contentAPI.update('general.logo_text1', branding.logoText1, 'general');
+            await contentAPI.update('general.logo_text2', branding.logoText2, 'general');
+            await contentAPI.update('general.accent_color', branding.accentColor, 'general');
+            await contentAPI.update('general.bg_color', branding.bgColor, 'general');
+            setMessage('✅ Configurações salvas!');
+        } catch (err) {
+            setMessage('❌ Erro ao salvar configurações.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
+        }
+    };
+
+    const toggleTag = (tag: string) => {
+        if (!editingProject) return;
+        const currentTags = editingProject.tags || [];
+        const newTags = currentTags.includes(tag)
+            ? currentTags.filter(t => t !== tag)
+            : [...currentTags, tag];
+        setEditingProject({ ...editingProject, tags: newTags });
+    };
+
+    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !editingProject) return;
         setSaving(true);
@@ -192,1379 +217,353 @@ export default function AdminDashboard() {
         setSaving(false);
     };
 
-    const handleProjectGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || !editingProject) return;
-        setSaving(true);
-        const currentGallery = [...(editingProject.gallery_images || [])];
-        for (let i = 0; i < files.length; i++) {
-            const url = await storageAPI.uploadImage(files[i], 'gallery');
-            if (url) currentGallery.push(url);
-        }
-        setEditingProject({ ...editingProject, gallery_images: currentGallery });
-        setSaving(false);
-    };
-
-    const deleteProject = async (id: string) => {
-        if (confirm('Delete this project?')) {
-            await projectsAPI.delete(id);
-            await loadProjects();
-        }
-    };
-
-    const saveCV = async () => {
-        if (!editingCV) return;
-
-        setSaving(true);
-        try {
-            const { id, created_at, updated_at, ...cvData } = editingCV as any;
-
-            if (editingCV.id && editingCV.id !== '') {
-                const ok = await cvAPI.update(editingCV.id, cvData);
-                if (!ok) throw new Error('Update failed');
-            } else {
-                const ok = await cvAPI.create(cvData);
-                if (!ok) throw new Error('Create failed');
-            }
-            await loadCV();
-            setEditingCV(null);
-            setMessage('CV section saved!');
-        } catch (err) {
-            console.error('Save CV error:', err);
-            setMessage('Error saving CV. Check console.');
-        } finally {
-            setSaving(false);
-            setTimeout(() => setMessage(''), 3000);
-        }
-    };
-
-    const deleteCV = async (id: string) => {
-        if (confirm('Delete this CV section?')) {
-            await cvAPI.delete(id);
-            await loadCV();
-        }
-    };
-
-    const saveJob = async () => {
-        if (!editingJob) return;
-
-        setSaving(true);
-        try {
-            const { id, created_at, updated_at, ...jobData } = editingJob as any;
-            if (editingJob.id && editingJob.id !== '') {
-                await jobListingsAPI.update(editingJob.id, jobData);
-            } else {
-                await jobListingsAPI.create(jobData);
-            }
-            await loadCareerData();
-            setEditingJob(null);
-            setMessage('Job saved!');
-        } catch (err) {
-            console.error('Save job error:', err);
-            setMessage('Error saving job.');
-        } finally {
-            setSaving(false);
-            setTimeout(() => setMessage(''), 3000);
-        }
-    };
-
-    const deleteJob = async (id: string) => {
-        if (confirm('Delete this job?')) {
-            await jobListingsAPI.delete(id);
-            await loadCareerData();
-        }
-    };
-
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-color)', padding: '20px' }}>
-            {/* Header */}
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0a', color: '#fff' }}>
+            {/* Sidebar */}
             <div style={{
-                maxWidth: '1400px',
-                margin: '0 auto 40px',
+                width: '260px',
+                background: '#111',
+                borderRight: '1px solid #222',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '20px',
-                background: 'var(--surface-color)',
-                borderRadius: '16px',
-                border: '1px solid var(--border-color)'
+                flexDirection: 'column',
+                padding: '20px'
             }}>
-                <div>
-                    <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', margin: 0, color: 'var(--accent-color)' }}>
-                        ADMIN DASHBOARD
+                <div style={{ marginBottom: '40px', padding: '10px' }}>
+                    <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', letterSpacing: '2px', color: 'var(--accent-color)' }}>
+                        DASHBOARD
                     </h1>
-                    <p style={{ color: 'var(--text-muted)', margin: '5px 0 0', fontFamily: 'var(--font-body)' }}>
-                        {user?.email || 'Direct Access Mode'}
-                    </p>
                 </div>
-                <div style={{ display: 'flex', gap: '15px' }}>
-                    <button
-                        onClick={restoreDemoContent}
-                        className="clickable"
-                        style={{
-                            padding: '12px 24px',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.3)',
-                            borderRadius: '8px',
-                            color: '#ef4444',
-                            fontFamily: 'var(--font-body)',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        RESTORE DEMO DATA
-                    </button>
-                    <button onClick={handleLogout} className="clickable" style={{
-                        padding: '12px 24px',
-                        background: 'transparent',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        color: 'var(--text-color)',
-                        fontFamily: 'var(--font-body)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        cursor: 'pointer'
-                    }}>
-                        <LogOut size={18} /> Logout
-                    </button>
-                </div>
-            </div>
 
-            {/* Status Message */}
-            {message && (
-                <div style={{
-                    maxWidth: '1400px',
-                    margin: '0 auto 20px',
-                    padding: '16px 20px',
-                    background: message.includes('✅') ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                    border: `1px solid ${message.includes('✅') ? '#22c55e' : '#ef4444'}`,
-                    borderRadius: '8px',
-                    color: message.includes('✅') ? '#4ade80' : '#f87171',
-                    fontFamily: 'var(--font-body)',
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center'
-                }}>
-                    {message}
-                </div>
-            )}
-
-            {/* Tabs */}
-            <div style={{
-                maxWidth: '1400px',
-                margin: '0 auto 20px',
-                display: 'flex',
-                gap: '10px'
-            }}>
-                {(['content', 'projects', 'cv', 'career', 'discovery', 'crm'] as const).map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className="clickable"
-                        style={{
-                            padding: '12px 24px',
-                            background: activeTab === tab ? 'var(--accent-color)' : 'var(--surface-color)',
-                            color: activeTab === tab ? '#000' : 'var(--text-color)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            textTransform: 'uppercase'
-                        }}
-                    >
-                        {tab === 'discovery' ? 'Website Discoverer' : tab === 'crm' ? 'CRM / Leads' : tab}
-                    </button>
-                ))}
-            </div>
-
-            {/* Content Tab */}
-            {activeTab === 'content' && (
-                <div style={{
-                    maxWidth: '1400px',
-                    margin: '0 auto',
-                    background: 'var(--surface-color)',
-                    padding: '30px',
-                    borderRadius: '16px',
-                    border: '1px solid var(--border-color)'
-                }}>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '30px' }}>
-                        SITE CONTENT
-                    </h2>
-
-                    <div style={{ marginBottom: '30px' }}>
-                        <label style={{ display: 'block', marginBottom: '10px', fontFamily: 'var(--font-body)', color: 'var(--text-color)' }}>
-                            Hero Title
-                        </label>
-                        <input
-                            type="text"
-                            value={heroTitle}
-                            onChange={(e) => setHeroTitle(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                background: 'var(--bg-color)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '8px',
-                                color: 'var(--text-color)',
-                                fontFamily: 'var(--font-body)',
-                                fontSize: '16px'
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ marginBottom: '30px' }}>
-                        <label style={{ display: 'block', marginBottom: '10px', fontFamily: 'var(--font-body)', color: 'var(--text-color)' }}>
-                            Hero Description
-                        </label>
-                        <textarea
-                            value={heroDesc}
-                            onChange={(e) => setHeroDesc(e.target.value)}
-                            rows={5}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                background: 'var(--bg-color)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '8px',
-                                color: 'var(--text-color)',
-                                fontFamily: 'var(--font-body)',
-                                fontSize: '16px',
-                                resize: 'vertical'
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ marginBottom: '30px' }}>
-                        <label style={{ display: 'block', marginBottom: '10px', fontFamily: 'var(--font-body)', color: 'var(--text-color)' }}>
-                            Storytelling Text
-                        </label>
-                        <textarea
-                            value={storyText}
-                            onChange={(e) => setStoryText(e.target.value)}
-                            rows={3}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                background: 'var(--bg-color)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '8px',
-                                color: 'var(--text-color)',
-                                fontFamily: 'var(--font-body)',
-                                fontSize: '16px',
-                                resize: 'vertical'
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ marginBottom: '30px', padding: '20px', background: 'rgba(242, 167, 61, 0.05)', borderRadius: '12px', border: '1px solid rgba(242, 167, 61, 0.2)' }}>
-                        <label style={{ display: 'block', marginBottom: '10px', fontFamily: 'var(--font-display)', fontSize: '14px' }}>
-                            CV PDF ATTACHMENT
-                        </label>
-                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                            <input
-                                type="text"
-                                value={cvUrl}
-                                onChange={(e) => setCvUrl(e.target.value)}
-                                placeholder="Paste PDF URL or upload →"
-                                style={{ flex: 1, padding: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-color)', fontFamily: 'var(--font-body)' }}
-                            />
-                            <input
-                                type="file"
-                                id="cv-upload"
-                                style={{ display: 'none' }}
-                                accept=".pdf"
-                                onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                        setSaving(true);
-                                        const url = await storageAPI.uploadImage(file, 'cv');
-                                        if (url) setCvUrl(url);
-                                        setSaving(false);
-                                    }
-                                }}
-                            />
-                            <label htmlFor="cv-upload" className="clickable" style={{ padding: '12px 20px', background: 'var(--text-color)', color: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                                UPLOAD PDF
-                            </label>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={saveContent}
-                        disabled={saving}
-                        className="clickable"
-                        style={{
-                            padding: '14px 28px',
-                            background: 'var(--accent-color)',
-                            color: '#000',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '16px',
-                            cursor: saving ? 'not-allowed' : 'pointer',
-                            opacity: saving ? 0.6 : 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                        }}
-                    >
-                        <Save size={18} /> {saving ? 'SAVING...' : 'SAVE CHANGES'}
-                    </button>
-                </div>
-            )}
-
-            {/* Projects Tab */}
-            {activeTab === 'projects' && (
-                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                    <div style={{
-                        background: 'var(--surface-color)',
-                        padding: '30px',
-                        borderRadius: '16px',
-                        border: '1px solid var(--border-color)',
-                        marginBottom: '20px'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', margin: 0 }}>
-                                PORTFOLIO PROJECTS
-                            </h2>
-                            <button
-                                onClick={() => setEditingProject({
-                                    id: '',
-                                    title: '',
-                                    description: '',
-                                    image_url: '',
-                                    tags: [],
-                                    live_url: '',
-                                    button_text: 'VIEW LIVE PROJECT',
-                                    button_icon: 'ExternalLink',
-                                    order_index: projects.length,
-                                    visible: true,
-                                    created_at: '',
-                                    updated_at: ''
-                                })}
-                                className="clickable"
-                                style={{
-                                    padding: '12px 24px',
-                                    background: 'var(--accent-color)',
-                                    color: '#000',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}
-                            >
-                                <Plus size={18} /> NEW PROJECT
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'grid', gap: '15px' }}>
-                            {projects.map(project => (
-                                <div key={project.id} style={{
-                                    padding: '20px',
-                                    background: 'var(--bg-color)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <div style={{ flex: 1 }}>
-                                        <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '18px', margin: '0 0 5px', color: 'var(--accent-color)' }}>
-                                            {project.title}
-                                        </h3>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-                                            {project.tags.join(', ')}
-                                        </p>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <button
-                                            onClick={() => setEditingProject(project)}
-                                            className="clickable"
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: 'transparent',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '6px',
-                                                color: 'var(--text-color)',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => deleteProject(project.id)}
-                                            className="clickable"
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: 'transparent',
-                                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                                borderRadius: '6px',
-                                                color: '#ef4444',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Project Edit Modal */}
-                    {editingProject && (
-                        <div style={{
-                            position: 'fixed',
-                            inset: 0,
-                            background: 'rgba(0,0,0,0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 1000,
-                            padding: '20px'
-                        }}>
-                            <div style={{
-                                background: 'var(--surface-color)',
-                                padding: '30px',
-                                borderRadius: '16px',
-                                border: '1px solid var(--border-color)',
-                                maxWidth: '600px',
-                                width: '100%',
-                                maxHeight: '90vh',
-                                overflow: 'auto'
-                            }}
-                                className="hide-scrollbar"
-                            >
-                                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>
-                                    {editingProject.id ? 'EDIT PROJECT' : 'NEW PROJECT'}
-                                </h3>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Title</label>
-                                    <input
-                                        type="text"
-                                        value={editingProject.title}
-                                        onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Year</label>
-                                    <input
-                                        type="text"
-                                        value={editingProject.year || ''}
-                                        onChange={(e) => setEditingProject({ ...editingProject, year: e.target.value })}
-                                        placeholder="2024"
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Tags (Intuitive)</label>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '8px' }}>
-                                        {editingProject.tags?.map((tag, idx) => (
-                                            <span key={idx} style={{ padding: '4px 10px', background: 'var(--accent-color)', color: '#000', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                {tag}
-                                                <X size={12} className="clickable" onClick={() => {
-                                                    const nt = [...(editingProject.tags || [])];
-                                                    nt.splice(idx, 1);
-                                                    setEditingProject({ ...editingProject, tags: nt });
-                                                }} />
-                                            </span>
-                                        ))}
-                                        <input
-                                            placeholder="Type and press Enter..."
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    const val = (e.target as HTMLInputElement).value.trim();
-                                                    if (val) {
-                                                        setEditingProject({ ...editingProject, tags: [...(editingProject.tags || []), val] });
-                                                        (e.target as HTMLInputElement).value = '';
-                                                    }
-                                                }
-                                            }}
-                                            style={{ border: 'none', background: 'transparent', color: 'white', flex: 1, minWidth: '100px', outline: 'none' }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Cover Image (Upload)</label>
-                                    <div style={{ border: '2px dashed var(--border-color)', borderRadius: '12px', padding: '20px', textAlign: 'center', background: editingProject.image_url ? `url(${editingProject.image_url}) center/cover no-repeat` : 'transparent', position: 'relative', minHeight: '120px' }}>
-                                        {editingProject.image_url && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: '10px' }} />}
-                                        <div style={{ position: 'relative', zIndex: 1 }}>
-                                            <input type="file" onChange={handleProjectCoverUpload} style={{ display: 'none' }} id="cover-upload-file" />
-                                            <label htmlFor="cover-upload-file" className="clickable" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--accent-color)', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                                <ImageIcon size={16} /> {editingProject.image_url ? 'Change Cover' : 'Upload Cover'}
-                                            </label>
-                                            {saving && <div style={{ marginTop: '10px', fontSize: '12px' }}>Uploading...</div>}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Gallery Images</label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px', marginBottom: '10px' }}>
-                                        {editingProject.gallery_images?.map((img, idx) => (
-                                            <div key={idx} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                <button onClick={() => {
-                                                    const ng = [...(editingProject.gallery_images || [])];
-                                                    ng.splice(idx, 1);
-                                                    setEditingProject({ ...editingProject, gallery_images: ng });
-                                                }} style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', borderRadius: '50%', padding: '3px' }}>
-                                                    <X size={10} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        <label htmlFor="gallery-upload-multiple" className="clickable" style={{ aspectRatio: '1', border: '2px dashed var(--border-color)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                                            <Plus size={24} />
-                                            <input type="file" multiple onChange={handleProjectGalleryUpload} id="gallery-upload-multiple" style={{ display: 'none' }} />
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Live URL</label>
-                                        <input
-                                            type="text"
-                                            value={editingProject.live_url || ''}
-                                            onChange={(e) => setEditingProject({ ...editingProject, live_url: e.target.value })}
-                                            placeholder="https://..."
-                                            style={{ width: '100%', padding: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-color)', fontFamily: 'var(--font-body)' }}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Button Text</label>
-                                        <input
-                                            type="text"
-                                            value={editingProject.button_text || 'VIEW LIVE PROJECT'}
-                                            onChange={(e) => setEditingProject({ ...editingProject, button_text: e.target.value })}
-                                            style={{ width: '100%', padding: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-color)', fontFamily: 'var(--font-body)' }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Internal Description (Modal)</label>
-                                    <textarea
-                                        value={editingProject.description || ''}
-                                        onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
-                                        rows={4}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)',
-                                            resize: 'vertical'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button
-                                        onClick={saveProject}
-                                        disabled={saving}
-                                        className="clickable"
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px',
-                                            background: 'var(--accent-color)',
-                                            color: '#000',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            fontFamily: 'var(--font-display)',
-                                            cursor: saving ? 'not-allowed' : 'pointer',
-                                            opacity: saving ? 0.6 : 1
-                                        }}
-                                    >
-                                        {saving ? 'SAVING...' : 'SAVE'}
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingProject(null)}
-                                        className="clickable"
-                                        style={{
-                                            padding: '12px 24px',
-                                            background: 'transparent',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* CV Tab */}
-            {activeTab === 'cv' && (
-                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                    <div style={{
-                        background: 'var(--surface-color)',
-                        padding: '30px',
-                        borderRadius: '16px',
-                        border: '1px solid var(--border-color)'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', margin: 0 }}>
-                                CV SECTIONS
-                            </h2>
-                            <button
-                                onClick={() => setEditingCV({
-                                    id: '',
-                                    section_type: 'experience',
-                                    title: '',
-                                    subtitle: '',
-                                    description: '',
-                                    date_range: '',
-                                    order_index: cvSections.length,
-                                    visible: true,
-                                    created_at: '',
-                                    updated_at: ''
-                                })}
-                                className="clickable"
-                                style={{
-                                    padding: '12px 24px',
-                                    background: 'var(--accent-color)',
-                                    color: '#000',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}
-                            >
-                                <Plus size={18} /> NEW SECTION
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'grid', gap: '15px' }}>
-                            {cvSections.map(section => (
-                                <div key={section.id} style={{
-                                    padding: '20px',
-                                    background: 'var(--bg-color)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '5px' }}>
-                                            <span style={{
-                                                padding: '4px 12px',
-                                                background: 'var(--accent-color)',
-                                                color: '#000',
-                                                borderRadius: '4px',
-                                                fontSize: '12px',
-                                                fontFamily: 'var(--font-display)'
-                                            }}>
-                                                {section.section_type.toUpperCase()}
-                                            </span>
-                                            <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '18px', margin: 0, color: 'var(--text-color)' }}>
-                                                {section.title}
-                                            </h3>
-                                        </div>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-                                            {section.subtitle} {section.date_range && `• ${section.date_range}`}
-                                        </p>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <button
-                                            onClick={() => setEditingCV(section)}
-                                            className="clickable"
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: 'transparent',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '6px',
-                                                color: 'var(--text-color)',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => deleteCV(section.id)}
-                                            className="clickable"
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: 'transparent',
-                                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                                borderRadius: '6px',
-                                                color: '#ef4444',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* CV Edit Modal */}
-                    {editingCV && (
-                        <div style={{
-                            position: 'fixed',
-                            inset: 0,
-                            background: 'rgba(0,0,0,0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 1000,
-                            padding: '20px'
-                        }}>
-                            <div style={{
-                                background: 'var(--surface-color)',
-                                padding: '30px',
-                                borderRadius: '16px',
-                                border: '1px solid var(--border-color)',
-                                maxWidth: '600px',
-                                width: '100%',
-                                maxHeight: '90vh',
-                                overflow: 'auto'
-                            }}
-                                className="hide-scrollbar"
-                            >
-                                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>
-                                    {editingCV.id ? 'EDIT CV SECTION' : 'NEW CV SECTION'}
-                                </h3>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Type</label>
-                                    <select
-                                        value={editingCV.section_type}
-                                        onChange={(e) => setEditingCV({ ...editingCV, section_type: e.target.value as any })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    >
-                                        <option value="experience">Experience</option>
-                                        <option value="education">Education</option>
-                                        <option value="skills">Skills</option>
-                                    </select>
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Title</label>
-                                    <input
-                                        type="text"
-                                        value={editingCV.title}
-                                        onChange={(e) => setEditingCV({ ...editingCV, title: e.target.value })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Subtitle</label>
-                                    <input
-                                        type="text"
-                                        value={editingCV.subtitle || ''}
-                                        onChange={(e) => setEditingCV({ ...editingCV, subtitle: e.target.value })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Date Range</label>
-                                    <input
-                                        type="text"
-                                        value={editingCV.date_range || ''}
-                                        onChange={(e) => setEditingCV({ ...editingCV, date_range: e.target.value })}
-                                        placeholder="e.g. 2020-2023"
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Description</label>
-                                    <textarea
-                                        value={editingCV.description || ''}
-                                        onChange={(e) => setEditingCV({ ...editingCV, description: e.target.value })}
-                                        rows={4}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)',
-                                            resize: 'vertical'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button
-                                        onClick={saveCV}
-                                        disabled={saving}
-                                        className="clickable"
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px',
-                                            background: 'var(--accent-color)',
-                                            color: '#000',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            fontFamily: 'var(--font-display)',
-                                            cursor: saving ? 'not-allowed' : 'pointer',
-                                            opacity: saving ? 0.6 : 1
-                                        }}
-                                    >
-                                        {saving ? 'SAVING...' : 'SAVE'}
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingCV(null)}
-                                        className="clickable"
-                                        style={{
-                                            padding: '12px 24px',
-                                            background: 'transparent',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Career Tab */}
-            {activeTab === 'career' && (
-                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                    {/* Quick Link to Career Dashboard */}
-                    <div style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        padding: '24px',
-                        borderRadius: '16px',
-                        marginBottom: '24px',
-                        color: 'white'
-                    }}>
-                        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', margin: '0 0 12px' }}>
-                            GLOBAL CAREER ARCHITECT
-                        </h2>
-                        <p style={{ margin: '0 0 16px', fontFamily: 'var(--font-body)', opacity: 0.9 }}>
-                            Manage job listings, track applications, and configure API integrations
-                        </p>
+                <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[
+                        { id: 'content', label: 'Conteúdo', icon: LayoutDashboard },
+                        { id: 'projects', label: 'Projetos', icon: FolderKanban },
+                        { id: 'cv', label: 'Currículo', icon: FileText },
+                        { id: 'settings', label: 'Configurações', icon: Settings },
+                    ].map(item => (
                         <button
-                            onClick={() => navigate('/career-dashboard')}
-                            className="clickable"
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id as any)}
                             style={{
-                                padding: '12px 24px',
-                                background: 'white',
-                                color: '#667eea',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '14px',
-                                cursor: 'pointer',
-                                fontWeight: 600,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px'
+                                gap: '12px',
+                                padding: '12px 16px',
+                                background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: activeTab === item.id ? 'var(--accent-color)' : '#888',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                textAlign: 'left',
+                                fontWeight: activeTab === item.id ? 'bold' : 'normal'
                             }}
                         >
-                            <Briefcase size={18} /> Open Career Dashboard
+                            <item.icon size={20} />
+                            <span style={{ flex: 1 }}>{item.label}</span>
+                            {activeTab === item.id && <ChevronRight size={16} />}
                         </button>
-                    </div>
+                    ))}
+                </nav>
 
-                    {/* Job Listings Management */}
+                <button
+                    onClick={handleLogout}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px 16px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: 'none',
+                        borderRadius: '10px',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        marginTop: 'auto'
+                    }}
+                >
+                    <LogOut size={20} />
+                    <span>Sair</span>
+                </button>
+            </div>
+
+            {/* Main Content */}
+            <div style={{ flex: 1, padding: '40px', overflowY: 'auto', position: 'relative' }}>
+                {message && (
                     <div style={{
-                        background: 'var(--surface-color)',
-                        padding: '30px',
-                        borderRadius: '16px',
-                        border: '1px solid var(--border-color)',
-                        marginBottom: '20px'
+                        position: 'fixed', top: '40px', right: '40px',
+                        padding: '16px 24px', background: message.includes('✅') ? '#065f46' : '#991b1b',
+                        color: '#fff', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                        zIndex: 10000, fontFamily: 'var(--font-body)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', margin: 0 }}>
-                                JOB LISTINGS
-                            </h2>
-                            <button
-                                onClick={async () => {
-                                    setSaving(true); // Reuse saving state for loading
-                                    const result = await jobSyncService.syncJobs();
-                                    await loadCareerData();
-                                    setSaving(false);
-                                    setMessage(`Synced! Added: ${result.added}, Errors: ${result.errors.length}`);
-                                    setTimeout(() => setMessage(''), 3000);
-                                }}
-                                className="clickable"
-                                style={{
-                                    padding: '12px 24px',
-                                    background: 'var(--surface-color)',
-                                    color: 'var(--text-color)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    marginRight: '10px'
-                                }}
-                            >
-                                <RefreshCw size={18} className={saving ? 'spin' : ''} /> SYNC JOBS
+                        {message}
+                    </div>
+                )}
+
+                {/* CONTENT TAB */}
+                {activeTab === 'content' && (
+                    <div style={{ maxWidth: '800px' }}>
+                        <h2 style={{ fontSize: '32px', marginBottom: '40px', fontFamily: 'var(--font-display)' }}>CONTEÚDO DO SITE</h2>
+                        <div style={{ display: 'grid', gap: '30px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>Título do Hero</label>
+                                <input value={heroTitle} onChange={e => setHeroTitle(e.target.value)} style={{ width: '100%', padding: '15px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>Descrição do Hero</label>
+                                <textarea value={heroDesc} onChange={e => setHeroDesc(e.target.value)} rows={4} style={{ width: '100%', padding: '15px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff', resize: 'vertical' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>Texto da História</label>
+                                <textarea value={storyText} onChange={e => setStoryText(e.target.value)} rows={3} style={{ width: '100%', padding: '15px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>Link do CV (PDF)</label>
+                                <input value={cvUrl} onChange={e => setCvUrl(e.target.value)} style={{ width: '100%', padding: '15px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                            </div>
+                            <button onClick={saveContent} disabled={saving} style={{ padding: '15px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                <Save size={18} /> {saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* PROJECTS TAB */}
+                {activeTab === 'projects' && (
+                    <div style={{ maxWidth: '1000px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                            <h2 style={{ fontSize: '32px', margin: 0, fontFamily: 'var(--font-display)' }}>MEUS PROJETOS</h2>
                             <button
-                                onClick={() => setEditingJob({
-                                    id: '',
-                                    source: 'manual',
-                                    title: '',
-                                    company: '',
-                                    location: '',
-                                    currency: 'USD',
-                                    is_low_competition: false,
-                                    visible: true,
-                                    created_at: '',
-                                    updated_at: ''
-                                })}
-                                className="clickable"
-                                style={{
-                                    padding: '12px 24px',
-                                    background: 'var(--accent-color)',
-                                    color: '#000',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    fontFamily: 'var(--font-display)',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}
+                                onClick={() => setEditingProject({ id: '', title: '', description: '', image_url: '', tags: [], year: '2024', order_index: projects.length, visible: true, gallery_images: [] } as any)}
+                                style={{ padding: '12px 24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                             >
-                                <Plus size={18} /> NEW JOB
+                                <Plus size={18} /> NOVO PROJETO
                             </button>
                         </div>
 
-                        <div style={{ display: 'grid', gap: '15px' }}>
-                            {jobs.map(job => (
-                                <div key={job.id} style={{
-                                    padding: '20px',
-                                    background: 'var(--bg-color)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '5px' }}>
-                                            <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '18px', margin: 0, color: 'var(--accent-color)' }}>
-                                                {job.title}
-                                            </h3>
-                                            {job.is_low_competition && (
-                                                <span style={{
-                                                    padding: '4px 8px',
-                                                    background: 'rgba(34, 197, 94, 0.1)',
-                                                    color: '#22c55e',
-                                                    borderRadius: '4px',
-                                                    fontSize: '11px',
-                                                    fontFamily: 'var(--font-display)'
-                                                }}>
-                                                    LOW COMPETITION
-                                                </span>
-                                            )}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
+                            {projects.map(p => (
+                                <div key={p.id} style={{ background: '#111', border: '1px solid #222', borderRadius: '16px', overflow: 'hidden' }}>
+                                    <div style={{ height: '180px', background: `url(${p.image_url}) center/cover no-repeat` }} />
+                                    <div style={{ padding: '20px' }}>
+                                        <h3 style={{ margin: '0 0 10px', fontSize: '18px' }}>{p.title}</h3>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
+                                            {p.tags.map(t => <span key={t} style={{ fontSize: '10px', padding: '4px 8px', background: '#222', borderRadius: '4px' }}>{t}</span>)}
                                         </div>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: '0 0 5px' }}>
-                                            {job.company} • {job.location}
-                                        </p>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0 }}>
-                                            Source: {job.source.toUpperCase()}
-                                        </p>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button onClick={() => setEditingProject(p)} style={{ flex: 1, padding: '8px', background: 'transparent', border: '1px solid #333', borderRadius: '6px', color: '#fff', cursor: 'pointer' }}>Editar</button>
+                                            <button onClick={() => deleteProject(p.id)} style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* CV TAB */}
+                {activeTab === 'cv' && (
+                    <div style={{ maxWidth: '800px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                            <h2 style={{ fontSize: '32px', margin: 0, fontFamily: 'var(--font-display)' }}>CURRÍCULO</h2>
+                            <button
+                                onClick={() => setEditingCV({ id: '', section_type: 'experience', title: '', subtitle: '', description: '', date_range: '', order_index: cvSections.length, visible: true } as any)}
+                                style={{ padding: '12px 24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                <Plus size={18} /> NOVA SEÇÃO
+                            </button>
+                        </div>
+                        <div style={{ display: 'grid', gap: '15px' }}>
+                            {cvSections.map(s => (
+                                <div key={s.id} style={{ padding: '20px', background: '#111', border: '1px solid #222', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <span style={{ fontSize: '10px', padding: '2px 8px', background: 'var(--accent-color)', color: '#000', borderRadius: '4px', textTransform: 'uppercase', marginRight: '10px' }}>{s.section_type}</span>
+                                        <span style={{ fontWeight: 'bold' }}>{s.title}</span>
                                     </div>
                                     <div style={{ display: 'flex', gap: '10px' }}>
-                                        <button
-                                            onClick={() => setEditingJob(job)}
-                                            className="clickable"
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: 'transparent',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '6px',
-                                                color: 'var(--text-color)',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => deleteJob(job.id)}
-                                            className="clickable"
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: 'transparent',
-                                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                                borderRadius: '6px',
-                                                color: '#ef4444',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <button onClick={() => setEditingCV(s)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #333', borderRadius: '6px', color: '#fff', cursor: 'pointer' }}>Editar</button>
+                                        <button onClick={() => deleteCV(s.id)} style={{ padding: '6px 12px', background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer' }}><Trash2 size={16} /></button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
+                )}
 
-                    {/* API Configuration */}
-                    <div style={{
-                        background: 'var(--surface-color)',
-                        padding: '30px',
-                        borderRadius: '16px',
-                        border: '1px solid var(--border-color)'
-                    }}>
-                        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>
-                            API CONFIGURATIONS
-                        </h2>
-                        <div style={{ display: 'grid', gap: '15px' }}>
-                            {apiConfigs.map(config => (
-                                <div key={config.id} style={{
-                                    padding: '20px',
-                                    background: 'var(--bg-color)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px'
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <Settings size={20} color="var(--accent-color)" />
-                                            <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '18px', margin: 0, color: 'var(--text-color)', textTransform: 'uppercase' }}>
-                                                {config.service_name}
-                                            </h3>
-                                        </div>
-                                        <span style={{
-                                            padding: '4px 12px',
-                                            background: config.is_active ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                            color: config.is_active ? '#22c55e' : '#ef4444',
-                                            borderRadius: '6px',
-                                            fontSize: '12px',
-                                            fontFamily: 'var(--font-display)'
-                                        }}>
-                                            {config.is_active ? 'ACTIVE' : 'INACTIVE'}
-                                        </span>
-                                    </div>
-                                    <div style={{ marginBottom: '15px' }}>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-muted)' }}>
-                                            API Key
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={config.api_key || ''}
-                                            onChange={(e) => {
-                                                const updated = apiConfigs.map(c =>
-                                                    c.id === config.id ? { ...c, api_key: e.target.value } : c
-                                                );
-                                                setApiConfigs(updated);
-                                            }}
-                                            placeholder="Enter API key..."
-                                            style={{
-                                                width: '100%',
-                                                padding: '10px',
-                                                background: 'var(--surface-color)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '6px',
-                                                color: 'var(--text-color)',
-                                                fontFamily: 'var(--font-body)',
-                                                fontSize: '14px'
-                                            }}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={async () => {
-                                            const config_to_update = apiConfigs.find(c => c.id === config.id);
-                                            if (config_to_update) {
-                                                await apiConfigAPI.update(config.id, {
-                                                    api_key: config_to_update.api_key,
-                                                    is_active: !config.is_active
-                                                });
-                                                await loadCareerData();
-                                                setMessage(`${config.service_name} ${!config.is_active ? 'activated' : 'deactivated'}!`);
-                                                setTimeout(() => setMessage(''), 3000);
-                                            }
-                                        }}
-                                        className="clickable"
-                                        style={{
-                                            padding: '10px 20px',
-                                            background: config.is_active ? 'transparent' : 'var(--accent-color)',
-                                            color: config.is_active ? '#ef4444' : '#000',
-                                            border: config.is_active ? '1px solid rgba(239, 68, 68, 0.3)' : 'none',
-                                            borderRadius: '6px',
-                                            fontFamily: 'var(--font-body)',
-                                            fontSize: '14px',
-                                            cursor: 'pointer',
-                                            fontWeight: 500
-                                        }}
-                                    >
-                                        {config.is_active ? 'Deactivate' : 'Activate'}
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                {/* SETTINGS TAB */}
+                {activeTab === 'settings' && (
+                    <div style={{ maxWidth: '800px' }}>
+                        <h2 style={{ fontSize: '32px', marginBottom: '40px', fontFamily: 'var(--font-display)' }}>CONFIGURAÇÕES GERAIS</h2>
 
-                    {/* Job Edit Modal */}
-                    {editingJob && (
-                        <div style={{
-                            position: 'fixed',
-                            inset: 0,
-                            background: 'rgba(0,0,0,0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 1000,
-                            padding: '20px'
-                        }}>
-                            <div style={{
-                                background: 'var(--surface-color)',
-                                padding: '30px',
-                                borderRadius: '16px',
-                                border: '1px solid var(--border-color)',
-                                maxWidth: '600px',
-                                width: '100%',
-                                maxHeight: '90vh',
-                                overflow: 'auto'
-                            }}>
-                                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>
-                                    {editingJob.id ? 'EDIT JOB' : 'NEW JOB'}
+                        <div style={{ display: 'grid', gap: '30px' }}>
+                            {/* Branding Section */}
+                            <div style={{ background: '#111', padding: '30px', borderRadius: '16px', border: '1px solid #222' }}>
+                                <h3 style={{ fontSize: '20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Palette size={20} /> Identidade Visual
                                 </h3>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Title</label>
-                                    <input
-                                        type="text"
-                                        value={editingJob.title}
-                                        onChange={(e) => setEditingJob({ ...editingJob, title: e.target.value })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Company</label>
-                                    <input
-                                        type="text"
-                                        value={editingJob.company}
-                                        onChange={(e) => setEditingJob({ ...editingJob, company: e.target.value })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Location</label>
-                                    <input
-                                        type="text"
-                                        value={editingJob.location || ''}
-                                        onChange={(e) => setEditingJob({ ...editingJob, location: e.target.value })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Min Salary</label>
-                                        <input
-                                            type="number"
-                                            value={editingJob.salary_min || ''}
-                                            onChange={(e) => setEditingJob({ ...editingJob, salary_min: parseFloat(e.target.value) })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                background: 'var(--bg-color)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '8px',
-                                                color: 'var(--text-color)',
-                                                fontFamily: 'var(--font-body)'
-                                            }}
-                                        />
+                                <div style={{ display: 'grid', gap: '20px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: '#888' }}>Logo Linha 1</label>
+                                            <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: '#888' }}>Logo Linha 2</label>
+                                            <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Max Salary</label>
-                                        <input
-                                            type="number"
-                                            value={editingJob.salary_max || ''}
-                                            onChange={(e) => setEditingJob({ ...editingJob, salary_max: parseFloat(e.target.value) })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px',
-                                                background: 'var(--bg-color)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: '8px',
-                                                color: 'var(--text-color)',
-                                                fontFamily: 'var(--font-body)'
-                                            }}
-                                        />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: '#888' }}>Cor de Destaque</label>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '50px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
+                                                <input value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: '#888' }}>Cor de Fundo</label>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ width: '50px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
+                                                <input value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={editingJob.is_low_competition}
-                                            onChange={(e) => setEditingJob({ ...editingJob, is_low_competition: e.target.checked })}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ fontFamily: 'var(--font-body)', color: 'var(--text-color)' }}>
-                                            Mark as Low Competition
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button
-                                        onClick={saveJob}
-                                        disabled={saving}
-                                        className="clickable"
-                                        style={{
-                                            flex: 1,
-                                            padding: '12px',
-                                            background: 'var(--accent-color)',
-                                            color: '#000',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            fontFamily: 'var(--font-display)',
-                                            cursor: saving ? 'not-allowed' : 'pointer',
-                                            opacity: saving ? 0.6 : 1
-                                        }}
-                                    >
-                                        {saving ? 'SAVING...' : 'SAVE'}
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingJob(null)}
-                                        className="clickable"
-                                        style={{
-                                            padding: '12px 24px',
-                                            background: 'transparent',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
                                 </div>
                             </div>
+                            <button onClick={saveSettings} disabled={saving} style={{ padding: '15px', background: '#fff', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                                {saving ? 'SALVANDO...' : 'SALVAR CONFIGURAÇÕES'}
+                            </button>
                         </div>
-                    )}
-                </div>
-            )}
-            {/* Website Discoverer Tab */}
-            {activeTab === 'discovery' && (
-                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                    <LeadDiscovery />
+                    </div>
+                )}
+            </div>
+
+            {/* PROJECT MODAL */}
+            {editingProject && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }} onClick={() => setEditingProject(null)}>
+                    <div className="hide-scrollbar" style={{ background: '#111', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '24px', padding: '40px', border: '1px solid #222' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                            <h3 style={{ fontSize: '24px', margin: 0 }}>{editingProject.id ? 'EDITAR PROJETO' : 'NOVO PROJETO'}</h3>
+                            <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}><X size={24} /></button>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '20px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Título</label>
+                                <input value={editingProject.title} onChange={e => setEditingProject({ ...editingProject, title: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Ano</label>
+                                    <input value={editingProject.year || ''} onChange={e => setEditingProject({ ...editingProject, year: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Ordem</label>
+                                    <input type="number" value={editingProject.order_index} onChange={e => setEditingProject({ ...editingProject, order_index: parseInt(e.target.value) })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Tags</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', padding: '10px', background: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
+                                    {editingProject.tags?.map(t => (
+                                        <span key={t} onClick={() => toggleTag(t)} style={{ padding: '4px 10px', background: 'var(--accent-color)', color: '#000', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            {t} <X size={10} />
+                                        </span>
+                                    ))}
+                                    <input
+                                        placeholder="Add tag..."
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                const val = (e.target as HTMLInputElement).value.trim();
+                                                if (val && !editingProject.tags.includes(val)) toggleTag(val);
+                                                (e.target as HTMLInputElement).value = '';
+                                            }
+                                        }}
+                                        style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', padding: '4px', flex: 1 }}
+                                    />
+                                </div>
+                                {/* Tag Memory */}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                    <span style={{ fontSize: '12px', color: '#555', marginRight: '5px' }}>Sugeridas:</span>
+                                    {availableTags.filter(t => !editingProject.tags.includes(t)).map(t => (
+                                        <button key={t} onClick={() => toggleTag(t)} style={{ padding: '2px 8px', background: 'transparent', border: '1px solid #333', borderRadius: '4px', color: '#888', fontSize: '11px', cursor: 'pointer' }}>+ {t}</button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Imagem de Capa</label>
+                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                    <div style={{ width: '100px', height: '60px', background: `url(${editingProject.image_url}) center/cover no-repeat`, borderRadius: '8px', border: '1px solid #333' }} />
+                                    <input type="file" onChange={handleCoverUpload} id="project-cover" style={{ display: 'none' }} />
+                                    <label htmlFor="project-cover" style={{ padding: '8px 16px', background: '#333', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>Trocar Imagem</label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Descrição</label>
+                                <textarea value={editingProject.description || ''} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} rows={3} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                            </div>
+
+                            <button onClick={saveProject} style={{ padding: '15px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>
+                                SALVAR PROJETO
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* CRM Tab */}
-            {activeTab === 'crm' && (
-                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                    <CRMSystem />
+            {/* CV MODAL */}
+            {editingCV && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditingCV(null)}>
+                    <div style={{ background: '#111', width: '100%', maxWidth: '600px', borderRadius: '24px', padding: '40px', border: '1px solid #222' }} onClick={e => e.stopPropagation()}>
+                        <h3 style={{ fontSize: '24px', marginBottom: '30px' }}>{editingCV.id ? 'EDITAR SEÇÃO' : 'NOVA SEÇÃO'}</h3>
+                        <div style={{ display: 'grid', gap: '20px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Tipo</label>
+                                <select value={editingCV.section_type} onChange={e => setEditingCV({ ...editingCV, section_type: e.target.value as any })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }}>
+                                    <option value="experience">Experiência</option>
+                                    <option value="education">Educação</option>
+                                    <option value="skills">Habilidade (Skill)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Título</label>
+                                <input value={editingCV.title} onChange={e => setEditingCV({ ...editingCV, title: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                            </div>
+
+                            {editingCV.section_type !== 'skills' && (
+                                <>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Subtítulo</label>
+                                        <input value={editingCV.subtitle || ''} onChange={e => setEditingCV({ ...editingCV, subtitle: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Período</label>
+                                        <input value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Descrição</label>
+                                        <textarea value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={3} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                    </div>
+                                </>
+                            )}
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: '#888' }}>Ordem</label>
+                                    <input type="number" value={editingCV.order_index} onChange={e => setEditingCV({ ...editingCV, order_index: parseInt(e.target.value) })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '30px' }}>
+                                    <input type="checkbox" checked={editingCV.visible} onChange={e => setEditingCV({ ...editingCV, visible: e.target.checked })} />
+                                    <label>Visível</label>
+                                </div>
+                            </div>
+                            <button onClick={saveCV} style={{ padding: '15px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>
+                                SALVAR SEÇÃO
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
