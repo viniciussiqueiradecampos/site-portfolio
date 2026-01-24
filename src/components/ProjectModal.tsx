@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ProjectData } from '../lib/supabase';
 
@@ -188,7 +188,24 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                         </div>
 
                         {/* Right/Bottom: Content Area */}
-                        <div style={{ flex: 1, padding: isMobile ? '30px' : '60px 40px', overflowY: 'auto' }}>
+                        <div
+                            className="modal-content-area"
+                            style={{
+                                flex: 1,
+                                padding: isMobile ? '30px' : '60px 40px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'none', // Hide scrollbar for Firefox
+                                msOverflowStyle: 'none',   // Hide scrollbar for IE/Edge
+                                position: 'relative'
+                            }}
+                        >
+                            {/* Hidden Scrollbar for Chrome/Safari */}
+                            <style>{`
+                                .modal-content-area::-webkit-scrollbar {
+                                    display: none;
+                                }
+                            `}</style>
+
                             <div style={{ marginBottom: '30px' }}>
                                 <h2 style={{ fontSize: isMobile ? '32px' : '48px', marginBottom: '10px', fontFamily: 'var(--font-display)' }}>{project.title}</h2>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '30px' }}>
@@ -215,18 +232,41 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                 </div>
                             </div>
 
-                            <button
-                                className="clickable"
+                            {project.live_url && (
+                                <a
+                                    href={project.live_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="clickable"
+                                    style={{
+                                        display: 'flex',
+                                        width: '100%', padding: '16px',
+                                        background: 'var(--accent-color)', color: 'black',
+                                        border: 'none', borderRadius: '8px',
+                                        fontSize: '16px', fontWeight: 'bold',
+                                        justifyContent: 'center', alignItems: 'center', gap: '10px',
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    {project.button_text || 'VIEW LIVE PROJECT'} <ExternalLink size={20} />
+                                </a>
+                            )}
+
+                            {/* Scroll Indicator */}
+                            <motion.div
+                                animate={{ y: [0, 5, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
                                 style={{
-                                    width: '100%', padding: '16px',
-                                    background: 'var(--accent-color)', color: 'black',
-                                    border: 'none', borderRadius: '8px',
-                                    fontSize: '16px', fontWeight: 'bold',
-                                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px'
+                                    position: 'absolute',
+                                    bottom: '20px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    opacity: 0.5,
+                                    pointerEvents: 'none'
                                 }}
                             >
-                                VIEW LIVE PROJECT <ExternalLink size={20} />
-                            </button>
+                                <ChevronDown size={24} />
+                            </motion.div>
                         </div>
                     </motion.div>
                 </>

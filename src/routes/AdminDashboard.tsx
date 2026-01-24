@@ -126,6 +126,9 @@ export default function AdminDashboard() {
                 description: 'A beautiful demo project description.',
                 image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070',
                 tags: ['UI/UX', 'Mobile'],
+                live_url: 'https://example.com',
+                button_text: 'VIEW LIVE PROJECT',
+                button_icon: 'ExternalLink',
                 order_index: 0,
                 visible: true,
                 gallery_images: []
@@ -499,6 +502,9 @@ export default function AdminDashboard() {
                                     description: '',
                                     image_url: '',
                                     tags: [],
+                                    live_url: '',
+                                    button_text: 'VIEW LIVE PROJECT',
+                                    button_icon: 'ExternalLink',
                                     order_index: projects.length,
                                     visible: true,
                                     created_at: '',
@@ -683,6 +689,28 @@ export default function AdminDashboard() {
                                             <Plus size={24} />
                                             <input type="file" multiple onChange={handleProjectGalleryUpload} id="gallery-upload-multiple" style={{ display: 'none' }} />
                                         </label>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Live URL</label>
+                                        <input
+                                            type="text"
+                                            value={editingProject.live_url || ''}
+                                            onChange={(e) => setEditingProject({ ...editingProject, live_url: e.target.value })}
+                                            placeholder="https://..."
+                                            style={{ width: '100%', padding: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-color)', fontFamily: 'var(--font-body)' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Button Text</label>
+                                        <input
+                                            type="text"
+                                            value={editingProject.button_text || 'VIEW LIVE PROJECT'}
+                                            onChange={(e) => setEditingProject({ ...editingProject, button_text: e.target.value })}
+                                            style={{ width: '100%', padding: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-color)', fontFamily: 'var(--font-body)' }}
+                                        />
                                     </div>
                                 </div>
 

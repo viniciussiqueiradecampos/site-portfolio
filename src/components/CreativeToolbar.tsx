@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MousePointer2, Pipette, Ruler, MessageSquare, Circle, X, Trash2 } from 'lucide-react';
 
@@ -21,12 +21,27 @@ interface Element {
     endY?: number; // For ruler
     content?: string;
     color?: string;
+    createdAt?: number; // Added to track birth for auto-disappearing
 }
 
 export default function CreativeToolbar() {
     const [activeTool, setActiveTool] = useState('cursor');
     const [elements, setElements] = useState<Element[]>([]);
     const [currentAction, setCurrentAction] = useState<{ type: string; startX: number; startY: number; id: string } | null>(null);
+
+    // Auto-remove shapes after 1s
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = Date.now();
+            setElements(prev => prev.filter(el => {
+                if (el.type === 'shape' && el.createdAt && now - el.createdAt > 1000) {
+                    return false;
+                }
+                return true;
+            }));
+        }, 100);
+        return () => clearInterval(interval);
+    }, []);
 
     // EyeDropper API Support
     const handlePipette = async () => {
@@ -79,7 +94,8 @@ export default function CreativeToolbar() {
                 width: 0,
                 height: 0,
                 endX: startX,
-                endY: startY
+                endY: startY,
+                createdAt: Date.now()
             };
             setElements(prev => [...prev, newEl]);
         }

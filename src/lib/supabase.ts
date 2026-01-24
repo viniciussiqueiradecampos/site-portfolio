@@ -44,6 +44,9 @@ export interface Project {
     image_url: string;
     gallery_images?: string[];
     tags: string[];
+    live_url?: string;
+    button_text?: string;
+    button_icon?: string;
     order_index: number;
     visible: boolean;
     created_at: string;
@@ -60,6 +63,9 @@ export interface ProjectData {
     img?: string;
     gallery?: string[];
     description?: string;
+    live_url?: string;
+    button_text?: string;
+    button_icon?: string;
 }
 
 export interface CVSection {
