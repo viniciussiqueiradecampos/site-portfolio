@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import Lenis from '@studio-freight/lenis';
+// import Lenis from '@studio-freight/lenis'; 
 import { useScroll, useTransform, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -136,12 +136,14 @@ export default function Home() {
 
                     {/* Main Title - Horizontal Scroll Animation (Previous Style) */}
                     <motion.div
+                        initial={{ opacity: 1, x: 0 }} // Force initial state
                         style={{
                             width: '100%',
                             textAlign: 'right',
                             x: isMobile ? 0 : heroTextX, // No scroll on mobile
                             opacity: 1, // Always visible
-                            marginBottom: '80px'
+                            marginBottom: '80px',
+                            visibility: 'visible' // Ensure visibility
                         }}
                     >
                         <h1 className="hero-title" style={{ fontSize: '11vw', lineHeight: '0.9', margin: 0, whiteSpace: 'nowrap' }}>
