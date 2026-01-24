@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { projectsAPI, type Project } from '../lib/supabase';
-import { Plus, Trash2, Edit2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 export default function AdminProjects() {
     const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState<Partial<Project> | null>(null);
 
     useEffect(() => {
@@ -13,10 +12,8 @@ export default function AdminProjects() {
     }, []);
 
     const loadProjects = async () => {
-        setLoading(true);
         const data = await projectsAPI.getAll();
         setProjects(data);
-        setLoading(false);
     };
 
     const handleSave = async () => {

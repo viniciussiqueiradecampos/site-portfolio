@@ -10,7 +10,6 @@ import RevealText from '../components/RevealText';
 import { contentAPI, projectsAPI, type Project } from '../lib/supabase';
 
 export default function Home() {
-    const { t } = useTranslation();
     const containerRef = useRef(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +18,6 @@ export default function Home() {
     const [heroDesc, setHeroDesc] = useState('Loading description...');
     const [storyText, setStoryText] = useState('Experience designing products for ambitious companies');
     const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
 
     // Refs for Sticky Sections
     const heroRef = useRef(null);
@@ -30,7 +28,6 @@ export default function Home() {
     }, []);
 
     const loadData = async () => {
-        setLoading(true);
         // Load Content
         const tTitle = await contentAPI.getByKey('hero.title');
         if (tTitle) setHeroTitle(tTitle.value);
@@ -44,8 +41,6 @@ export default function Home() {
         // Load Projects
         const projs = await projectsAPI.getAll();
         setProjects(projs);
-
-        setLoading(false);
     };
 
     // Hero Section Scroll Progress
