@@ -1,25 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ProjectModal, { type ProjectData } from '../components/ProjectModal';
-
-// Mock list of projects using Unsplash images for Pinterest grid effect
-const PROJECTS: ProjectData[] = [
-    { title: 'Finance App', type: 'Product Design', year: '2024', tags: ['Figma', 'React', 'Mobile'], img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop' },
-    { title: 'Botanical Kit', type: 'Branding', year: '2023', tags: ['Identity', 'Packaging'], img: 'https://images.unsplash.com/photo-1470058869958-2a77ade41c02?q=80&w=800&auto=format&fit=crop' },
-    { title: 'Neon Brand', type: 'Visual Design', year: '2025', tags: ['3D', 'Motion'], img: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop' },
-    { title: 'Arch Viz', type: 'Art Direction', year: '2024', tags: ['Photography', 'Layout'], img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop' },
-    { title: 'Typo Series', type: 'Typography', year: '2023', tags: ['Editorial', 'Print'], img: 'https://images.unsplash.com/photo-1558655146-d09347e0c7a8?q=80&w=800&auto=format&fit=crop' },
-    { title: 'Abstract 3D', type: 'Experimental', year: '2025', tags: ['Blender', 'Generative'], img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop' },
-];
+import { projectsAPI, type Project } from '../lib/supabase';
 
 export default function Projects() {
     const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const openModal = (project: ProjectData) => {
-        setSelectedProject(project);
+    useEffect(() => {
+        loadProjects();
+    }, []);
+
+    const loadProjects = async () => {
+        const data = await projectsAPI.getAll();
+        setProjects(data);
+        setLoading(false);
+    };
+
+    const openModal = (project: Project) => {
+        // Map DB Project to Modal ProjectData
+        const modalData: ProjectData = {
+            title: project.title,
+            img: project.image_url,
+            tags: project.tags,
+            type: project.tags?.[0] || 'Project', // Use first tag as type
+            year: new Date(project.created_at).getFullYear().toString() // Use created_at year
+        };
+        setSelectedProject(modalData);
         setIsModalOpen(true);
     };
+
+    if (loading) {
+        return (
+            <div style={{ paddingTop: '150px', paddingBottom: '150px', textAlign: 'center' }}>
+                <div className="container">Loading projects...</div>
+            </div>
+        );
+    }
 
     return (
         <div style={{ paddingTop: '150px', paddingBottom: '150px' }}>
@@ -36,9 +55,9 @@ export default function Projects() {
                     columns: '3 320px',
                     gap: '40px'
                 }}>
-                    {PROJECTS.map((p, i) => (
+                    {projects.map((p, i) => (
                         <motion.div
-                            key={i}
+                            key={p.id}
                             initial={{ opacity: 0, y: 100 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: i * 0.1 }}
@@ -64,7 +83,7 @@ export default function Projects() {
                                     zIndex: 2, transition: 'opacity 0.3s'
                                 }} className="hover-overlay" />
 
-                                <img src={p.img} alt={p.title} style={{
+                                <img src={p.image_url} alt={p.title} style={{
                                     width: '100%', height: '100%', objectFit: 'cover',
                                     transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)'
                                 }} className="card-img" />
@@ -73,12 +92,12 @@ export default function Projects() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
                                     <h3 style={{ fontSize: '24px', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>{p.title}</h3>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{p.type}</p>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{p.tags?.[0] || 'Project'}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <span style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: 'var(--accent-color)' }}>{p.year}</span>
-                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                        {p.tags?.map(tag => (
+                                    <span style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: 'var(--accent-color)' }}>{new Date(p.created_at).getFullYear()}</span>
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                        {p.tags?.slice(0, 3).map(tag => (
                                             <span key={tag} style={{
                                                 fontSize: '10px', padding: '4px 8px',
                                                 border: '1px solid var(--border-color)', borderRadius: '20px',

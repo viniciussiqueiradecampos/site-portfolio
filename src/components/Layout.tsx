@@ -50,7 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <li><NavLink to="/" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>HOME</NavLink></li>
                         <li><NavLink to="/cv" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>CV</NavLink></li>
                         <li><NavLink to="/projects" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>PORTFOLIO</NavLink></li>
-                        <li><NavLink to="/career-dashboard" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>DASHBOARD</NavLink></li>
+
                     </ul>
                 </nav>
 
@@ -116,7 +116,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>HOME</NavLink>
                             <NavLink onClick={toggleMenu} to="/cv" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>CV</NavLink>
                             <NavLink onClick={toggleMenu} to="/projects" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>PORTFOLIO</NavLink>
-                            <NavLink onClick={toggleMenu} to="/career-dashboard" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>DASHBOARD</NavLink>
+
                         </nav>
                     </motion.div>
                 )}
