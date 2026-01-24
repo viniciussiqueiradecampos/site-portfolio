@@ -49,19 +49,14 @@
 
 [data-theme='light'] {
   --bg-color: #FFFFFF;
-  /* Pure white for maximum contrast */
   --surface-color: #F5F5F5;
-  /* Slightly off-white for surfaces */
   --text-color: #0A0A0A;
-  /* Near-black for AAA contrast (19.6:1) */
-  --accent-color: #C87A1A;
-  /* Darker orange for AAA contrast (4.8:1 on white) */
+  --accent-light: #C87A1A;
+  /* Fixed high-contrast accent for light mode */
+  --accent-color: var(--accent-light);
   --text-muted: #4A4A4A;
-  /* Dark gray for AAA contrast (9.7:1) */
   --border-color: rgba(0, 0, 0, 0.15);
-  /* Darker borders for visibility */
   --border-hover: rgba(0, 0, 0, 0.4);
-  /* Even darker on hover */
 }
 
 * {
