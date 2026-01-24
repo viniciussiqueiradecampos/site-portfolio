@@ -23,12 +23,14 @@ export default function Projects() {
         // Map DB Project to Modal ProjectData
         const modalData: ProjectData = {
             title: project.title,
+            image_url: project.image_url,
             img: project.image_url,
             tags: project.tags,
-            gallery: project.gallery_images || [], // Add gallery images
+            gallery_images: project.gallery_images || [],
+            gallery: project.gallery_images || [],
             description: project.description,
-            type: project.tags?.[0] || 'Project', // Use first tag as type
-            year: new Date(project.created_at).getFullYear().toString() // Use created_at year
+            type: project.tags?.[0] || 'Project',
+            year: project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'
         };
         setSelectedProject(modalData);
         setIsModalOpen(true);

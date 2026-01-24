@@ -8,7 +8,7 @@ export interface ProjectData {
     type?: string;
     year?: string;
     tags?: string[];
-    image_url: string; // Main image (matches Supabase)
+    image_url?: string; // Main image (matches Supabase)
     gallery_images?: string[]; // Gallery images (matches Supabase)
     img?: string; // Fallback
     gallery?: string[]; // Fallback

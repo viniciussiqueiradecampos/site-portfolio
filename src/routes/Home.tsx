@@ -83,12 +83,14 @@ export default function Home() {
         // Adapt DB project to Modal ProjectData if needed
         const modalProject: ProjectData = {
             title: project.title,
+            image_url: project.image_url,
             img: project.image_url,
             tags: project.tags || [],
-            gallery: project.gallery_images || [], // Add gallery images
+            gallery_images: project.gallery_images || [],
+            gallery: project.gallery_images || [],
             description: project.description,
             type: project.tags?.[0] || 'Project',
-            year: new Date(project.created_at).getFullYear().toString()
+            year: project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'
         };
         setSelectedProject(modalProject);
         setIsModalOpen(true);
