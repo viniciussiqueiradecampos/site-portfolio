@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink } from 'lucide-react';
-import { useEffect } from 'react';
+import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 // Define the interface for the modal props
 export interface ProjectData {
@@ -9,6 +9,7 @@ export interface ProjectData {
     year?: string;
     tags?: string[];
     img: string; // Main image
+    gallery?: string[]; // Gallery images for carousel
     description?: string; // Optional full description
 }
 
@@ -19,11 +20,13 @@ interface ProjectModalProps {
 }
 
 export default function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     // Prevent body scroll when modal is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            setCurrentImageIndex(0); // Reset to first image
         } else {
             document.body.style.overflow = 'unset';
         }
@@ -32,9 +35,23 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
         };
     }, [isOpen]);
 
+    if (!project) return null;
+
+    // Combine main image with gallery images
+    const allImages = [project.img, ...(project.gallery || [])];
+    const hasMultipleImages = allImages.length > 1;
+
+    const nextImage = () => {
+        setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+    };
+
+    const prevImage = () => {
+        setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+    };
+
     return (
         <AnimatePresence>
-            {isOpen && project && (
+            {isOpen && (
                 <>
                     {/* Backdrop */}
                     <motion.div
@@ -85,13 +102,82 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                         </div>
 
                         <div style={{ display: 'flex', height: '100%', flexDirection: 'row' }}>
-                            {/* Left: Image Area */}
+                            {/* Left: Image Area with Carousel */}
                             <div style={{ flex: 1.5, position: 'relative', overflow: 'hidden', borderRight: '1px solid var(--border-color)' }}>
                                 <img
-                                    src={project.img}
+                                    src={allImages[currentImageIndex]}
                                     alt={project.title}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
+
+                                {/* Carousel Navigation */}
+                                {hasMultipleImages && (
+                                    <>
+                                        <button
+                                            onClick={prevImage}
+                                            className="clickable"
+                                            style={{
+                                                position: 'absolute',
+                                                left: '20px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'rgba(0,0,0,0.5)',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '50px',
+                                                height: '50px',
+                                                color: 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                backdropFilter: 'blur(5px)'
+                                            }}
+                                        >
+                                            <ChevronLeft size={24} />
+                                        </button>
+                                        <button
+                                            onClick={nextImage}
+                                            className="clickable"
+                                            style={{
+                                                position: 'absolute',
+                                                right: '20px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'rgba(0,0,0,0.5)',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '50px',
+                                                height: '50px',
+                                                color: 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                backdropFilter: 'blur(5px)'
+                                            }}
+                                        >
+                                            <ChevronRight size={24} />
+                                        </button>
+
+                                        {/* Image Counter */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            bottom: '20px',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            background: 'rgba(0,0,0,0.7)',
+                                            color: 'white',
+                                            padding: '8px 16px',
+                                            borderRadius: '20px',
+                                            fontSize: '14px',
+                                            backdropFilter: 'blur(5px)'
+                                        }}>
+                                            {currentImageIndex + 1} / {allImages.length}
+                                        </div>
+                                    </>
+                                )}
+
                                 <div style={{
                                     position: 'absolute', bottom: 0, left: 0, width: '100%',
                                     padding: '40px', background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)'

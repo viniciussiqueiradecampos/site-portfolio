@@ -26,6 +26,7 @@ export interface Project {
     title: string;
     description?: string;
     image_url: string;
+    gallery_images?: string[]; // Additional images for carousel
     tags: string[];
     order_index: number;
     visible: boolean;
@@ -231,6 +232,8 @@ export interface JobListing {
     title: string;
     company: string;
     location?: string;
+    job_type?: 'full-time' | 'part-time' | 'contract' | 'freelance'; // New field
+    remote_type?: 'remote' | 'hybrid' | 'on-site'; // New field
     salary_min?: number;
     salary_max?: number;
     currency: string;

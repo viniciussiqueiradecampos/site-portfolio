@@ -50,6 +50,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <li><NavLink to="/" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>HOME</NavLink></li>
                         <li><NavLink to="/cv" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>CV</NavLink></li>
                         <li><NavLink to="/projects" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>PORTFOLIO</NavLink></li>
+                        <li>
+                            <a
+                                href="/#contact"
+                                className="clickable menu-link"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const contactSection = document.querySelector('.footer-section');
+                                    if (contactSection) {
+                                        contactSection.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                }}
+                            >
+                                GET IN TOUCH
+                            </a>
+                        </li>
 
                     </ul>
                 </nav>
@@ -116,6 +131,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>HOME</NavLink>
                             <NavLink onClick={toggleMenu} to="/cv" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>CV</NavLink>
                             <NavLink onClick={toggleMenu} to="/projects" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>PORTFOLIO</NavLink>
+                            <a
+                                href="/#contact"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    toggleMenu();
+                                    setTimeout(() => {
+                                        const contactSection = document.querySelector('.footer-section');
+                                        if (contactSection) {
+                                            contactSection.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    }, 300);
+                                }}
+                                className="mobile-link"
+                                style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}
+                            >
+                                GET IN TOUCH
+                            </a>
 
                         </nav>
                     </motion.div>

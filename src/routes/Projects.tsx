@@ -25,6 +25,8 @@ export default function Projects() {
             title: project.title,
             img: project.image_url,
             tags: project.tags,
+            gallery: project.gallery_images || [], // Add gallery images
+            description: project.description,
             type: project.tags?.[0] || 'Project', // Use first tag as type
             year: new Date(project.created_at).getFullYear().toString() // Use created_at year
         };

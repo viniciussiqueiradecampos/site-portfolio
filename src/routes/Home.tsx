@@ -76,8 +76,10 @@ export default function Home() {
             title: project.title,
             img: project.image_url,
             tags: project.tags || [],
-            // Add description/content if the modal supports it, using description from DB
-            // Assuming Modal expects 'img', 'title', 'tags' mainly.
+            gallery: project.gallery_images || [], // Add gallery images
+            description: project.description,
+            type: project.tags?.[0] || 'Project',
+            year: new Date(project.created_at).getFullYear().toString()
         };
         setSelectedProject(modalProject);
         setIsModalOpen(true);

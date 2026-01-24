@@ -35,6 +35,9 @@ export default function CareerDashboard() {
     const [tasks, setTasks] = useState<DailyTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('UI Designer');
+    const [filterJobType, setFilterJobType] = useState<string>('all');
+    const [filterRemoteType, setFilterRemoteType] = useState<string>('all');
+    const [filterLocation, setFilterLocation] = useState<string>('');
 
     useEffect(() => {
         loadData();
@@ -333,7 +336,7 @@ export default function CareerDashboard() {
                         </div>
 
                         <div style={{ marginBottom: '20px' }}>
-                            <div style={{ display: 'flex', gap: '10px' }}>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
                                 <div style={{ position: 'relative', flex: 1 }}>
                                     <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                     <input
@@ -343,7 +346,6 @@ export default function CareerDashboard() {
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
-                                                // Trigger search logic
                                                 setLoading(true);
                                                 jobSyncService.searchJobs(searchTerm).then(() => loadData());
                                             }
@@ -381,10 +383,76 @@ export default function CareerDashboard() {
                                     SEARCH
                                 </button>
                             </div>
+
+                            {/* Filters */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                                <select
+                                    value={filterJobType}
+                                    onChange={(e) => setFilterJobType(e.target.value)}
+                                    style={{
+                                        padding: '10px 12px',
+                                        background: '#f8fafc',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        color: '#0f172a',
+                                        fontFamily: 'var(--font-body)',
+                                        fontSize: '13px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="all">All Types</option>
+                                    <option value="full-time">Full-time</option>
+                                    <option value="part-time">Part-time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="freelance">Freelance</option>
+                                </select>
+
+                                <select
+                                    value={filterRemoteType}
+                                    onChange={(e) => setFilterRemoteType(e.target.value)}
+                                    style={{
+                                        padding: '10px 12px',
+                                        background: '#f8fafc',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        color: '#0f172a',
+                                        fontFamily: 'var(--font-body)',
+                                        fontSize: '13px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="all">All Locations</option>
+                                    <option value="remote">Remote</option>
+                                    <option value="hybrid">Hybrid</option>
+                                    <option value="on-site">On-site</option>
+                                </select>
+
+                                <input
+                                    type="text"
+                                    placeholder="Filter by location..."
+                                    value={filterLocation}
+                                    onChange={(e) => setFilterLocation(e.target.value)}
+                                    style={{
+                                        padding: '10px 12px',
+                                        background: '#f8fafc',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        color: '#0f172a',
+                                        fontFamily: 'var(--font-body)',
+                                        fontSize: '13px'
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                            {jobs.length === 0 ? (
+                            {jobs.filter(job => {
+                                // Apply filters
+                                if (filterJobType !== 'all' && job.job_type !== filterJobType) return false;
+                                if (filterRemoteType !== 'all' && job.remote_type !== filterRemoteType) return false;
+                                if (filterLocation && !job.location?.toLowerCase().includes(filterLocation.toLowerCase())) return false;
+                                return true;
+                            }).length === 0 ? (
                                 <div style={{
                                     textAlign: 'center',
                                     padding: '60px 20px',
@@ -392,12 +460,17 @@ export default function CareerDashboard() {
                                 }}>
                                     <Briefcase size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
                                     <p style={{ fontFamily: 'var(--font-body)', fontSize: '16px', margin: 0 }}>
-                                        No recent jobs found. Add your first job listing!
+                                        No jobs match your filters. Try adjusting them!
                                     </p>
                                 </div>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    {jobs.map(job => (
+                                    {jobs.filter(job => {
+                                        if (filterJobType !== 'all' && job.job_type !== filterJobType) return false;
+                                        if (filterRemoteType !== 'all' && job.remote_type !== filterRemoteType) return false;
+                                        if (filterLocation && !job.location?.toLowerCase().includes(filterLocation.toLowerCase())) return false;
+                                        return true;
+                                    }).map(job => (
                                         <div key={job.id} style={{
                                             padding: '20px',
                                             background: '#f8fafc',
@@ -476,7 +549,7 @@ export default function CareerDashboard() {
                                             </div>
 
                                             {job.tags && job.tags.length > 0 && (
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
                                                     {job.tags.map((tag, idx) => (
                                                         <span key={idx} style={{
                                                             padding: '4px 10px',
@@ -491,6 +564,30 @@ export default function CareerDashboard() {
                                                         </span>
                                                     ))}
                                                 </div>
+                                            )}
+
+                                            {/* Apply Button */}
+                                            {job.url && (
+                                                <a
+                                                    href={job.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="clickable"
+                                                    style={{
+                                                        display: 'inline-block',
+                                                        padding: '8px 16px',
+                                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                        color: 'white',
+                                                        borderRadius: '8px',
+                                                        fontSize: '13px',
+                                                        fontWeight: 600,
+                                                        fontFamily: 'var(--font-body)',
+                                                        textDecoration: 'none',
+                                                        marginTop: '4px'
+                                                    }}
+                                                >
+                                                    Apply Now →
+                                                </a>
                                             )}
                                         </div>
                                     ))}
