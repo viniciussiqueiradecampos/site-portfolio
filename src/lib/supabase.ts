@@ -16,7 +16,23 @@ export interface Content {
     id: string;
     key: string;
     value: string;
-    category: 'hero' | 'portfolio' | 'cv' | 'storytelling';
+    category: 'hero' | 'portfolio' | 'cv' | 'storytelling' | 'general';
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CRMLead {
+    id: string;
+    company_name: string;
+    website_url?: string;
+    region?: string;
+    status: 'novo' | 'contatado' | 'negociacao' | 'fechado' | 'perdido';
+    detected_issues?: string[];
+    contact_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    notes?: string;
+    last_contact_at?: string;
     created_at: string;
     updated_at: string;
 }
@@ -36,7 +52,7 @@ export interface Project {
 
 export interface CVSection {
     id: string;
-    section_type: 'experience' | 'education' | 'skills';
+    section_type: 'experience' | 'education' | 'skills' | 'certification';
     title: string;
     subtitle?: string;
     description?: string;
@@ -46,6 +62,62 @@ export interface CVSection {
     created_at: string;
     updated_at: string;
 }
+
+export const crmAPI = {
+    async getAll(): Promise<CRMLead[]> {
+        const { data, error } = await supabase
+            .from('crm_leads')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching leads:', error);
+            return [];
+        }
+        return data || [];
+    },
+
+    async create(lead: Omit<CRMLead, 'id' | 'created_at' | 'updated_at'>): Promise<CRMLead | null> {
+        const { data, error } = await supabase
+            .from('crm_leads')
+            .insert([lead])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating lead:', error);
+            return null;
+        }
+        return data;
+    },
+
+    async update(id: string, updates: Partial<CRMLead>): Promise<boolean> {
+        const { error } = await supabase
+            .from('crm_leads')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating lead:', error);
+            return false;
+        }
+        return true;
+    },
+
+    async delete(id: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('crm_leads')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting lead:', error);
+            return false;
+        }
+        return true;
+    }
+};
+
 
 // API Functions
 export const contentAPI = {
@@ -76,11 +148,10 @@ export const contentAPI = {
         return data || [];
     },
 
-    async update(key: string, value: string): Promise<boolean> {
+    async update(key: string, value: string, category: string = 'general'): Promise<boolean> {
         const { error } = await supabase
             .from('content')
-            .update({ value })
-            .eq('key', key);
+            .upsert({ key, value, category }, { onConflict: 'key' });
 
         if (error) {
             console.error('Error updating content:', error);

@@ -13,12 +13,15 @@ import {
 } from '../lib/supabase';
 import { jobSyncService } from '../lib/job-sync';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Save, Plus, Trash2, Briefcase, Settings, RefreshCw } from 'lucide-react';
+import { LogOut, Save, Plus, Trash2, Briefcase, Settings, RefreshCw, X } from 'lucide-react';
+import LeadDiscovery from '../components/LeadDiscovery';
+import CRMSystem from '../components/CRMSystem';
+import { storageAPI } from '../lib/storage';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const [user] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'cv' | 'career'>('content');
+    const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'cv' | 'career' | 'discovery' | 'crm'>('content');
 
     // Content State
     const [heroTitle, setHeroTitle] = useState('');
@@ -98,16 +101,47 @@ export default function AdminDashboard() {
         if (!editingProject) return;
 
         setSaving(true);
+        // Ensure arrays are initialized
+        const projectToSave = {
+            ...editingProject,
+            tags: editingProject.tags || [],
+            gallery_images: editingProject.gallery_images || []
+        };
+
         if (editingProject.id) {
-            await projectsAPI.update(editingProject.id, editingProject);
+            await projectsAPI.update(editingProject.id, projectToSave);
         } else {
-            await projectsAPI.create(editingProject);
+            // Remove empty id if creating
+            const { id, ...newProject } = projectToSave;
+            await projectsAPI.create(newProject);
         }
         await loadProjects();
         setEditingProject(null);
         setSaving(false);
         setMessage('Project saved!');
         setTimeout(() => setMessage(''), 3000);
+    };
+
+    const handleProjectCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !editingProject) return;
+        setSaving(true);
+        const url = await storageAPI.uploadImage(file, 'covers');
+        if (url) setEditingProject({ ...editingProject, image_url: url });
+        setSaving(false);
+    };
+
+    const handleProjectGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || !editingProject) return;
+        setSaving(true);
+        const currentGallery = [...(editingProject.gallery_images || [])];
+        for (let i = 0; i < files.length; i++) {
+            const url = await storageAPI.uploadImage(files[i], 'gallery');
+            if (url) currentGallery.push(url);
+        }
+        setEditingProject({ ...editingProject, gallery_images: currentGallery });
+        setSaving(false);
     };
 
     const deleteProject = async (id: string) => {
@@ -224,7 +258,7 @@ export default function AdminDashboard() {
                 display: 'flex',
                 gap: '10px'
             }}>
-                {(['content', 'projects', 'cv', 'career'] as const).map(tab => (
+                {(['content', 'projects', 'cv', 'career', 'discovery', 'crm'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -236,12 +270,12 @@ export default function AdminDashboard() {
                             border: '1px solid var(--border-color)',
                             borderRadius: '8px',
                             fontFamily: 'var(--font-display)',
-                            fontSize: '14px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                             textTransform: 'uppercase'
                         }}
                     >
-                        {tab}
+                        {tab === 'discovery' ? 'Website Discoverer' : tab === 'crm' ? 'CRM / Leads' : tab}
                     </button>
                 ))}
             </div>
@@ -514,8 +548,8 @@ export default function AdminDashboard() {
                                     <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Tags (comma separated)</label>
                                     <input
                                         type="text"
-                                        value={editingProject.tags.join(', ')}
-                                        onChange={(e) => setEditingProject({ ...editingProject, tags: e.target.value.split(',').map(t => t.trim()) })}
+                                        value={editingProject.tags?.join(', ') || ''}
+                                        onChange={(e) => setEditingProject({ ...editingProject, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
                                         style={{
                                             width: '100%',
                                             padding: '12px',
@@ -526,6 +560,61 @@ export default function AdminDashboard() {
                                             fontFamily: 'var(--font-body)'
                                         }}
                                     />
+                                </div>
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Internal Description (Modal)</label>
+                                    <textarea
+                                        value={editingProject.description || ''}
+                                        onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                                        rows={4}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px',
+                                            background: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-color)',
+                                            fontFamily: 'var(--font-body)',
+                                            resize: 'vertical'
+                                        }}
+                                    />
+                                </div>
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Cover Image</label>
+                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                        <input type="file" onChange={handleProjectCoverUpload} style={{ display: 'none' }} id="cover-upload" />
+                                        <label htmlFor="cover-upload" className="clickable" style={{ padding: '10px 20px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer' }}>
+                                            Change Cover
+                                        </label>
+                                        {editingProject.image_url && <img src={editingProject.image_url} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />}
+                                    </div>
+                                </div>
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Gallery Images (Internal)</label>
+                                    <input type="file" multiple onChange={handleProjectGalleryUpload} style={{ display: 'none' }} id="gallery-upload" />
+                                    <label htmlFor="gallery-upload" className="clickable" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', marginBottom: '10px' }}>
+                                        <Plus size={14} /> Add Images
+                                    </label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                                        {editingProject.gallery_images?.map((img, idx) => (
+                                            <div key={idx} style={{ position: 'relative', aspectRatio: '1', background: 'var(--bg-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <button
+                                                    onClick={() => {
+                                                        const ng = [...(editingProject.gallery_images || [])];
+                                                        ng.splice(idx, 1);
+                                                        setEditingProject({ ...editingProject, gallery_images: ng });
+                                                    }}
+                                                    style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(239, 68, 68, 0.8)', border: 'none', borderRadius: '50%', padding: '2px', cursor: 'pointer', color: 'white' }}
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -1287,6 +1376,19 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+            {/* Website Discoverer Tab */}
+            {activeTab === 'discovery' && (
+                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                    <LeadDiscovery />
+                </div>
+            )}
+
+            {/* CRM Tab */}
+            {activeTab === 'crm' && (
+                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                    <CRMSystem />
                 </div>
             )}
         </div>

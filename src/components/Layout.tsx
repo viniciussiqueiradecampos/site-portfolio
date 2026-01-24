@@ -55,10 +55,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 href="/#contact"
                                 className="clickable menu-link"
                                 onClick={(e) => {
-                                    e.preventDefault();
-                                    const contactSection = document.querySelector('.footer-section');
-                                    if (contactSection) {
-                                        contactSection.scrollIntoView({ behavior: 'smooth' });
+                                    if (window.location.pathname === '/') {
+                                        e.preventDefault();
+                                        const contactSection = document.getElementById('contact');
+                                        if (contactSection) {
+                                            contactSection.scrollIntoView({ behavior: 'smooth' });
+                                        }
                                     }
                                 }}
                             >

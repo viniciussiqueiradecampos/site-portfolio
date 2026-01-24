@@ -37,7 +37,7 @@ export default function AdminCV() {
         }
     };
 
-    const sectionTypes = ['experience', 'education', 'certification', 'skill'];
+    const sectionTypes = ['experience', 'education', 'certification', 'skills'];
 
     const renderList = (type: string) => {
         const items = sections.filter(s => s.section_type === type);

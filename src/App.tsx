@@ -70,7 +70,7 @@ function App() {
         <Route path="/admin/projects" element={<AdminProjects />} />
         <Route path="/admin/cv" element={<AdminCV />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
-        <Route path="/career-dashboard" element={<CareerDashboard />} />
+        <Route path="/career-dashboard" element={<Layout><CareerDashboard /></Layout>} />
 
         {/* Public Routes (With Layout) */}
         <Route path="/" element={<Layout><Home /></Layout>} />

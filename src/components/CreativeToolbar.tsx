@@ -252,7 +252,7 @@ export default function CreativeToolbar() {
                     position: 'fixed',
                     bottom: '30px',
                     left: '50%',
-                    transform: 'translateX(-50%)',
+                    x: '-50%',
                     background: 'var(--surface-color)',
                     border: '1px solid var(--border-color)',
                     padding: '8px',

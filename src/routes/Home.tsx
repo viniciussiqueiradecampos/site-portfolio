@@ -24,6 +24,15 @@ export default function Home() {
 
     useEffect(() => {
         loadData();
+        // Handle hash scroll
+        if (window.location.hash === '#contact') {
+            setTimeout(() => {
+                const contactSection = document.getElementById('contact');
+                if (contactSection) {
+                    contactSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 500);
+        }
     }, []);
 
     const loadData = async () => {
@@ -112,11 +121,11 @@ export default function Home() {
     }, []);
 
     // Title Slides: 100% visible from start. Scrolls horizontally.
-    // Range [0, 0.35] must cover the full exit of the text before 0.4 (when description starts).
-    // Start at 60% (off-center right), End at -100% (fully off-screen left or just past center) to ensure "last word" behavior.
-    const heroTextX = useTransform(heroProgress, [0, 0.38], ['60%', '-100%']);
+    // Range [0, 0.45] to give more space for the text to scroll.
+    // Start at 100% (hidden right), End at -100% (hidden left)
+    const heroTextX = useTransform(heroProgress, [0, 0.45], ['100%', '-100%']);
 
-    // Description: Starts at 0.4
+    // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
 
     // --- STORYTELLING ANIMATIONS ---
@@ -132,34 +141,34 @@ export default function Home() {
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                    justifyContent: 'center', alignItems: 'flex-end', // Flexbox to prevent overlap
+                    justifyContent: 'center', alignItems: 'flex-start', // Changed to flex-start for easier scroll calculation
                     paddingRight: '5%', paddingLeft: '5%'
                 }}>
 
-                    {/* Main Title - Horizontal Scroll Animation (Previous Style) */}
+                    {/* Main Title - Horizontal Scroll Animation */}
                     <motion.div
-                        initial={{ opacity: 1, x: 0 }} // Force initial state
+                        initial={{ opacity: 1, x: '100%' }}
                         style={{
                             width: '100%',
-                            textAlign: 'right',
-                            x: isMobile ? 0 : heroTextX, // No scroll on mobile
-                            opacity: 1, // Always visible
+                            textAlign: 'left', // Changed to left
+                            x: isMobile ? 0 : heroTextX,
+                            opacity: 1,
                             marginBottom: '80px',
-                            visibility: 'visible' // Ensure visibility
+                            whiteSpace: 'nowrap'
                         }}
                     >
-                        <h1 className="hero-title" style={{ fontSize: '11vw', lineHeight: '0.9', margin: 0, whiteSpace: 'nowrap' }}>
+                        <h1 className="hero-title" style={{ fontSize: '11vw', lineHeight: '0.9', margin: 0 }}>
                             {heroTitle}
                         </h1>
                     </motion.div>
 
                     {/* Description - Appears below Title word by word */}
-                    <div style={{ maxWidth: '600px', textAlign: 'right' }}>
-                        <p style={{ fontSize: '18px', lineHeight: '1.6', color: 'var(--text-muted)', fontFamily: 'var(--font-body)', display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '6px' }}>
+                    <div style={{ maxWidth: '800px', width: '100%', alignSelf: 'flex-end', textAlign: 'right' }}>
+                        <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', lineHeight: '1.6', color: 'var(--text-muted)', fontFamily: 'var(--font-body)', display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '6px' }}>
                             {descriptionText.map((word, i) => {
-                                // Start after title is done (0.4)
-                                const step = 0.5 / descriptionText.length;
-                                const start = 0.4 + (i * step);
+                                // Start after title is done (0.45)
+                                const step = 0.45 / descriptionText.length;
+                                const start = 0.5 + (i * step);
                                 const end = start + step;
                                 const opacity = useTransform(heroProgress, [start, end], [0.1, 1]);
 
@@ -282,7 +291,7 @@ export default function Home() {
             </section>
 
             {/* FOOTER */}
-            <section className="footer-section" style={{ marginTop: '200px', paddingBottom: '100px', overflow: 'hidden' }}>
+            <section id="contact" className="footer-section" style={{ marginTop: '200px', paddingBottom: '100px', overflow: 'hidden' }}>
                 <div className="ticker-wrapper" style={{ borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', padding: '40px 0' }}>
                     <motion.div
                         animate={{ x: [0, -1000] }}
