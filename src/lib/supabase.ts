@@ -42,12 +42,24 @@ export interface Project {
     title: string;
     description?: string;
     image_url: string;
-    gallery_images?: string[]; // Additional images for carousel
+    gallery_images?: string[];
     tags: string[];
     order_index: number;
     visible: boolean;
     created_at: string;
     updated_at: string;
+}
+
+export interface ProjectData {
+    title: string;
+    type?: string;
+    year?: string;
+    tags?: string[];
+    image_url?: string;
+    gallery_images?: string[];
+    img?: string;
+    gallery?: string[];
+    description?: string;
 }
 
 export interface CVSection {

@@ -4,9 +4,9 @@ import { useScroll, useTransform, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CreativeToolbar from '../components/CreativeToolbar';
-import ProjectModal, { type ProjectData } from '../components/ProjectModal';
+import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
-import { contentAPI, projectsAPI, type Project } from '../lib/supabase';
+import { contentAPI, projectsAPI, type Project, type ProjectData } from '../lib/supabase';
 
 export default function Home() {
     const containerRef = useRef(null);
@@ -81,7 +81,7 @@ export default function Home() {
 
     const openModal = (project: any) => {
         // Adapt DB project to Modal ProjectData if needed
-        const modalProject: ProjectData = {
+        const modalProject = {
             title: project.title,
             image_url: project.image_url,
             img: project.image_url,
@@ -91,7 +91,7 @@ export default function Home() {
             description: project.description,
             type: project.tags?.[0] || 'Project',
             year: project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'
-        } as ProjectData;
+        } as any as ProjectData;
         setSelectedProject(modalProject);
         setIsModalOpen(true);
     };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import ProjectModal, { type ProjectData } from '../components/ProjectModal';
-import { projectsAPI, type Project } from '../lib/supabase';
+import ProjectModal from '../components/ProjectModal';
+import { projectsAPI, type Project, type ProjectData } from '../lib/supabase';
 
 export default function Projects() {
     const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
@@ -21,7 +21,7 @@ export default function Projects() {
 
     const openModal = (project: Project) => {
         // Map DB Project to Modal ProjectData
-        const modalData: ProjectData = {
+        const modalData = {
             title: project.title,
             image_url: project.image_url,
             img: project.image_url,
@@ -31,7 +31,7 @@ export default function Projects() {
             description: project.description,
             type: project.tags?.[0] || 'Project',
             year: project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'
-        } as ProjectData;
+        } as any as ProjectData;
         setSelectedProject(modalData);
         setIsModalOpen(true);
     };

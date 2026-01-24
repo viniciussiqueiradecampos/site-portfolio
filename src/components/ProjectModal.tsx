@@ -1,19 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-// Define the interface for the modal props
-export interface ProjectData {
-    title: string;
-    type?: string;
-    year?: string;
-    tags?: string[];
-    image_url?: string; // Main image (matches Supabase)
-    gallery_images?: string[]; // Gallery images (matches Supabase)
-    img?: string; // Fallback
-    gallery?: string[]; // Fallback
-    description?: string; // Optional full description
-}
+import type { ProjectData } from '../lib/supabase';
 
 interface ProjectModalProps {
     project: ProjectData | null;

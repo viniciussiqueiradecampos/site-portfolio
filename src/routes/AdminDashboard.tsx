@@ -108,6 +108,37 @@ export default function AdminDashboard() {
         }
     };
 
+    const restoreDemoContent = async () => {
+        if (!confirm('This will populate the database with demo content. Irreversible. Continue?')) return;
+        setSaving(true);
+        try {
+            await contentAPI.update('hero.title', 'figma • UI DESIGN • AI • WEB DESIGN', 'hero');
+            await contentAPI.update('hero.description', 'Senior Designer focused on high-performance interfaces.', 'hero');
+            await contentAPI.update('storytelling.main', 'Experience designing products for ambitious companies', 'storytelling');
+
+            // Seed 1 project
+            await projectsAPI.create({
+                title: 'Demo Project',
+                description: 'A beautiful demo project description.',
+                image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070',
+                tags: ['UI/UX', 'Mobile'],
+                order_index: 0,
+                visible: true,
+                gallery_images: []
+            });
+
+            await loadContent();
+            await loadProjects();
+            setMessage('Database seeded successfully!');
+        } catch (err) {
+            console.error('Seed error:', err);
+            setMessage('Error seeding database.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
+        }
+    };
+
     const saveProject = async () => {
         if (!editingProject) return;
 
@@ -255,20 +286,39 @@ export default function AdminDashboard() {
                         {user?.email || 'Direct Access Mode'}
                     </p>
                 </div>
-                <button onClick={handleLogout} className="clickable" style={{
-                    padding: '12px 24px',
-                    background: 'transparent',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    color: 'var(--text-color)',
-                    fontFamily: 'var(--font-body)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer'
-                }}>
-                    <LogOut size={18} /> Logout
-                </button>
+                <div style={{ display: 'flex', gap: '15px' }}>
+                    <button
+                        onClick={restoreDemoContent}
+                        className="clickable"
+                        style={{
+                            padding: '12px 24px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '8px',
+                            color: '#ef4444',
+                            fontFamily: 'var(--font-body)',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        RESTORE DEMO DATA
+                    </button>
+                    <button onClick={handleLogout} className="clickable" style={{
+                        padding: '12px 24px',
+                        background: 'transparent',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        color: 'var(--text-color)',
+                        fontFamily: 'var(--font-body)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer'
+                    }}>
+                        <LogOut size={18} /> Logout
+                    </button>
+                </div>
             </div>
 
             {/* Success Message */}
