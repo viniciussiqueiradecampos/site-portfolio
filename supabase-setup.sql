@@ -248,24 +248,79 @@ DROP TRIGGER IF EXISTS update_api_configurations_updated_at ON api_configuration
 CREATE TRIGGER update_api_configurations_updated_at BEFORE UPDATE ON api_configurations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ========================================
--- 4. INITIAL SEEDS
+-- 4. STORAGE SETUP (PROJECT BUCKET)
 -- ========================================
+-- Try to create the bucket if it doesn't exist
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('project-images', 'project-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Policies for public access to images
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'Public Access' AND tablename = 'objects' AND schemaname = 'storage'
+    ) THEN
+        CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'project-images');
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'All Access for Auth' AND tablename = 'objects' AND schemaname = 'storage'
+    ) THEN
+        CREATE POLICY "All Access for Auth" ON storage.objects FOR ALL USING (bucket_id = 'project-images') WITH CHECK (bucket_id = 'project-images');
+    END IF;
+END $$;
+
+
+-- ========================================
+-- 5. COMPREHENSIVE SEED DATA
+-- ========================================
+
+-- Hero & Storytelling
 INSERT INTO content (key, value, category) VALUES
-    ('hero.title', 'figma • UI DESIGN • AI • WEB DESIGN', 'hero'),
-    ('hero.description', 'Senior Designer focused on high-performance interfaces and scalable systems.', 'hero'),
-    ('storytelling.main', 'Experience designing products for ambitious companies', 'storytelling')
+    ('hero.title', 'figma • UI DESIGN • AI • BRANDING', 'hero'),
+    ('hero.description', 'Especialista em criar experiências digitais de alto impacto, unindo design estratégico e tecnologias de ponta como IA.', 'hero'),
+    ('storytelling.main', 'Transformando conceitos complexos em interfaces humanas e intuitivas para empresas que querem liderar o futuro.', 'storytelling'),
+    ('contact.email', 'seu-email@exemplo.com', 'general'),
+    ('contact.linkedin', 'https://linkedin.com/in/seu-perfil', 'general')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO cv_sections (section_type, title, subtitle, description, date_range, order_index) VALUES
-    ('skills', 'Figma', NULL, 'Design Tool', NULL, 1),
-    ('skills', 'React', NULL, 'Frontend', NULL, 2),
-    ('experience', 'Senior Product Designer', 'Company X', 'Lead design efforts...', '2024', 10),
-    ('education', 'BFA Design', 'University Y', NULL, '2018', 20)
+-- Real Demo Projects
+INSERT INTO projects (title, description, image_url, tags, order_index, gallery_images) VALUES
+    (
+        'Alpha Banking App', 
+        'Um ecossistema bancário completo focado na Geração Z, com micro-interações fluidas e uma linguagem visual disruptiva.',
+        'https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=2070',
+        ARRAY['UI/UX', 'Fintech', 'Mobile'],
+        1,
+        ARRAY['https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070', 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2072']
+    ),
+    (
+        'EcoFlow Dashboard', 
+        'Plataforma de monitoramento em tempo real para redes de energia renovável. Otimizado para visualização de grandes volumes de dados.',
+        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2072',
+        ARRAY['Web App', 'Analytics', 'Energy'],
+        2,
+        ARRAY['https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070']
+    ),
+    (
+        'Vision Brand Identity', 
+        'Rebranding completo para uma agência de inteligência artificial pioneira na Europa.',
+        'https://images.unsplash.com/photo-1557262590-f2824da57e51?q=80&w=2070',
+        ARRAY['Branding', 'AI', 'Graphic Design'],
+        3,
+        ARRAY['https://images.unsplash.com/photo-1557262569-83935391624c?q=80&w=2070']
+    )
 ON CONFLICT DO NOTHING;
 
-INSERT INTO api_configurations (service_name, is_active) VALUES
-    ('adzuna', false),
-    ('gemini', false),
-    ('theirstack', false)
-ON CONFLICT (service_name) DO NOTHING;
+-- CV Sections
+DELETE FROM cv_sections; -- Reset to ensure clean order
+INSERT INTO cv_sections (section_type, title, subtitle, description, date_range, order_index) VALUES
+    ('skills', 'Design System', 'Arquitetura e Escala', 'Criação de bibliotecas escaláveis no Figma.', NULL, 1),
+    ('skills', 'Prototype', 'Framer & Protopie', 'Interações de alta fidelidade.', NULL, 2),
+    ('skills', 'Advanced AI', 'Midjourney & ChatGPT', 'Workflow otimizado com IA.', NULL, 3),
+    ('experience', 'Senior Product Designer', 'Freelancer / Global', 'Liderei design de interfaces para 10+ startups internacionais.', '2023 - Presente', 10),
+    ('experience', 'UI Designer', 'Agência Digital X', 'Responsável pela criação de portais corporativos e apps mobile.', '2021 - 2023', 11),
+    ('education', 'Design Gráfico', 'Escola Superior de Tecnologia', 'Especialização em Digital Design.', '2017 - 2021', 20),
+    ('certification', 'Google UX Certificate', 'Google / Coursera', NULL, '2022', 30);
 

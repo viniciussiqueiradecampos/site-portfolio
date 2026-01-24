@@ -13,7 +13,7 @@ import {
 } from '../lib/supabase';
 import { jobSyncService } from '../lib/job-sync';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Save, Plus, Trash2, Briefcase, Settings, RefreshCw, X } from 'lucide-react';
+import { LogOut, Save, Plus, Trash2, Briefcase, Settings, RefreshCw, X, Image as ImageIcon } from 'lucide-react';
 import LeadDiscovery from '../components/LeadDiscovery';
 import CRMSystem from '../components/CRMSystem';
 import { storageAPI } from '../lib/storage';
@@ -207,16 +207,23 @@ export default function AdminDashboard() {
         if (!editingJob) return;
 
         setSaving(true);
-        if (editingJob.id) {
-            await jobListingsAPI.update(editingJob.id, editingJob);
-        } else {
-            await jobListingsAPI.create(editingJob);
+        try {
+            const { id, created_at, updated_at, ...jobData } = editingJob as any;
+            if (editingJob.id && editingJob.id !== '') {
+                await jobListingsAPI.update(editingJob.id, jobData);
+            } else {
+                await jobListingsAPI.create(jobData);
+            }
+            await loadCareerData();
+            setEditingJob(null);
+            setMessage('Job saved!');
+        } catch (err) {
+            console.error('Save job error:', err);
+            setMessage('Error saving job.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
         }
-        await loadCareerData();
-        setEditingJob(null);
-        setSaving(false);
-        setMessage('Job saved!');
-        setTimeout(() => setMessage(''), 3000);
     };
 
     const deleteJob = async (id: string) => {
@@ -556,39 +563,68 @@ export default function AdminDashboard() {
                                 </div>
 
                                 <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Image URL</label>
-                                    <input
-                                        type="text"
-                                        value={editingProject.image_url}
-                                        onChange={(e) => setEditingProject({ ...editingProject, image_url: e.target.value })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
+                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Tags (Intuitive)</label>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '8px' }}>
+                                        {editingProject.tags?.map((tag, idx) => (
+                                            <span key={idx} style={{ padding: '4px 10px', background: 'var(--accent-color)', color: '#000', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                {tag}
+                                                <X size={12} className="clickable" onClick={() => {
+                                                    const nt = [...(editingProject.tags || [])];
+                                                    nt.splice(idx, 1);
+                                                    setEditingProject({ ...editingProject, tags: nt });
+                                                }} />
+                                            </span>
+                                        ))}
+                                        <input
+                                            placeholder="Type and press Enter..."
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    const val = (e.target as HTMLInputElement).value.trim();
+                                                    if (val) {
+                                                        setEditingProject({ ...editingProject, tags: [...(editingProject.tags || []), val] });
+                                                        (e.target as HTMLInputElement).value = '';
+                                                    }
+                                                }
+                                            }}
+                                            style={{ border: 'none', background: 'transparent', color: 'white', flex: 1, minWidth: '100px', outline: 'none' }}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Tags (comma separated)</label>
-                                    <input
-                                        type="text"
-                                        value={editingProject.tags?.join(', ') || ''}
-                                        onChange={(e) => setEditingProject({ ...editingProject, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px',
-                                            background: 'var(--bg-color)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '8px',
-                                            color: 'var(--text-color)',
-                                            fontFamily: 'var(--font-body)'
-                                        }}
-                                    />
+                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Cover Image (Upload)</label>
+                                    <div style={{ border: '2px dashed var(--border-color)', borderRadius: '12px', padding: '20px', textAlign: 'center', background: editingProject.image_url ? `url(${editingProject.image_url}) center/cover no-repeat` : 'transparent', position: 'relative', minHeight: '120px' }}>
+                                        {editingProject.image_url && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: '10px' }} />}
+                                        <div style={{ position: 'relative', zIndex: 1 }}>
+                                            <input type="file" onChange={handleProjectCoverUpload} style={{ display: 'none' }} id="cover-upload-file" />
+                                            <label htmlFor="cover-upload-file" className="clickable" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--accent-color)', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                                <ImageIcon size={16} /> {editingProject.image_url ? 'Change Cover' : 'Upload Cover'}
+                                            </label>
+                                            {saving && <div style={{ marginTop: '10px', fontSize: '12px' }}>Uploading...</div>}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Gallery Images</label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px', marginBottom: '10px' }}>
+                                        {editingProject.gallery_images?.map((img, idx) => (
+                                            <div key={idx} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <button onClick={() => {
+                                                    const ng = [...(editingProject.gallery_images || [])];
+                                                    ng.splice(idx, 1);
+                                                    setEditingProject({ ...editingProject, gallery_images: ng });
+                                                }} style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', borderRadius: '50%', padding: '3px' }}>
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <label htmlFor="gallery-upload-multiple" className="clickable" style={{ aspectRatio: '1', border: '2px dashed var(--border-color)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                                            <Plus size={24} />
+                                            <input type="file" multiple onChange={handleProjectGalleryUpload} id="gallery-upload-multiple" style={{ display: 'none' }} />
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <div style={{ marginBottom: '20px' }}>
@@ -608,42 +644,6 @@ export default function AdminDashboard() {
                                             resize: 'vertical'
                                         }}
                                     />
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Cover Image</label>
-                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                        <input type="file" onChange={handleProjectCoverUpload} style={{ display: 'none' }} id="cover-upload" />
-                                        <label htmlFor="cover-upload" className="clickable" style={{ padding: '10px 20px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer' }}>
-                                            Change Cover
-                                        </label>
-                                        {editingProject.image_url && <img src={editingProject.image_url} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />}
-                                    </div>
-                                </div>
-
-                                <div style={{ marginBottom: '20px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Gallery Images (Internal)</label>
-                                    <input type="file" multiple onChange={handleProjectGalleryUpload} style={{ display: 'none' }} id="gallery-upload" />
-                                    <label htmlFor="gallery-upload" className="clickable" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', marginBottom: '10px' }}>
-                                        <Plus size={14} /> Add Images
-                                    </label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                                        {editingProject.gallery_images?.map((img, idx) => (
-                                            <div key={idx} style={{ position: 'relative', aspectRatio: '1', background: 'var(--bg-color)', borderRadius: '4px', overflow: 'hidden' }}>
-                                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                <button
-                                                    onClick={() => {
-                                                        const ng = [...(editingProject.gallery_images || [])];
-                                                        ng.splice(idx, 1);
-                                                        setEditingProject({ ...editingProject, gallery_images: ng });
-                                                    }}
-                                                    style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(239, 68, 68, 0.8)', border: 'none', borderRadius: '50%', padding: '2px', cursor: 'pointer', color: 'white' }}
-                                                >
-                                                    <X size={10} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '10px' }}>
