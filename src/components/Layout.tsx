@@ -6,7 +6,6 @@ import { contentAPI } from '../lib/supabase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 
-    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
@@ -32,57 +31,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         if (ac) {
             document.documentElement.style.setProperty('--accent-color', ac.value);
-            // Also store original for theme switch calculations
-            document.documentElement.style.setProperty('--raw-accent', ac.value);
         }
         if (bg) {
             document.documentElement.style.setProperty('--bg-color', bg.value);
-            document.documentElement.style.setProperty('--raw-bg', bg.value);
         }
     };
 
-    useEffect(() => {
-        // Enforce AAA contrast on theme change
-        const rawAccent = document.documentElement.style.getPropertyValue('--raw-accent');
-        if (theme === 'light' && rawAccent) {
-            // Very simple hex darkening for basic AAA support
-            // For a production app, use a library like 'color' or 'polished'
-            // Here we just apply the darker standard if it's light mode
-            document.documentElement.style.setProperty('--accent-color', 'var(--accent-light, #C87A1A)');
-        } else if (rawAccent) {
-            document.documentElement.style.setProperty('--accent-color', rawAccent);
-        }
-    }, [theme]);
-
-    const toggleTheme = () => {
-        const newTheme = theme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
-        document.documentElement.setAttribute('data-theme', newTheme);
-    };
 
     const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
     return (
         <>
             {/* Noise Overlay Persistent */}
-            <div className={`noise-overlay ${theme === 'light' ? 'light-mode' : ''}`} />
+            <div className="noise-overlay" />
 
             {/* Global Header */}
             <motion.header
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="container"
                 style={{
                     position: 'fixed', top: 0, left: 0, right: 0,
                     height: 'var(--header-height)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     zIndex: 1000,
                     padding: '0 5%',
-                    background: theme === 'dark' ? 'rgba(5, 5, 5, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-                    backdropFilter: 'blur(10px)',
+                    background: 'rgba(5, 5, 5, 0.9)',
+                    backdropFilter: 'blur(20px)',
                     borderBottom: '1px solid var(--border-color)',
-                    pointerEvents: 'auto'
+                    pointerEvents: 'auto',
+                    width: '100%'
                 }}
             >
                 <div className="logo clickable" style={{ pointerEvents: 'auto', width: '120px' }}>
@@ -122,22 +100,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </nav>
 
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center', pointerEvents: 'auto' }}>
-                    {/* Theme Toggle */}
-                    <button
-                        onClick={toggleTheme}
-                        className="clickable"
-                        style={{
-                            background: 'transparent',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '50%',
-                            width: '40px', height: '40px',
-                            color: 'var(--text-color)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {theme === 'dark' ? '☀' : '☾'}
-                    </button>
 
                     {/* Mobile Menu Toggle */}
                     <button

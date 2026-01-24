@@ -358,16 +358,31 @@ export default function Home() {
                         ))}
                     </motion.div>
                 </div>
-                <div className="container" style={{ marginTop: '100px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                    <div className="contact-links" style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontFamily: 'var(--font-body)' }}>
-                        <RevealText><a href="#" className="clickable" style={{ fontSize: '24px', color: 'var(--text-color)', textDecoration: 'none' }}>Linkedin ↗</a></RevealText>
-                        <RevealText><a href="mailto:email@example.com" className="clickable" style={{ fontSize: '40px', fontWeight: 'bold', color: 'var(--accent-color)', textDecoration: 'none' }}>vinisiqueiradecampos@gmail.com</a></RevealText>
-                        <RevealText><a href="#" className="clickable" style={{ fontSize: '24px', color: 'var(--text-color)', textDecoration: 'none' }}>+351 920 196 634</a></RevealText>
+                <div className="container" style={{ marginTop: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                    <div className="contact-links" style={{ display: 'flex', flexDirection: 'column', gap: '40px', fontFamily: 'var(--font-body)' }}>
+                        <RevealText>
+                            <a href="mailto:vinisiqueiradecampos@gmail.com" className="clickable footer-email-link" style={{
+                                fontSize: 'clamp(32px, 5vw, 64px)',
+                                fontWeight: 900,
+                                color: 'var(--accent-color)',
+                                textDecoration: 'none',
+                                fontFamily: 'var(--font-display)',
+                                lineBreak: 'anywhere'
+                            }}>
+                                vinisiqueiradecampos@gmail.com
+                            </a>
+                        </RevealText>
+
+                        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '20px' }}>
+                            <RevealText><a href="#" className="clickable footer-sub-link">LINKEDIN ↗</a></RevealText>
+                            <RevealText><a href="#" className="clickable footer-sub-link">INSTAGRAM ↗</a></RevealText>
+                            <RevealText><a href="#" className="clickable footer-sub-link">+351 920 196 634</a></RevealText>
+                        </div>
                     </div>
                 </div>
 
-                <div className="footer-credits">
-                    Desenvolvido por Vinicius Campos 2026 - Não aplicar sem aprovação do administrador
+                <div className="footer-credits" style={{ marginTop: '150px', opacity: 0.3, fontSize: '12px', letterSpacing: '2px', textAlign: 'center' }}>
+                    VINICIUS CAMPOS &copy; 2026 • PORTUGAL
                 </div>
             </section>
         </div>

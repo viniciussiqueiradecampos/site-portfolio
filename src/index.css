@@ -16,7 +16,7 @@
 }
 
 :root {
-  /* Colors */
+  /* Colors - Optimized for deep dark mode */
   --bg-color: #050505;
   --surface-color: #111111;
   --surface-hover: #1a1a1a;
@@ -25,6 +25,7 @@
   --text-muted: rgba(255, 255, 255, 0.5);
   --border-color: rgba(255, 255, 255, 0.1);
   --border-hover: rgba(255, 255, 255, 0.3);
+  --header-bg: rgba(5, 5, 5, 0.85);
 
   /* Fonts */
   --font-display: "Akira Expanded", sans-serif;
@@ -39,24 +40,11 @@
 
   /* Layout */
   --header-height: 80px;
-  --toolbar-height: 50px;
-  --toolbar-bottom-gap: 30px;
-  --container-max: 1600px;
+  --container-max: 1400px;
+  /* Standardize max width */
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 32px;
-}
-
-[data-theme='light'] {
-  --bg-color: #FFFFFF;
-  --surface-color: #F5F5F5;
-  --text-color: #0A0A0A;
-  --accent-light: #C87A1A;
-  /* Fixed high-contrast accent for light mode */
-  --accent-color: var(--accent-light);
-  --text-muted: #4A4A4A;
-  --border-color: rgba(0, 0, 0, 0.15);
-  --border-hover: rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -177,12 +165,35 @@ nav ul li a,
 }
 
 /* Project Card Interactions */
-.project-card:hover .hover-overlay {
-  opacity: 0.2 !important;
-}
-
 .project-card:hover .card-img {
   transform: scale(1.05) !important;
+}
+
+/* Link Hover Effects */
+.clickable {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clickable:hover {
+  opacity: 0.7;
+}
+
+.footer-email-link:hover {
+  opacity: 1 !important;
+  color: var(--text-color) !important;
+}
+
+.footer-sub-link {
+  font-size: 16px;
+  color: var(--text-color);
+  text-decoration: none;
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+}
+
+.footer-sub-link:hover {
+  color: var(--accent-color);
+  opacity: 1 !important;
 }
 
 /* RESPONSIVE QUERIES */
