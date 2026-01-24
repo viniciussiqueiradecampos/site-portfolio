@@ -8,6 +8,12 @@ import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
 import { contentAPI, projectsAPI, type Project, type ProjectData } from '../lib/supabase';
 
+// Helper component to fix Rule of Hooks (useTransform inside loop)
+const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
+    const opacity = useTransform(progress, [start, end], [0.1, 1]);
+    return <motion.span style={{ ...style, opacity }}>{word}</motion.span>;
+};
+
 export default function Home() {
     const containerRef = useRef(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -172,13 +178,16 @@ export default function Home() {
                                 const step = 0.45 / descriptionText.length;
                                 const start = 0.5 + (i * step);
                                 const end = start + step;
-                                const opacity = useTransform(heroProgress, [start, end], [0.1, 1]);
 
                                 return (
-                                    <motion.span key={i} style={{ opacity }}>
-                                        {word}
-                                    </motion.span>
-                                )
+                                    <ScrollyWord
+                                        key={`hero-${i}`}
+                                        word={word}
+                                        progress={heroProgress}
+                                        start={start}
+                                        end={end}
+                                    />
+                                );
                             })}
                         </p>
                     </div>
@@ -202,22 +211,22 @@ export default function Home() {
                                 const step = 0.8 / storyWords.length;
                                 const start = 0.1 + (i * step);
                                 const end = start + step;
-                                const opacity = useTransform(storyProgress, [start, end], [0.1, 1]);
 
                                 return (
-                                    <motion.span
-                                        key={i}
+                                    <ScrollyWord
+                                        key={`story-${i}`}
+                                        word={word}
+                                        progress={storyProgress}
+                                        start={start}
+                                        end={end}
                                         style={{
-                                            opacity,
                                             fontSize: 'clamp(40px, 5vw, 90px)',
                                             fontWeight: 900,
                                             fontFamily: 'var(--font-display)',
                                             lineHeight: 1.1
                                         }}
-                                    >
-                                        {word}
-                                    </motion.span>
-                                )
+                                    />
+                                );
                             })}
                         </div>
                     </div>
