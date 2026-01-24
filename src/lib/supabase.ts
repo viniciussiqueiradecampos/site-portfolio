@@ -160,16 +160,16 @@ export const contentAPI = {
         return data || [];
     },
 
-    async update(key: string, value: string, category: string = 'general'): Promise<boolean> {
+    async update(key: string, value: string, category: string = 'general'): Promise<{ ok: boolean, msg?: string }> {
         const { error } = await supabase
             .from('content')
             .upsert({ key, value, category }, { onConflict: 'key' });
 
         if (error) {
-            console.error('Error updating content:', error);
-            return false;
+            console.error(`Error updating content [${key}]:`, error);
+            return { ok: false, msg: error.message };
         }
-        return true;
+        return { ok: true };
     }
 };
 

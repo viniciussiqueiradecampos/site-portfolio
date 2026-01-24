@@ -90,21 +90,25 @@ export default function AdminDashboard() {
     const saveContent = async () => {
         setSaving(true);
         try {
-            const ok1 = await contentAPI.update('hero.title', heroTitle, 'hero');
-            const ok2 = await contentAPI.update('hero.description', heroDesc, 'hero');
-            const ok3 = await contentAPI.update('storytelling.main', storyText, 'storytelling');
+            const results = await Promise.all([
+                contentAPI.update('hero.title', heroTitle, 'hero'),
+                contentAPI.update('hero.description', heroDesc, 'hero'),
+                contentAPI.update('storytelling.main', storyText, 'storytelling')
+            ]);
 
-            if (ok1 && ok2 && ok3) {
-                setMessage('Content saved successfully!');
+            const failed = results.filter(r => !r.ok);
+            if (failed.length === 0) {
+                setMessage('✅ CONTEÚDO SALVO COM SUCESSO! (v1.2)');
             } else {
-                setMessage('Some content failed to save.');
+                const errorMsgs = failed.map(f => f.msg).join(', ');
+                setMessage(`⚠️ ERRO: ${failed.length} campos falharam. Erro: ${errorMsgs}`);
             }
         } catch (err) {
-            console.error('Save content error:', err);
-            setMessage('Error connecting to database.');
+            console.error('Critical save error:', err);
+            setMessage('❌ ERRO CRÍTICO NA CONEXÃO.');
         } finally {
             setSaving(false);
-            setTimeout(() => setMessage(''), 3000);
+            setTimeout(() => setMessage(''), 6000);
         }
     };
 
@@ -321,17 +325,22 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Success Message */}
+            {/* Status Message */}
             {message && (
                 <div style={{
                     maxWidth: '1400px',
                     margin: '0 auto 20px',
-                    padding: '12px 20px',
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    padding: '16px 20px',
+                    background: message.includes('✅') ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    border: `1px solid ${message.includes('✅') ? '#22c55e' : '#ef4444'}`,
                     borderRadius: '8px',
-                    color: '#22c55e',
-                    fontFamily: 'var(--font-body)'
+                    color: message.includes('✅') ? '#4ade80' : '#f87171',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center'
                 }}>
                     {message}
                 </div>
