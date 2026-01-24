@@ -132,7 +132,7 @@ export default function Home() {
     // Range [0, 0.45] to give more space for the text to scroll.
     // Start at 100% (hidden right), End at -100% (hidden left)
     // Extend range from -100% to -400% to ensure the end of long titles is visible.
-    const heroTextX = useTransform(heroProgress, [0, 0.6], ['100%', '-400%']);
+    const heroTextX = useTransform(heroProgress, [0, 0.5], ['100%', '0%']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -159,7 +159,7 @@ export default function Home() {
                         initial={{ opacity: 1, x: '100%' }}
                         style={{
                             width: '100%',
-                            textAlign: 'left', // Changed to left
+                            textAlign: 'right', // Aligns to the right
                             x: isMobile ? 0 : heroTextX,
                             opacity: 1,
                             marginBottom: '80px',
