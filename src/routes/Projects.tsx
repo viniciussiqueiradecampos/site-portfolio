@@ -170,17 +170,13 @@ export default function Projects() {
                                     }} className="card-img" />
                                 </div>
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    <div>
-                                        <h3 style={{ fontSize: '20px', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>{p.title}</h3>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{p.tags?.[0] || 'Project'}</p>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <span style={{ display: 'block', fontSize: '13px', marginBottom: '8px', color: 'var(--accent-color)' }}>{p.year || new Date(p.created_at).getFullYear()}</span>
-                                        <div className="project-tags-container" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                                            {p.tags?.slice(0, 3).map(tag => (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
+                                    <div style={{ flex: 1, minWidth: '150px' }}>
+                                        <h3 style={{ fontSize: '20px', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>{p.title}</h3>
+                                        <div className="project-tags-container" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                            {p.tags?.map(tag => (
                                                 <span key={tag} className="project-tag" style={{
-                                                    fontSize: '10px', padding: '4px 8px',
+                                                    fontSize: '10px', padding: '4px 10px',
                                                     border: '1px solid var(--border-color)', borderRadius: '20px',
                                                     textTransform: 'uppercase'
                                                 }}>
@@ -188,6 +184,9 @@ export default function Projects() {
                                                 </span>
                                             ))}
                                         </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                        <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8 }}>{p.year || (p.created_at ? new Date(p.created_at).getFullYear() : '2026')}</div>
                                     </div>
                                 </div>
                             </motion.div>

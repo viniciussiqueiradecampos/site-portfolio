@@ -10,7 +10,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
-        logoText2: 'CAMPOS'
+        logoText2: 'CAMPOS',
+        accentColor: '#F2A73D',
+        bgColor: '#050505',
+        lightAccentColor: '#C87A1A',
+        lightBgColor: '#FFFFFF'
     });
 
     useEffect(() => {
@@ -22,21 +26,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         const l2 = await contentAPI.getByKey('general.logo_text2');
         const ac = await contentAPI.getByKey('general.accent_color');
         const bg = await contentAPI.getByKey('general.bg_color');
+        const lac = await contentAPI.getByKey('general.light_accent_color');
+        const lbg = await contentAPI.getByKey('general.light_bg_color');
 
-        if (l1 || l2) {
-            setBranding({
-                logoText1: l1?.value || 'VINICIUS',
-                logoText2: l2?.value || 'CAMPOS'
-            });
-        }
-
-        if (ac) {
-            document.documentElement.style.setProperty('--accent-color', ac.value);
-        }
-        if (bg) {
-            document.documentElement.style.setProperty('--bg-color', bg.value);
-        }
+        setBranding({
+            logoText1: l1?.value || 'VINICIUS',
+            logoText2: l2?.value || 'CAMPOS',
+            accentColor: ac?.value || '#F2A73D',
+            bgColor: bg?.value || '#050505',
+            lightAccentColor: lac?.value || '#C87A1A',
+            lightBgColor: lbg?.value || '#FFFFFF'
+        });
     };
+
+    useEffect(() => {
+        if (theme === 'dark') {
+            document.documentElement.style.setProperty('--accent-color', branding.accentColor);
+            document.documentElement.style.setProperty('--bg-color', branding.bgColor);
+            document.documentElement.style.setProperty('--text-color', '#ffffff');
+            document.documentElement.style.setProperty('--border-color', 'rgba(255, 255, 255, 0.1)');
+        } else {
+            document.documentElement.style.setProperty('--accent-color', branding.lightAccentColor);
+            document.documentElement.style.setProperty('--bg-color', branding.lightBgColor);
+            document.documentElement.style.setProperty('--text-color', '#0a0a0a');
+            document.documentElement.style.setProperty('--border-color', 'rgba(0, 0, 0, 0.1)');
+        }
+    }, [theme, branding]);
 
 
     const toggleTheme = () => {

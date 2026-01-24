@@ -45,7 +45,9 @@ export default function AdminDashboard() {
         logoText1: 'VINICIUS',
         logoText2: 'CAMPOS',
         accentColor: '#F2A73D',
-        bgColor: '#050505'
+        bgColor: '#050505',
+        lightAccentColor: '#C87A1A',
+        lightBgColor: '#FFFFFF'
     });
 
     const [saving, setSaving] = useState(false);
@@ -91,15 +93,21 @@ export default function AdminDashboard() {
     const loadSettings = async () => {
         const configsData = await apiConfigAPI.getAll();
         setApiConfigs(configsData);
+
         const l1 = await contentAPI.getByKey('general.logo_text1');
         const l2 = await contentAPI.getByKey('general.logo_text2');
         const ac = await contentAPI.getByKey('general.accent_color');
         const bg = await contentAPI.getByKey('general.bg_color');
+        const lac = await contentAPI.getByKey('general.light_accent_color');
+        const lbg = await contentAPI.getByKey('general.light_bg_color');
+
         setBranding({
             logoText1: l1?.value || 'VINICIUS',
             logoText2: l2?.value || 'CAMPOS',
             accentColor: ac?.value || '#F2A73D',
-            bgColor: bg?.value || '#050505'
+            bgColor: bg?.value || '#050505',
+            lightAccentColor: lac?.value || '#C87A1A',
+            lightBgColor: lbg?.value || '#FFFFFF'
         });
     };
 
@@ -168,6 +176,8 @@ export default function AdminDashboard() {
             await contentAPI.update('general.logo_text2', branding.logoText2, 'general');
             await contentAPI.update('general.accent_color', branding.accentColor, 'general');
             await contentAPI.update('general.bg_color', branding.bgColor, 'general');
+            await contentAPI.update('general.light_accent_color', branding.lightAccentColor, 'general');
+            await contentAPI.update('general.light_bg_color', branding.lightBgColor, 'general');
             setMessage('✅ Configurações salvas!');
         } catch (err) { setMessage('❌ Erro.'); }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
@@ -418,15 +428,27 @@ export default function AdminDashboard() {
                                                 <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
                                         </div>
                                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Cor de Destaque</label>
+                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Destaque (DARK)</label>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
                                                     <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
                                                     <input value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
                                                 </div></div>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Cor de Fundo</label>
+                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Fundo (DARK)</label>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
                                                     <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
                                                     <input value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                                </div></div>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px', borderTop: '1px solid #222', paddingTop: '15px' }}>
+                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Destaque (LIGHT)</label>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
+                                                    <input value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                                </div></div>
+                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Fundo (LIGHT)</label>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
+                                                    <input value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
                                                 </div></div>
                                         </div>
                                     </div>

@@ -144,8 +144,8 @@ export default function Home() {
     // Title Slides: 100% visible from start. Scrolls horizontally.
     // Ensure it stops exactly when the text ends. 
     // We use a container width of 90vw (5% padding each side).
-    // Title Slides: Smoother horizontal scroll
-    const heroTextX = useTransform(heroProgress, [0, 0.8], ['0px', '-50%']);
+    // Title Slides: Smoother horizontal scroll covering the full width of the text
+    const heroTextX = useTransform(heroProgress, [0, 0.7], ['0px', '-100%']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -314,25 +314,30 @@ export default function Home() {
                                         <img src={item.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
                                 </div>
-                                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: 0 }}>{item.title}</h3></RevealText>
-                                    <RevealText>
-                                        <div className="learn-more-text" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px', fontWeight: 'bold' }}>
-                                            Learn More <span>→</span>
+                                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
+                                    <div style={{ flex: 1, minWidth: '200px' }}>
+                                        <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: '0 0 10px 0' }}>{item.title}</h3></RevealText>
+                                        <div className="project-tags-container" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                            {item.tags?.map(tag => (
+                                                <RevealText key={tag}>
+                                                    <div className="project-tag" style={{
+                                                        padding: '8px 16px', border: '1px solid var(--border-color)',
+                                                        borderRadius: '50px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px'
+                                                    }}>
+                                                        {tag}
+                                                    </div>
+                                                </RevealText>
+                                            ))}
                                         </div>
-                                    </RevealText>
-                                </div>
-                                <div className="project-tags-container" style={{ display: 'flex', gap: '15px' }}>
-                                    {item.tags?.map(tag => (
-                                        <RevealText key={tag}>
-                                            <div className="project-tag" style={{
-                                                padding: '10px 20px', border: '1px solid var(--border-color)',
-                                                borderRadius: '50px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px'
-                                            }}>
-                                                {tag}
+                                    </div>
+                                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                                        <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-color)', opacity: 0.5 }}>{item.year || (item.created_at ? new Date(item.created_at).getFullYear() : '2026')}</div>
+                                        <RevealText>
+                                            <div className="learn-more-text" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 'bold' }}>
+                                                Learn More <span>→</span>
                                             </div>
                                         </RevealText>
-                                    ))}
+                                    </div>
                                 </div>
                             </div>
                         ))}
