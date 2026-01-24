@@ -247,3 +247,17 @@ INSERT INTO api_configurations (service_name, is_active) VALUES
     ('gemini', false),
     ('theirstack', false)
 ON CONFLICT (service_name) DO NOTHING;
+
+INSERT INTO cv_sections (section_type, title, subtitle, description, date_range, order_index) VALUES
+    ('skills', 'Figma', NULL, 'Design Tool', NULL, 1),
+    ('skills', 'React', NULL, 'Frontend Framework', NULL, 2),
+    ('skills', 'Design Systems', NULL, 'Architecture', NULL, 3),
+    ('skills', 'Prototyping', NULL, 'Interaction Design', NULL, 4),
+    ('skills', 'UI/UX', NULL, 'Product Design', NULL, 5),
+    ('skills', 'AI Tools', NULL, 'Emerging Tech', NULL, 6),
+    ('experience', 'Senior Product Designer', 'Fintech Global', '• Led the redesign of the core banking dashboard.\n• Established a new design system used by 40+ developers.\n• Mentored 3 junior designers and improved team velocity by 20%.', '2024', 10),
+    ('experience', 'UI Designer', 'Creative Agency', '• Designed award-winning marketing sites for tech startups.\n• Collaborated directly with clients to define visual direction.', '2022', 11),
+    ('education', 'BFA Design & Technology', 'University of Lisbon', NULL, '2018', 20),
+    ('education', 'Google UX Design Certificate', 'Coursera / Google', NULL, '2023', 30),
+    ('education', 'Advanced React & Redux', 'Udemy', NULL, '2021', 31)
+ON CONFLICT DO NOTHING;
