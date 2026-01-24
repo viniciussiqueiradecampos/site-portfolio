@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { cvAPI, type CVSection } from '../lib/supabase';
-import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { Trash2, Edit2 } from 'lucide-react';
 
 export default function AdminCV() {
     const [sections, setSections] = useState<CVSection[]>([]);
-    const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState<Partial<CVSection> | null>(null);
 
     useEffect(() => {
@@ -13,10 +12,8 @@ export default function AdminCV() {
     }, []);
 
     const loadData = async () => {
-        setLoading(true);
         const data = await cvAPI.getAll();
         setSections(data);
-        setLoading(false);
     };
 
     const handleSave = async () => {

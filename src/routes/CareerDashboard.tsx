@@ -49,7 +49,7 @@ export default function CareerDashboard() {
             userProfile = await careerProfileAPI.create({
                 user_email: 'demo@example.com',
                 full_name: 'Demo User',
-                current_role: 'Product Designer',
+                current_job_title: 'Product Designer',
                 target_role: 'Senior Product Designer',
                 linkedin_ssi_score: 0,
                 daily_application_goal: 5,

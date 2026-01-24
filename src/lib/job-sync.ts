@@ -33,7 +33,7 @@ export const jobSyncService = {
         return { added, updated, errors };
     },
 
-    async fetchAdzuna(apiKey: string): Promise<{ added: number, updated: number }> {
+    async fetchAdzuna(_apiKey: string): Promise<{ added: number, updated: number }> {
         // Implementation would go here. 
         // Adzuna requires App ID and App Key usually.
         // Assuming apiKey stores "APP_ID:APP_KEY" for simplicity.

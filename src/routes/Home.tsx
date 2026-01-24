@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Lenis from '@studio-freight/lenis';
 import { useScroll, useTransform, motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CreativeToolbar from '../components/CreativeToolbar';

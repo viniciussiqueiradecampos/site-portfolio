@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -6,7 +6,6 @@ import {
     Briefcase,
     GraduationCap,
     Settings,
-    LogOut,
     Menu,
     X
 } from 'lucide-react';

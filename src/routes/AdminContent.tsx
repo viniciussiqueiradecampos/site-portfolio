@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { contentAPI, type Content } from '../lib/supabase';
-import { Save, RefreshCw } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 export default function AdminContent() {
     const [contents, setContents] = useState<Content[]>([]);

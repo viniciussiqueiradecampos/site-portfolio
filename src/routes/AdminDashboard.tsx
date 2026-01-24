@@ -17,7 +17,7 @@ import { LogOut, Save, Plus, Trash2, Briefcase, Settings, RefreshCw } from 'luci
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    const [user, setUser] = useState<any>(null);
+    const [user] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'cv' | 'career'>('content');
 
     // Content State
@@ -50,15 +50,6 @@ export default function AdminDashboard() {
         loadCareerData();
     }, []);
 
-    const checkUser = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            // navigate('/admin'); // Disabled - allow direct access
-            console.log('No user logged in, but allowing access anyway');
-        } else {
-            setUser(user);
-        }
-    };
 
     const loadContent = async () => {
         const title = await contentAPI.getByKey('hero.title');
