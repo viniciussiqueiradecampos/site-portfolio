@@ -1,83 +1,70 @@
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function TestSupabase() {
-    const testConnection = async () => {
-        console.log('🔍 Testing Supabase connection...');
-        console.log('📍 URL:', import.meta.env.VITE_SUPABASE_URL);
-        console.log('🔑 Key:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Present ✅' : 'Missing ❌');
+const [logs, setLogs] = useState<string[]>([]);
 
-        // Test 1: Check if supabase client is initialized
-        console.log('✅ Supabase client:', supabase ? 'Initialized' : 'NOT initialized');
+const addLog = (msg: string) => setLogs(prev => [...prev, msg]);
 
-        // Test 2: Try to fetch from content table
+const testConnection = async () => {
+    setLogs([]);
+    addLog('🔍 Testing Supabase connection...');
+    addLog(`📍 URL: ${import.meta.env.VITE_SUPABASE_URL}`);
+    addLog(`🔑 Key: ${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Present ✅' : 'Missing ❌'}`);
+
+    // Test Client
+    addLog(`✅ Supabase client: ${supabase ? 'Initialized' : 'NOT initialized'}`);
+
+    // Table Checks
+    const tables = ['content', 'projects', 'cv_sections', 'career_profiles', 'job_listings', 'api_configurations'];
+
+    for (const table of tables) {
         try {
-            const { data, error } = await supabase
-                .from('content')
-                .select('*')
-                .limit(1);
+            const { error, count } = await supabase
+                .from(table)
+                .select('*', { count: 'exact', head: true });
 
             if (error) {
-                console.error('❌ Error fetching content:', error);
+                addLog(`❌ Table '${table}': Error - ${error.message} (Code: ${error.code})`);
             } else {
-                console.log('✅ Content table accessible:', data);
+                addLog(`✅ Table '${table}': Accessible (Rows: ${count})`);
             }
-        } catch (e) {
-            console.error('❌ Exception:', e);
+        } catch (e: any) {
+            addLog(`❌ Table '${table}': Exception - ${e.message}`);
         }
+    }
+};
 
-        // Test 3: Try login
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: 'vinicius@transmitadigital.com.br',
-                password: '123'
-            });
+return (
+    <div style={{ padding: '40px', fontFamily: 'monospace', background: '#0a0a0a', minHeight: '100vh', color: '#fff' }}>
+        <h1 style={{ color: '#f2a73d' }}>Supabase Connection Test</h1>
 
-            if (error) {
-                console.error('❌ Login error:', error.message);
-                console.error('Full error:', error);
-            } else {
-                console.log('✅ Login successful!', data);
-            }
-        } catch (e) {
-            console.error('❌ Login exception:', e);
-        }
-    };
+        <button
+            onClick={testConnection}
+            style={{
+                padding: '12px 24px',
+                background: '#f2a73d',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#000',
+                marginBottom: '20px'
+            }}
+        >
+            Run Diagnostics
+        </button>
 
-    return (
-        <div style={{ padding: '40px', fontFamily: 'monospace', background: '#0a0a0a', minHeight: '100vh', color: '#fff' }}>
-            <h1 style={{ color: '#f2a73d' }}>Supabase Connection Test</h1>
-
-            <div style={{ marginBottom: '20px', padding: '20px', background: '#1a1a1a', borderRadius: '8px' }}>
-                <h3>Environment Variables:</h3>
-                <p>URL: {import.meta.env.VITE_SUPABASE_URL || '❌ NOT SET'}</p>
-                <p>Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Present' : '❌ NOT SET'}</p>
-            </div>
-
-            <button
-                onClick={testConnection}
-                style={{
-                    padding: '12px 24px',
-                    background: '#f2a73d',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    color: '#000'
-                }}
-            >
-                Run Tests
-            </button>
-            <p>Open browser console (F12) to see detailed results</p>
-
-            <div style={{ marginTop: '30px', padding: '20px', background: '#1a1a1a', borderRadius: '8px' }}>
-                <h3>⚠️ If variables are NOT SET:</h3>
-                <ol>
-                    <li>Stop the dev server (Ctrl+C in terminal)</li>
-                    <li>Verify .env file exists in project root</li>
-                    <li>Run: <code style={{ background: '#000', padding: '2px 6px' }}>npm run dev</code></li>
-                </ol>
-            </div>
+        <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '8px', whiteSpace: 'pre-wrap' }}>
+            {logs.length === 0 ? 'Click button to start...' : logs.map((log, i) => <div key={i} style={{ marginBottom: '5px' }}>{log}</div>)}
         </div>
-    );
+
+        <div style={{ marginTop: '30px', padding: '20px', background: '#333', borderRadius: '8px' }}>
+            <h3>How to fix "Relation does not exist":</h3>
+            <p>1. Copy the content of <b>supabase-setup.sql</b></p>
+            <p>2. Go to Supabase Dashboard > SQL Editor</p>
+            <p>3. Paste and Run the script</p>
+        </div>
+    </div>
+);
 }
