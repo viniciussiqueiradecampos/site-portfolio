@@ -29,8 +29,10 @@ export default function CV() {
     };
 
     const skills = sections.filter(s => s.section_type === 'skills').sort((a, b) => a.order_index - b.order_index);
-    const experience = sections.filter(s => s.section_type === 'experience').sort((a, b) => b.order_index - a.order_index); // Descending for exp
+    const hobbies = sections.filter(s => s.section_type === 'hobbies').sort((a, b) => a.order_index - b.order_index);
+    const experience = sections.filter(s => s.section_type === 'experience').sort((a, b) => b.order_index - a.order_index);
     const education = sections.filter(s => s.section_type === 'education').sort((a, b) => b.order_index - a.order_index);
+    const certifications = sections.filter(s => s.section_type === 'certification').sort((a, b) => b.order_index - a.order_index);
 
     if (loading) {
         return <div style={{ paddingTop: '150px', paddingBottom: '100px', textAlign: 'center' }}>Loading CV...</div>;
@@ -100,6 +102,26 @@ export default function CV() {
                                 ))}
                             </div>
                         </div>
+
+                        {/* HOBBIES */}
+                        {hobbies.length > 0 && (
+                            <div>
+                                <h3 style={{ fontSize: '24px', marginBottom: '20px' }}>HOBBIES</h3>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    {hobbies.map(hobby => (
+                                        <span key={hobby.id} style={{
+                                            padding: '8px 16px',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '20px',
+                                            fontSize: '14px',
+                                            color: 'var(--text-muted)'
+                                        }}>
+                                            {hobby.title}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* RIGHT COLUMN: Experience, Education */}
@@ -111,9 +133,9 @@ export default function CV() {
                                 {experience.map(job => (
                                     <div key={job.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '50px', position: 'relative' }}>
                                         <div className="timeline-dot"></div>
-                                        <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>{job.date_range}</span>
+                                        <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{job.date_range}</span>
                                         <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
-                                            <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px' }}>{job.title} @ {job.subtitle}</h4>
+                                            <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{job.title} @ {job.subtitle}</h4>
                                             {job.description && (
                                                 <div style={{ marginTop: '15px' }}>
                                                     {job.description.split('\n').map((line, idx) => (
@@ -140,17 +162,34 @@ export default function CV() {
                             </div>
                         )}
 
-                        {/* EDUCATION & CERTIFICATIONS (Grouped in DB as education or separated? I used 'education' for both in seed) */}
+                        {/* EDUCATION */}
                         {education.length > 0 && (
                             <div style={{ marginBottom: '60px' }}>
-                                <h3 style={{ fontSize: '24px', marginBottom: '40px' }}>EDUCATION & CERTIFICATIONS</h3>
+                                <h3 style={{ fontSize: '24px', marginBottom: '40px' }}>EDUCATION</h3>
                                 {education.map(edu => (
                                     <div key={edu.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '40px', position: 'relative' }}>
                                         <div className="timeline-dot"></div>
-                                        <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>{edu.date_range}</span>
+                                        <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{edu.date_range}</span>
                                         <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
-                                            <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px' }}>{edu.title}</h4>
+                                            <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{edu.title}</h4>
                                             <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>{edu.subtitle}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* CERTIFICATIONS */}
+                        {certifications.length > 0 && (
+                            <div style={{ marginBottom: '60px' }}>
+                                <h3 style={{ fontSize: '24px', marginBottom: '40px' }}>CERTIFICATIONS</h3>
+                                {certifications.map(cert => (
+                                    <div key={cert.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '40px', position: 'relative' }}>
+                                        <div className="timeline-dot"></div>
+                                        <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{cert.date_range}</span>
+                                        <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
+                                            <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{cert.title}</h4>
+                                            <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>{cert.subtitle}</p>
                                         </div>
                                     </div>
                                 ))}

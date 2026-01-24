@@ -327,7 +327,7 @@ export default function Home() {
                     </div>
 
                     {/* Carousel Dots (especially for Mobile) */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
                         {projects.map((_, i) => (
                             <div
                                 key={i}

@@ -20,7 +20,7 @@ import { storageAPI } from '../lib/storage';
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'cv' | 'settings'>('content');
-    const [cvSubTab, setCvSubTab] = useState<'experience' | 'education' | 'skills' | 'certification'>('experience');
+    const [cvSubTab, setCvSubTab] = useState<'experience' | 'education' | 'skills' | 'certification' | 'hobbies'>('experience');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -384,13 +384,13 @@ export default function AdminDashboard() {
                                 </button>
                             </div>
 
-                            {/* CV Sub-Nav */}
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', overflowX: 'auto', paddingBottom: '5px' }} className="hide-scrollbar">
                                 {[
                                     { id: 'experience', label: 'Experiência', icon: Briefcase },
                                     { id: 'education', label: 'Educação', icon: GraduationCap },
                                     { id: 'skills', label: 'Habilidades', icon: MousePointer2 },
                                     { id: 'certification', label: 'Certificados', icon: Award },
+                                    { id: 'hobbies', label: 'Hobbies', icon: MousePointer2 },
                                 ].map(sub => (
                                     <button
                                         key={sub.id}

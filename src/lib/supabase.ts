@@ -71,7 +71,7 @@ export interface ProjectData {
 
 export interface CVSection {
     id: string;
-    section_type: 'experience' | 'education' | 'skills' | 'certification';
+    section_type: 'experience' | 'education' | 'skills' | 'certification' | 'hobbies';
     title: string;
     subtitle?: string;
     description?: string;
