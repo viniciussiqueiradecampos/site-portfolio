@@ -50,12 +50,12 @@ export default function Projects() {
 
             <div className="container">
                 <div style={{ marginBottom: '100px', borderBottom: '1px solid var(--border-color)', paddingBottom: '40px' }}>
-                    <h1 style={{ fontSize: 'clamp(60px, 8vw, 120px)', marginBottom: '20px', lineHeight: 0.9 }}>
+                    <h1 className="selected-works-title" style={{ fontSize: 'clamp(60px, 8vw, 120px)', marginBottom: '20px', lineHeight: 0.9 }}>
                         SELECTED<br />WORKS <span style={{ fontSize: '20px', verticalAlign: 'middle', letterSpacing: '0.1em' }}>(2023—2025)</span>
                     </h1>
                 </div>
 
-                <div style={{
+                <div className="projects-grid" style={{
                     columns: '3 320px',
                     gap: '40px'
                 }}>
@@ -95,14 +95,14 @@ export default function Projects() {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
-                                    <h3 style={{ fontSize: '24px', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>{p.title}</h3>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{p.tags?.[0] || 'Project'}</p>
+                                    <h3 style={{ fontSize: '20px', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>{p.title}</h3>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{p.tags?.[0] || 'Project'}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <span style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: 'var(--accent-color)' }}>{new Date(p.created_at).getFullYear()}</span>
-                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                    <span style={{ display: 'block', fontSize: '13px', marginBottom: '8px', color: 'var(--accent-color)' }}>{p.year || new Date(p.created_at).getFullYear()}</span>
+                                    <div className="project-tags-container" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                         {p.tags?.slice(0, 3).map(tag => (
-                                            <span key={tag} style={{
+                                            <span key={tag} className="project-tag" style={{
                                                 fontSize: '10px', padding: '4px 8px',
                                                 border: '1px solid var(--border-color)', borderRadius: '20px',
                                                 textTransform: 'uppercase'

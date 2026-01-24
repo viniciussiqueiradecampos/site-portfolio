@@ -7,6 +7,14 @@ export default function CV() {
     const [sections, setSections] = useState<CVSection[]>([]);
     const [cvPdfLink, setCvPdfLink] = useState('');
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         loadData();
@@ -31,8 +39,8 @@ export default function CV() {
     return (
         <div style={{ paddingTop: '150px', paddingBottom: '100px' }}>
             <div className="container">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px' }}>
-                    <h1 style={{
+                <div className="cv-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px' }}>
+                    <h1 className="cv-title" style={{
                         fontSize: '60px',
                         lineHeight: 1,
                         margin: 0,
@@ -103,9 +111,9 @@ export default function CV() {
                                 {experience.map(job => (
                                     <div key={job.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '50px', position: 'relative' }}>
                                         <div className="timeline-dot"></div>
-                                        <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '18px' }}>{job.date_range}</span>
-                                        <div>
-                                            <h4 style={{ fontSize: '22px', marginBottom: '5px' }}>{job.title} @ {job.subtitle}</h4>
+                                        <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>{job.date_range}</span>
+                                        <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
+                                            <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px' }}>{job.title} @ {job.subtitle}</h4>
                                             {job.description && (
                                                 <div style={{ marginTop: '15px' }}>
                                                     {job.description.split('\n').map((line, idx) => (
@@ -139,9 +147,9 @@ export default function CV() {
                                 {education.map(edu => (
                                     <div key={edu.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '40px', position: 'relative' }}>
                                         <div className="timeline-dot"></div>
-                                        <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '18px' }}>{edu.date_range}</span>
-                                        <div>
-                                            <h4 style={{ fontSize: '22px', marginBottom: '5px' }}>{edu.title}</h4>
+                                        <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>{edu.date_range}</span>
+                                        <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
+                                            <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px' }}>{edu.title}</h4>
                                             <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>{edu.subtitle}</p>
                                         </div>
                                     </div>

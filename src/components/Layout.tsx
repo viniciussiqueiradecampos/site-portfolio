@@ -1,12 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { contentAPI } from '../lib/supabase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [branding, setBranding] = useState({
+        logoText1: 'VINICIUS',
+        logoText2: 'CAMPOS'
+    });
+
+    useEffect(() => {
+        loadBranding();
+    }, []);
+
+    const loadBranding = async () => {
+        const l1 = await contentAPI.getByKey('general.logo_text1');
+        const l2 = await contentAPI.getByKey('general.logo_text2');
+        const ac = await contentAPI.getByKey('general.accent_color');
+        const bg = await contentAPI.getByKey('general.bg_color');
+
+        if (l1 || l2) {
+            setBranding({
+                logoText1: l1?.value || 'VINICIUS',
+                logoText2: l2?.value || 'CAMPOS'
+            });
+        }
+
+        if (ac) {
+            document.documentElement.style.setProperty('--accent-color', ac.value);
+        }
+        if (bg) {
+            document.documentElement.style.setProperty('--bg-color', bg.value);
+        }
+    };
 
     const toggleTheme = () => {
         const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -42,8 +72,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div className="logo clickable" style={{ pointerEvents: 'auto', width: '120px' }}>
                     <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
-                            <text x="0" y="15" fontFamily="var(--font-display)" fontSize="16" fontWeight="900" fill="currentColor">VINICIUS</text>
-                            <text x="0" y="32" fontFamily="var(--font-display)" fontSize="16" fontWeight="900" fill="currentColor">CAMPOS</text>
+                            <text x="0" y="15" fontFamily="var(--font-display)" fontSize="16" fontWeight="900" fill="currentColor">{branding.logoText1}</text>
+                            <text x="0" y="32" fontFamily="var(--font-display)" fontSize="16" fontWeight="900" fill="currentColor">{branding.logoText2}</text>
                         </svg>
                     </NavLink>
                 </div>
@@ -118,6 +148,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: '100%' }}
                         transition={{ type: 'tween', duration: 0.3 }}
+                        className="mobile-nav-overlay"
                         style={{
                             position: 'fixed',
                             inset: 0,
@@ -128,12 +159,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             padding: '30px'
                         }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '60px' }}>
+                        <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', marginBottom: '60px' }}>
                             <button onClick={toggleMenu} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}>
                                 <X size={40} />
                             </button>
                         </div>
-                        <nav style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
+                        <nav style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '40px', width: '100%' }}>
                             <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>HOME</NavLink>
                             <NavLink onClick={toggleMenu} to="/cv" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>CV</NavLink>
                             <NavLink onClick={toggleMenu} to="/projects" className="mobile-link" style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>PORTFOLIO</NavLink>
@@ -149,7 +180,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                         }
                                     }, 300);
                                 }}
-                                className="mobile-link"
+                                className="mobile-link get-in-touch-mobile"
                                 style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}
                             >
                                 GET IN TOUCH

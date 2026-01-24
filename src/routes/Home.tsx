@@ -69,10 +69,21 @@ export default function Home() {
         offset: ["start start", "end end"]
     });
 
+    const [activeProjectIndex, setActiveProjectIndex] = useState(0);
+
+    const handleCarouselScroll = () => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft } = scrollContainerRef.current;
+            const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
+            const index = Math.round(scrollLeft / scrollAmount);
+            setActiveProjectIndex(index);
+        }
+    };
+
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const { current } = scrollContainerRef;
-            const scrollAmount = (window.innerWidth * 0.55) + 50;
+            const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
             if (direction === 'left') {
                 current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
             } else {
@@ -96,7 +107,7 @@ export default function Home() {
             gallery: project.gallery_images || [],
             description: project.description,
             type: project.tags?.[0] || 'Project',
-            year: project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'
+            year: project.year || (project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024')
         } as any as ProjectData;
         setSelectedProject(modalProject);
         setIsModalOpen(true);
@@ -129,11 +140,9 @@ export default function Home() {
     }, []);
 
     // Title Slides: 100% visible from start. Scrolls horizontally.
-    // Range [0, 0.45] to give more space for the text to scroll.
-    // Start at 100% (hidden right), End at -100% (hidden left)
-    // Start from the beginning (0px) and scroll until the last letter is at the right padding
-    // calc(90vw - 100%) ensures the right edge of the text aligns with the right side.
-    const heroTextX = useTransform(heroProgress, [0, 0.8], ['0px', 'calc(90vw - 100%)']);
+    // Ensure it stops exactly when the text ends. 
+    // We use a container width of 90vw (5% padding each side).
+    const heroTextX = useTransform(heroProgress, [0, 0.6], ['0px', 'calc(90vw - 100%)']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -143,7 +152,7 @@ export default function Home() {
 
     return (
         <div ref={containerRef} style={{ position: 'relative' }}>
-            <CreativeToolbar />
+            {!isMobile && <CreativeToolbar />}
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
@@ -161,13 +170,13 @@ export default function Home() {
                         style={{
                             width: 'max-content',
                             textAlign: 'left',
-                            x: heroTextX,
+                            x: isMobile ? 0 : heroTextX, // No scroll transform on mobile, just wrap
                             opacity: 1,
                             marginBottom: '40px',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: isMobile ? 'normal' : 'nowrap'
                         }}
                     >
-                        <h1 className="hero-title" style={{ fontSize: '11vw', lineHeight: '0.9', margin: 0 }}>
+                        <h1 className="hero-title" style={{ fontSize: isMobile ? '10vw' : '11vw', lineHeight: '0.9', margin: 0, textAlign: isMobile ? 'center' : 'left' }}>
                             {heroTitle}
                         </h1>
                     </motion.div>
@@ -175,7 +184,7 @@ export default function Home() {
                     {/* Description - Narrower container for more line breaks */}
                     <div style={{ maxWidth: isMobile ? '90%' : '450px', width: '100%', alignSelf: isMobile ? 'center' : 'flex-end', textAlign: isMobile ? 'center' : 'right' }}>
                         <p style={{ fontSize: 'clamp(14px, 2vw, 20px)', lineHeight: '1.6', color: 'var(--text-muted)', fontFamily: 'var(--font-body)', display: 'flex', flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-end', gap: '6px' }}>
-                            {descriptionText.map((word, i) => {
+                            {isMobile ? heroDesc : descriptionText.map((word, i) => {
                                 // Start after title is done (0.45)
                                 const step = 0.45 / descriptionText.length;
                                 const start = 0.5 + (i * step);
@@ -238,34 +247,38 @@ export default function Home() {
             {/* SECTION 3: PORTFOLIO */}
             <section id="portfolio" className="portfolio-section" style={{ padding: '100px 0', background: 'var(--bg-color)', position: 'relative', zIndex: 10 }}>
                 <div className="container" style={{ maxWidth: '100%', padding: '0 5%', position: 'relative' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                    <div className="portfolio-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
                         <RevealText><h2 style={{ fontSize: '80px', margin: 0 }}>PORTFOLIO</h2></RevealText>
                         <Link to="/projects" className="clickable" style={{ fontSize: '20px', textDecoration: 'none', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            VIEW ALL <span style={{ fontSize: '24px' }}>→</span>
+                            <span className="view-all-text">VIEW ALL</span> <span style={{ fontSize: '24px' }}>→</span>
                         </Link>
                     </div>
 
-                    {/* Navigation Buttons for Carousel */}
-                    <button onClick={() => scroll('left')} className="clickable" style={{
-                        position: 'absolute', top: '480px', left: '12%', transform: 'translateY(-50%)',
-                        zIndex: 20, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '50%', width: '60px', height: '60px',
-                        color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        backdropFilter: 'blur(5px)'
-                    }}>
-                        <ChevronLeft size={30} />
-                    </button>
-                    <button onClick={() => scroll('right')} className="clickable" style={{
-                        position: 'absolute', top: '480px', right: '12%', transform: 'translateY(-50%)',
-                        zIndex: 20, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '50%', width: '60px', height: '60px',
-                        color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        backdropFilter: 'blur(5px)'
-                    }}>
-                        <ChevronRight size={30} />
-                    </button>
+                    {/* Navigation Buttons for Carousel (Desktop Only) */}
+                    {!isMobile && (
+                        <>
+                            <button onClick={() => scroll('left')} className="clickable" style={{
+                                position: 'absolute', top: '480px', left: '12%', transform: 'translateY(-50%)',
+                                zIndex: 20, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '50%', width: '60px', height: '60px',
+                                color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                backdropFilter: 'blur(5px)'
+                            }}>
+                                <ChevronLeft size={30} />
+                            </button>
+                            <button onClick={() => scroll('right')} className="clickable" style={{
+                                position: 'absolute', top: '480px', right: '12%', transform: 'translateY(-50%)',
+                                zIndex: 20, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '50%', width: '60px', height: '60px',
+                                color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                backdropFilter: 'blur(5px)'
+                            }}>
+                                <ChevronRight size={30} />
+                            </button>
+                        </>
+                    )}
 
-                    <div className="horizontal-scroll-container" ref={scrollContainerRef}>
+                    <div className="horizontal-scroll-container" ref={scrollContainerRef} onScroll={handleCarouselScroll}>
                         {projects.map((item, i) => (
                             <div key={i} className="home-project-card clickable" onClick={() => openModal(item)}>
                                 <div style={{
@@ -278,17 +291,17 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <RevealText><h3 style={{ fontSize: '24px', color: 'var(--accent-color)', margin: 0 }}>{item.title}</h3></RevealText>
+                                    <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: 0 }}>{item.title}</h3></RevealText>
                                     <RevealText>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px', fontWeight: 'bold' }}>
+                                        <div className="learn-more-text" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px', fontWeight: 'bold' }}>
                                             Learn More <span>→</span>
                                         </div>
                                     </RevealText>
                                 </div>
-                                <div style={{ display: 'flex', gap: '15px' }}>
+                                <div className="project-tags-container" style={{ display: 'flex', gap: '15px' }}>
                                     {item.tags?.map(tag => (
                                         <RevealText key={tag}>
-                                            <div style={{
+                                            <div className="project-tag" style={{
                                                 padding: '10px 20px', border: '1px solid var(--border-color)',
                                                 borderRadius: '50px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px'
                                             }}>
@@ -298,6 +311,33 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
+                        ))}
+                    </div>
+
+                    {/* Carousel Dots (especially for Mobile) */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '40px' }}>
+                        {projects.map((_, i) => (
+                            <div
+                                key={i}
+                                className="clickable"
+                                onClick={() => {
+                                    if (scrollContainerRef.current) {
+                                        const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
+                                        scrollContainerRef.current.scrollTo({
+                                            left: i * scrollAmount,
+                                            behavior: 'smooth'
+                                        });
+                                    }
+                                }}
+                                style={{
+                                    width: '10px', height: '10px',
+                                    borderRadius: '50%',
+                                    background: 'var(--text-color)',
+                                    opacity: activeProjectIndex === i ? 1 : 0.3,
+                                    transition: 'all 0.3s',
+                                    transform: activeProjectIndex === i ? 'scale(1.2)' : 'scale(1)'
+                                }}
+                            />
                         ))}
                     </div>
                 </div>
@@ -324,6 +364,10 @@ export default function Home() {
                         <RevealText><a href="mailto:email@example.com" className="clickable" style={{ fontSize: '40px', fontWeight: 'bold', color: 'var(--accent-color)', textDecoration: 'none' }}>vinisiqueiradecampos@gmail.com</a></RevealText>
                         <RevealText><a href="#" className="clickable" style={{ fontSize: '24px', color: 'var(--text-color)', textDecoration: 'none' }}>+351 920 196 634</a></RevealText>
                     </div>
+                </div>
+
+                <div className="footer-credits">
+                    Desenvolvido por Vinicius Campos 2026 - Não aplicar sem aprovação do administrador
                 </div>
             </section>
         </div>

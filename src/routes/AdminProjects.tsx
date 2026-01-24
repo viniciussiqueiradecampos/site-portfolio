@@ -117,6 +117,13 @@ export default function AdminProjects() {
                                 style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '16px' }}
                             />
 
+                            <input
+                                placeholder="Project Year (e.g., 2024)"
+                                value={editing.year || ''}
+                                onChange={e => setEditing({ ...editing, year: e.target.value })}
+                                style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px' }}
+                            />
+
                             {/* Cover Image Upload */}
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>

@@ -641,7 +641,9 @@ export default function AdminDashboard() {
                                 width: '100%',
                                 maxHeight: '90vh',
                                 overflow: 'auto'
-                            }}>
+                            }}
+                                className="hide-scrollbar"
+                            >
                                 <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>
                                     {editingProject.id ? 'EDIT PROJECT' : 'NEW PROJECT'}
                                 </h3>
@@ -652,6 +654,25 @@ export default function AdminDashboard() {
                                         type="text"
                                         value={editingProject.title}
                                         onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px',
+                                            background: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-color)',
+                                            fontFamily: 'var(--font-body)'
+                                        }}
+                                    />
+                                </div>
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontFamily: 'var(--font-body)' }}>Year</label>
+                                    <input
+                                        type="text"
+                                        value={editingProject.year || ''}
+                                        onChange={(e) => setEditingProject({ ...editingProject, year: e.target.value })}
+                                        placeholder="2024"
                                         style={{
                                             width: '100%',
                                             padding: '12px',
@@ -943,7 +964,9 @@ export default function AdminDashboard() {
                                 width: '100%',
                                 maxHeight: '90vh',
                                 overflow: 'auto'
-                            }}>
+                            }}
+                                className="hide-scrollbar"
+                            >
                                 <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>
                                     {editingCV.id ? 'EDIT CV SECTION' : 'NEW CV SECTION'}
                                 </h3>

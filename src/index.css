@@ -209,7 +209,7 @@ nav ul li a,
     padding: 15px;
   }
 
-  /* Target nested div inside project card if specified via style attribute */
+  /* Target nested div inside project card */
   .home-project-card>div:first-child {
     height: 300px !important;
   }
@@ -219,34 +219,51 @@ nav ul li a,
   }
 
   .hero-title {
-    font-size: 18vw !important;
-    white-space: nowrap !important;
-    /* Keep it as a line for the scroll effect */
-    margin-bottom: 30px !important;
+    font-size: 10vw !important;
+    /* Reduced to fit better */
+    white-space: normal !important;
+    /* Wrap on mobile */
+    text-align: center !important;
+    margin-bottom: 20px !important;
   }
 
-  .hero-section,
-  .story-section {
-    height: 250vh !important;
-    /* Keep enough height for scrollytelling */
+  .hero-section {
+    height: 100vh !important;
+    overflow: hidden;
   }
 
-  .sticky-wrapper {
-    position: sticky !important;
-    top: 0;
+  .hero-section .sticky-wrapper {
+    position: relative !important;
     height: 100vh !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
+    align-items: center !important;
     padding: 0 5% !important;
   }
 
+  /* Keep storytelling effect on mobile */
+  .story-section {
+    height: 300vh !important;
+    position: relative !important;
+  }
+
+  .story-section .sticky-wrapper {
+    position: sticky !important;
+    top: 0;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 0 !important;
+  }
+
   h2 {
-    font-size: 32px !important;
+    font-size: 28px !important;
   }
 
   .reveal-text-container span {
-    font-size: 32px !important;
+    font-size: 28px !important;
   }
 
   /* Footer adjustments */
@@ -255,11 +272,13 @@ nav ul li a,
   }
 
   .ticker-wrapper span {
-    font-size: 60px !important;
+    font-size: 40px !important;
+    /* Reduced from 60px */
   }
 
   .contact-links a {
-    font-size: 20px !important;
+    font-size: 18px !important;
+    /* Reduced from 20px */
   }
 
   /* Responsive Header */
@@ -270,11 +289,145 @@ nav ul li a,
   .mobile-menu-toggle {
     display: flex !important;
   }
+
+  /* Mobile Menu Styles */
+  .mobile-nav-overlay {
+    align-items: flex-start !important;
+    padding: 60px 40px !important;
+  }
+
+  .mobile-link {
+    font-size: 28px !important;
+    /* Reduced from 40px */
+    text-align: left !important;
+  }
+
+  .get-in-touch-mobile {
+    white-space: nowrap !important;
+  }
+
+  /* CV Responsive */
+  .cv-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+
+  .cv-timeline-title {
+    font-size: 14px !important;
+  }
+
+  .cv-timeline-date {
+    font-size: 10px !important;
+  }
+
+  .cv-timeline-content {
+    padding-left: 20px !important;
+  }
+
+  /* Portfolio Selected Works */
+  .selected-works-title {
+    font-size: 45px !important;
+    /* Reduced from clamp(60px, 8vw, 120px) */
+  }
+
+  .portfolio-title-row {
+    margin-bottom: 40px !important;
+  }
+
+  .portfolio-title-row h2 {
+    font-size: 40px !important;
+  }
+
+  .view-all-text {
+    display: none !important;
+  }
+
+  .project-title {
+    font-size: 18px !important;
+  }
+
+  .learn-more-text {
+    font-size: 16px !important;
+  }
+
+  .project-tag {
+    padding: 6px 12px !important;
+    font-size: 10px !important;
+  }
+
+  .project-tags-container {
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden;
+  }
+
+  /* CV Page Hero */
+  .cv-title {
+    font-size: 36px !important;
+  }
+
+  .cv-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 30px !important;
+  }
+
+  /* Projects Page */
+  .projects-grid {
+    columns: 1 100% !important;
+  }
+}
+
+.footer-credits {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 40px;
+}
+
+/* Hide scrollbars globally for modals but allow scrolling */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari and Opera */
+}
+
+/* CV Desktop Typography */
+.cv-timeline-title-desktop {
+  font-size: 16px !important;
+}
+
+.cv-timeline-date-desktop {
+  font-size: 12px !important;
+}
+
+.cv-timeline-content {
+  padding-left: 40px !important;
+  /* Increased padding */
 }
 
 /* Timeline Vertical Line */
 .timeline-item {
   position: relative;
+}
+
+@media (max-width: 768px) {
+  .timeline-item {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
+  .timeline-dot {
+    display: none;
+  }
 }
 
 /* ... existing timeline styles ... */
