@@ -27,6 +27,7 @@ export default function AdminDashboard() {
     const [heroTitle, setHeroTitle] = useState('');
     const [heroDesc, setHeroDesc] = useState('');
     const [storyText, setStoryText] = useState('');
+    const [cvUrl, setCvUrl] = useState('');
 
     // Projects State
     const [projects, setProjects] = useState<Project[]>([]);
@@ -58,10 +59,12 @@ export default function AdminDashboard() {
         const title = await contentAPI.getByKey('hero.title');
         const desc = await contentAPI.getByKey('hero.description');
         const story = await contentAPI.getByKey('storytelling.main');
+        const cvLink = await contentAPI.getByKey('cv.pdf_url');
 
         if (title) setHeroTitle(title.value);
         if (desc) setHeroDesc(desc.value);
         if (story) setStoryText(story.value);
+        if (cvLink) setCvUrl(cvLink.value);
     };
 
     const loadProjects = async () => {
@@ -93,7 +96,8 @@ export default function AdminDashboard() {
             const results = await Promise.all([
                 contentAPI.update('hero.title', heroTitle, 'hero'),
                 contentAPI.update('hero.description', heroDesc, 'hero'),
-                contentAPI.update('storytelling.main', storyText, 'storytelling')
+                contentAPI.update('storytelling.main', storyText, 'storytelling'),
+                contentAPI.update('cv.pdf_url', cvUrl, 'cv')
             ]);
 
             const failed = results.filter(r => !r.ok);
@@ -455,6 +459,39 @@ export default function AdminDashboard() {
                                 resize: 'vertical'
                             }}
                         />
+                    </div>
+
+                    <div style={{ marginBottom: '30px', padding: '20px', background: 'rgba(242, 167, 61, 0.05)', borderRadius: '12px', border: '1px solid rgba(242, 167, 61, 0.2)' }}>
+                        <label style={{ display: 'block', marginBottom: '10px', fontFamily: 'var(--font-display)', fontSize: '14px' }}>
+                            CV PDF ATTACHMENT
+                        </label>
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                            <input
+                                type="text"
+                                value={cvUrl}
+                                onChange={(e) => setCvUrl(e.target.value)}
+                                placeholder="Paste PDF URL or upload →"
+                                style={{ flex: 1, padding: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-color)', fontFamily: 'var(--font-body)' }}
+                            />
+                            <input
+                                type="file"
+                                id="cv-upload"
+                                style={{ display: 'none' }}
+                                accept=".pdf"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        setSaving(true);
+                                        const url = await storageAPI.uploadImage(file, 'cv');
+                                        if (url) setCvUrl(url);
+                                        setSaving(false);
+                                    }
+                                }}
+                            />
+                            <label htmlFor="cv-upload" className="clickable" style={{ padding: '12px 20px', background: 'var(--text-color)', color: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                                UPLOAD PDF
+                            </label>
+                        </div>
                     </div>
 
                     <button

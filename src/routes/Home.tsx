@@ -131,8 +131,9 @@ export default function Home() {
     // Title Slides: 100% visible from start. Scrolls horizontally.
     // Range [0, 0.45] to give more space for the text to scroll.
     // Start at 100% (hidden right), End at -100% (hidden left)
-    // Start completely off-screen right (100vw) and slide until the last letter is at the right padding (95vw - 100%)
-    const heroTextX = useTransform(heroProgress, [0, 0.7], ['100vw', 'calc(95vw - 100%)']);
+    // Start from the beginning (0px) and scroll until the last letter is at the right padding
+    // calc(90vw - 100%) ensures the right edge of the text aligns with the right side.
+    const heroTextX = useTransform(heroProgress, [0, 0.8], ['0px', 'calc(90vw - 100%)']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");

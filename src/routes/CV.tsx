@@ -1,10 +1,11 @@
 
 
 import { useState, useEffect } from 'react';
-import { cvAPI, type CVSection } from '../lib/supabase';
+import { cvAPI, contentAPI, type CVSection } from '../lib/supabase';
 
 export default function CV() {
     const [sections, setSections] = useState<CVSection[]>([]);
+    const [cvPdfLink, setCvPdfLink] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -13,7 +14,9 @@ export default function CV() {
 
     const loadData = async () => {
         const data = await cvAPI.getAll();
+        const cvLink = await contentAPI.getByKey('cv.pdf_url');
         setSections(data);
+        if (cvLink) setCvPdfLink(cvLink.value);
         setLoading(false);
     };
 
@@ -28,7 +31,39 @@ export default function CV() {
     return (
         <div style={{ paddingTop: '150px', paddingBottom: '100px' }}>
             <div className="container">
-                <h1 style={{ fontSize: '120px', lineHeight: 0.8, marginBottom: '100px', color: 'var(--accent-color)' }}>CURRICULUM<br />VITAE</h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px' }}>
+                    <h1 style={{
+                        fontSize: '60px',
+                        lineHeight: 1,
+                        margin: 0,
+                        color: 'var(--accent-color)',
+                        fontFamily: 'var(--font-body)',
+                        textTransform: 'uppercase',
+                        fontWeight: 900
+                    }}>
+                        CURRICULUM<br />VITAE
+                    </h1>
+
+                    <a
+                        href={cvPdfLink || '#'}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                        className="clickable"
+                        style={{
+                            padding: '12px 24px',
+                            background: 'var(--accent-color)',
+                            color: '#000',
+                            borderRadius: '8px',
+                            textDecoration: 'none',
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        DOWNLOAD PDF ↓
+                    </a>
+                </div>
 
                 <div className="cv-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '80px', borderTop: '1px solid var(--border-color)', paddingTop: '60px' }}>
 
@@ -81,10 +116,10 @@ export default function CV() {
                                                             position: 'relative',
                                                             paddingLeft: '15px'
                                                         }}>
-                                                            {line.startsWith('•') ? (
+                                                            {line.trim().startsWith('•') || line.trim().startsWith('-') ? (
                                                                 <>
                                                                     <span style={{ position: 'absolute', left: 0, color: 'var(--accent-color)' }}>•</span>
-                                                                    {line.substring(1).trim()}
+                                                                    {line.trim().substring(1).trim()}
                                                                 </>
                                                             ) : line}
                                                         </div>

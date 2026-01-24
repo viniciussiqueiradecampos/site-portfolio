@@ -31,8 +31,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     position: 'fixed', top: 0, left: 0, right: 0,
                     height: 'var(--header-height)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    zIndex: 1000, pointerEvents: 'none',
-                    padding: '0 5%'
+                    zIndex: 1000,
+                    padding: '0 5%',
+                    background: theme === 'dark' ? 'rgba(5, 5, 5, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+                    backdropFilter: 'blur(10px)',
+                    borderBottom: '1px solid var(--border-color)',
+                    pointerEvents: 'auto'
                 }}
             >
                 <div className="logo clickable" style={{ pointerEvents: 'auto', width: '120px' }}>
