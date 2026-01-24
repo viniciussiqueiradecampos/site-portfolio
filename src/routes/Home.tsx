@@ -131,8 +131,8 @@ export default function Home() {
     // Title Slides: 100% visible from start. Scrolls horizontally.
     // Range [0, 0.45] to give more space for the text to scroll.
     // Start at 100% (hidden right), End at -100% (hidden left)
-    // Start from right edge (95vw) and scroll until the end of the text matches the right padding (90vw - 100%)
-    const heroTextX = useTransform(heroProgress, [0, 0.7], ['95vw', 'calc(90vw - 100%)']);
+    // Start completely off-screen right (100vw) and slide until the last letter is at the right padding (95vw - 100%)
+    const heroTextX = useTransform(heroProgress, [0, 0.7], ['100vw', 'calc(95vw - 100%)']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -158,11 +158,11 @@ export default function Home() {
                     <motion.div
                         initial={{ opacity: 1 }}
                         style={{
-                            width: 'max-content', // Essential for the 'calc' to work based on text width
+                            width: 'max-content',
                             textAlign: 'left',
-                            x: isMobile ? 0 : heroTextX,
+                            x: heroTextX,
                             opacity: 1,
-                            marginBottom: '80px',
+                            marginBottom: '40px',
                             whiteSpace: 'nowrap'
                         }}
                     >
@@ -172,8 +172,8 @@ export default function Home() {
                     </motion.div>
 
                     {/* Description - Narrower container for more line breaks */}
-                    <div style={{ maxWidth: '450px', width: '100%', alignSelf: 'flex-end', textAlign: 'right' }}>
-                        <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', lineHeight: '1.6', color: 'var(--text-muted)', fontFamily: 'var(--font-body)', display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '6px' }}>
+                    <div style={{ maxWidth: isMobile ? '90%' : '450px', width: '100%', alignSelf: isMobile ? 'center' : 'flex-end', textAlign: isMobile ? 'center' : 'right' }}>
+                        <p style={{ fontSize: 'clamp(14px, 2vw, 20px)', lineHeight: '1.6', color: 'var(--text-muted)', fontFamily: 'var(--font-body)', display: 'flex', flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-end', gap: '6px' }}>
                             {descriptionText.map((word, i) => {
                                 // Start after title is done (0.45)
                                 const step = 0.45 / descriptionText.length;
