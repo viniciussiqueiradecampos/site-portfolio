@@ -1,0 +1,49 @@
+/* Additional Styles for new features */
+
+.menu-link {
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-color);
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.menu-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-color);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  color: var(--accent-color);
+  -webkit-text-stroke: 0px;
+  /* Reset stroke if any */
+}
+
+/* Pinterest Grid Logic handled by CSS columns in inline styles mostly, but ensure images break correctly */
+img {
+  display: block;
+}
+
+.creation-overlay {
+  background: transparent;
+}
+
+/* Dark Mode / Light Mode Transitions */
+body,
+.creative-element,
+.portfolio-card {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure creative toolbar is usable */
+.creative-toolbar button.active {
+  box-shadow: 0 0 15px var(--accent-color);
+}

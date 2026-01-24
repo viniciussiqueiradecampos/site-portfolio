@@ -1,0 +1,270 @@
+/* Fonts Setup */
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Jost:wght@300;400;500;700&display=swap');
+
+@font-face {
+  font-family: 'Akira Expanded';
+  src: local('Akira Expanded'), local('Akira-Expanded'), url('https://fonts.cdnfonts.com/s/37506/Akira%20Expanded%20Demo.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+  /* Force wait for font */
+}
+
+@font-face {
+  font-family: 'Futura Md BT';
+  src: local('Futura Md BT'), local('Futura-Md-BT'), url('https://fonts.cdnfonts.com/s/15830/FuturaMdBTMedium.woff') format('woff');
+}
+
+:root {
+  /* Colors */
+  --bg-color: #050505;
+  --surface-color: #111111;
+  --surface-hover: #1a1a1a;
+  --text-color: #ffffff;
+  --accent-color: #F2A73D;
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.3);
+
+  /* Fonts */
+  --font-display: "Akira Expanded", sans-serif;
+  --font-body: "Futura Md BT", "Jost", sans-serif;
+
+  /* Spacing */
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 32px;
+  --space-xl: 64px;
+  --space-2xl: 120px;
+
+  /* Layout */
+  --header-height: 80px;
+  --toolbar-height: 50px;
+  --toolbar-bottom-gap: 30px;
+  --container-max: 1600px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+}
+
+[data-theme='light'] {
+  --bg-color: #FFFFFF;
+  /* Pure white for maximum contrast */
+  --surface-color: #F5F5F5;
+  /* Slightly off-white for surfaces */
+  --text-color: #0A0A0A;
+  /* Near-black for AAA contrast (19.6:1) */
+  --accent-color: #C87A1A;
+  /* Darker orange for AAA contrast (4.8:1 on white) */
+  --text-muted: #4A4A4A;
+  /* Dark gray for AAA contrast (9.7:1) */
+  --border-color: rgba(0, 0, 0, 0.15);
+  /* Darker borders for visibility */
+  --border-hover: rgba(0, 0, 0, 0.4);
+  /* Even darker on hover */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  cursor: none;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+.nav-link,
+.menu-link,
+nav ul li a,
+/* Force deep selector */
+.logo {
+  font-family: var(--font-display) !important;
+  text-transform: uppercase;
+}
+
+/* Custom Cursor */
+.custom-cursor {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  mix-blend-mode: difference;
+  transition: transform 0.15s ease-out;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+}
+
+.custom-cursor.hovering {
+  transform: translate(-50%, -50%) scale(3);
+  background: var(--accent-color);
+  mix-blend-mode: normal;
+}
+
+/* Noise */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.08;
+  filter: contrast(150%) brightness(100%);
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+/* Horizontal Scroll Container (Home Project Gallery) */
+.horizontal-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 50px;
+  padding-bottom: 50px;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
+  scroll-snap-type: x mandatory;
+  /* Snap enabled */
+  padding-left: 22.5vw;
+  /* (100 - 55) / 2 = 22.5 */
+  padding-right: 22.5vw;
+}
+
+.horizontal-scroll-container::-webkit-scrollbar {
+  display: none;
+  /* Chrome Safari */
+}
+
+/* Home Project Card Specifics */
+.home-project-card {
+  display: flex;
+  width: 55vw;
+  /* Reduced to 55vw to show more of neighbors */
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  flex-shrink: 0;
+  padding: 30px;
+  scroll-snap-align: center;
+  /* Snap Center */
+}
+
+.container {
+  width: 90%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+/* Project Card Interactions */
+.project-card:hover .hover-overlay {
+  opacity: 0.2 !important;
+}
+
+.project-card:hover .card-img {
+  transform: scale(1.05) !important;
+}
+
+/* RESPONSIVE QUERIES */
+@media (max-width: 768px) {
+  .horizontal-scroll-container {
+    padding-left: 10vw;
+    padding-right: 10vw;
+    gap: 20px;
+  }
+
+  .home-project-card {
+    width: 80vw;
+  }
+
+  .container {
+    width: 80% !important;
+  }
+
+  .hero-title {
+    font-size: 11vw !important;
+    /* Reduced from 14vw to prevent cut-off */
+    white-space: normal !important;
+    /* Allow wrapping if needed, or keep nowrap but smaller */
+    word-break: break-word;
+  }
+
+  .hero-section {
+    height: 100vh !important;
+  }
+
+  h2 {
+    font-size: 40px !important;
+  }
+
+  .reveal-text-container span {
+    font-size: 40px !important;
+  }
+
+  /* Hide Creative Toolbar on Mobile */
+  .creative-toolbar,
+  .creative-overlay {
+    display: none !important;
+  }
+
+  /* CV Responsive */
+  .cv-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+
+  /* Responsive Header */
+  .desktop-nav {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+}
+
+/* Timeline Vertical Line */
+.timeline-item {
+  position: relative;
+}
+
+/* ... existing timeline styles ... */
+
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: -29px;
+  /* Adjust based on grid layout */
+  top: 30px;
+  bottom: -50px;
+  /* Extend to next item */
+  width: 1px;
+  background: var(--border-color);
+  z-index: 0;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -33px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  z-index: 1;
+}
