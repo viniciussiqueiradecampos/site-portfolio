@@ -47,7 +47,11 @@ export default function AdminDashboard() {
         accentColor: '#F2A73D',
         bgColor: '#050505',
         lightAccentColor: '#C87A1A',
-        lightBgColor: '#FFFFFF'
+        lightBgColor: '#FFFFFF',
+        linkedin: '',
+        instagram: '',
+        footerEmail: '',
+        showToolbar: true
     });
 
     const [saving, setSaving] = useState(false);
@@ -107,7 +111,11 @@ export default function AdminDashboard() {
             accentColor: ac?.value || '#F2A73D',
             bgColor: bg?.value || '#050505',
             lightAccentColor: lac?.value || '#C87A1A',
-            lightBgColor: lbg?.value || '#FFFFFF'
+            lightBgColor: lbg?.value || '#FFFFFF',
+            linkedin: (await contentAPI.getByKey('social.linkedin'))?.value || '',
+            instagram: (await contentAPI.getByKey('social.instagram'))?.value || '',
+            footerEmail: (await contentAPI.getByKey('social.footer_email'))?.value || '',
+            showToolbar: (await contentAPI.getByKey('general.show_toolbar'))?.value === 'true'
         });
     };
 
@@ -178,6 +186,10 @@ export default function AdminDashboard() {
             await contentAPI.update('general.bg_color', branding.bgColor, 'general');
             await contentAPI.update('general.light_accent_color', branding.lightAccentColor, 'general');
             await contentAPI.update('general.light_bg_color', branding.lightBgColor, 'general');
+            await contentAPI.update('social.linkedin', branding.linkedin, 'social');
+            await contentAPI.update('social.instagram', branding.instagram, 'social');
+            await contentAPI.update('social.footer_email', branding.footerEmail, 'social');
+            await contentAPI.update('general.show_toolbar', branding.showToolbar.toString(), 'general');
             setMessage('✅ Configurações salvas!');
         } catch (err) { setMessage('❌ Erro.'); }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
@@ -422,10 +434,21 @@ export default function AdminDashboard() {
                                     <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-color)' }}><Palette size={18} /> Identidade Visual</h3>
                                     <div style={{ display: 'grid', gap: '15px' }}>
                                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Logo Linha 1</label>
+                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '10px' }}>Logo Linha 1</label>
                                                 <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Logo Linha 2</label>
+                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '10px' }}>Logo Linha 2</label>
                                                 <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#1a1a1a', borderRadius: '12px', marginTop: '10px' }}>
+                                            <input
+                                                type="checkbox"
+                                                id="show-toolbar"
+                                                checked={branding.showToolbar}
+                                                onChange={e => setBranding({ ...branding, showToolbar: e.target.checked })}
+                                                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                            />
+                                            <label htmlFor="show-toolbar" style={{ fontSize: '14px', cursor: 'pointer' }}>Mostrar Toolbar de Edição (estilo Figma)</label>
                                         </div>
                                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
                                             <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Destaque (DARK)</label>
@@ -450,6 +473,24 @@ export default function AdminDashboard() {
                                                     <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
                                                     <input value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
                                                 </div></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ background: '#111', padding: isMobile ? '20px' : '30px', borderRadius: '16px', border: '1px solid #222' }}>
+                                    <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-color)' }}><MousePointer2 size={18} /> Links & Contato</h3>
+                                    <div style={{ display: 'grid', gap: '15px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>LinkedIn URL</label>
+                                            <input value={branding.linkedin} onChange={e => setBranding({ ...branding, linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Instagram URL</label>
+                                            <input value={branding.instagram} onChange={e => setBranding({ ...branding, instagram: e.target.value })} placeholder="https://instagram.com/..." style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Email do Rodapé</label>
+                                            <input value={branding.footerEmail} onChange={e => setBranding({ ...branding, footerEmail: e.target.value })} placeholder="exemplo@email.com" style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
                                         </div>
                                     </div>
                                 </div>

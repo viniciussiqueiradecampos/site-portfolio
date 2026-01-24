@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 // import Lenis from '@studio-freight/lenis'; 
 import { useScroll, useTransform, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CreativeToolbar from '../components/CreativeToolbar';
 import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
@@ -23,6 +22,12 @@ export default function Home() {
     const [heroDesc, setHeroDesc] = useState('Loading description...');
     const [storyText, setStoryText] = useState('Experience designing products for ambitious companies');
     const [projects, setProjects] = useState<Project[]>([]);
+    const [socials, setSocials] = useState({
+        linkedin: '#',
+        instagram: '#',
+        footerEmail: 'vinisiqueiradecampos@gmail.com'
+    });
+    const [showToolbar, setShowToolbar] = useState(true);
 
     // Refs for Sticky Sections
     const heroRef = useRef(null);
@@ -55,6 +60,19 @@ export default function Home() {
         // Load Projects - Limited to 4 for Home
         const projs = await projectsAPI.getAll();
         setProjects(projs.slice(0, 4));
+
+        // Load Socials
+        const ln = await contentAPI.getByKey('social.linkedin');
+        const ig = await contentAPI.getByKey('social.instagram');
+        const em = await contentAPI.getByKey('social.footer_email');
+        setSocials({
+            linkedin: ln?.value || '#',
+            instagram: ig?.value || '#',
+            footerEmail: em?.value || 'vinisiqueiradecampos@gmail.com'
+        });
+
+        const showTb = await contentAPI.getByKey('general.show_toolbar');
+        setShowToolbar(showTb?.value === 'true');
     };
 
     // Hero Section Scroll Progress
@@ -77,18 +95,6 @@ export default function Home() {
             const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
             const index = Math.round(scrollLeft / scrollAmount);
             setActiveProjectIndex(index);
-        }
-    };
-
-    const scroll = (direction: 'left' | 'right') => {
-        if (scrollContainerRef.current) {
-            const { current } = scrollContainerRef;
-            const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
-            if (direction === 'left') {
-                current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            } else {
-                current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            }
         }
     };
 
@@ -155,7 +161,7 @@ export default function Home() {
 
     return (
         <div ref={containerRef} style={{ position: 'relative' }}>
-            {!isMobile && <CreativeToolbar />}
+            {(!isMobile && showToolbar) && <CreativeToolbar />}
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
@@ -278,35 +284,12 @@ export default function Home() {
                         </Link>
                     </div>
 
-                    {/* Navigation Buttons for Carousel (Desktop Only) */}
-                    {!isMobile && (
-                        <>
-                            <button onClick={() => scroll('left')} className="clickable" style={{
-                                position: 'absolute', top: '480px', left: '12%', transform: 'translateY(-50%)',
-                                zIndex: 20, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '50%', width: '60px', height: '60px',
-                                color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                backdropFilter: 'blur(5px)'
-                            }}>
-                                <ChevronLeft size={30} />
-                            </button>
-                            <button onClick={() => scroll('right')} className="clickable" style={{
-                                position: 'absolute', top: '480px', right: '12%', transform: 'translateY(-50%)',
-                                zIndex: 20, background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '50%', width: '60px', height: '60px',
-                                color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                backdropFilter: 'blur(5px)'
-                            }}>
-                                <ChevronRight size={30} />
-                            </button>
-                        </>
-                    )}
 
                     <div className="horizontal-scroll-container" ref={scrollContainerRef} onScroll={handleCarouselScroll}>
                         {projects.map((item, i) => (
                             <div key={i} className="home-project-card clickable" onClick={() => openModal(item)}>
                                 <div style={{
-                                    width: '100%', height: '500px', overflow: 'hidden',
+                                    width: '100%', height: '400px', overflow: 'hidden',
                                     borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
                                     padding: '15px', background: 'rgba(255,255,255,0.03)'
                                 }}>
@@ -390,7 +373,7 @@ export default function Home() {
                 <div className="container" style={{ marginTop: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                     <div className="contact-links" style={{ display: 'flex', flexDirection: 'column', gap: '40px', fontFamily: 'var(--font-body)' }}>
                         <RevealText>
-                            <a href="mailto:vinisiqueiradecampos@gmail.com" className="clickable footer-email-link" style={{
+                            <a href={`mailto:${socials.footerEmail}`} className="clickable footer-email-link" style={{
                                 fontSize: 'clamp(20px, 3.5vw, 40px)',
                                 fontWeight: 600,
                                 color: 'var(--accent-color)',
@@ -398,13 +381,13 @@ export default function Home() {
                                 fontFamily: 'var(--font-display)',
                                 lineBreak: 'anywhere'
                             }}>
-                                vinisiqueiradecampos@gmail.com
+                                {socials.footerEmail}
                             </a>
                         </RevealText>
 
                         <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '20px' }}>
-                            <RevealText><a href="#" className="clickable footer-sub-link">LINKEDIN ↗</a></RevealText>
-                            <RevealText><a href="#" className="clickable footer-sub-link">INSTAGRAM ↗</a></RevealText>
+                            <RevealText><a href={socials.linkedin} target="_blank" rel="noopener noreferrer" className="clickable footer-sub-link">LINKEDIN ↗</a></RevealText>
+                            <RevealText><a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="clickable footer-sub-link">INSTAGRAM ↗</a></RevealText>
                             <RevealText><a href="#" className="clickable footer-sub-link">+351 920 196 634</a></RevealText>
                         </div>
                     </div>
