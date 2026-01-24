@@ -475,6 +475,12 @@ export default function AdminDashboard() {
                                     <input type="file" onChange={handleCoverUpload} id="project-cover" style={{ display: 'none' }} />
                                     <label htmlFor="project-cover" style={{ padding: '8px 14px', background: '#333', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>Trocar</label>
                                 </div></div>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
+                                <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Link do Projeto (Live URL)</label>
+                                    <input value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
+                                <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Texto do Botão</label>
+                                    <input value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} placeholder="VIEW LIVE PROJECT" style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
+                            </div>
                             <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Descrição</label>
                                 <textarea value={editingProject.description || ''} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} rows={3} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '13px' }} /></div>
                             <button onClick={saveProject} style={{ padding: '14px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}> SALVAR PROJETO </button>

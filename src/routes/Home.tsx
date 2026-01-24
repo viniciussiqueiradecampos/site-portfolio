@@ -107,7 +107,9 @@ export default function Home() {
             gallery: project.gallery_images || [],
             description: project.description,
             type: project.tags?.[0] || 'Project',
-            year: project.year || (project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024')
+            year: project.year || (project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'),
+            live_url: project.live_url,
+            button_text: project.button_text
         } as any as ProjectData;
         setSelectedProject(modalProject);
         setIsModalOpen(true);

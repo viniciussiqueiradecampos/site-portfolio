@@ -29,9 +29,17 @@ export default function Projects() {
         setProjects(data);
         setFilteredProjects(data);
 
-        // Extract unique tags and format them
+        // Extract unique tags and format them (only tags that are actually used)
         const tagsSet = new Set<string>();
-        data.forEach(p => p.tags.forEach(t => tagsSet.add(t.toUpperCase())));
+        data.forEach(p => {
+            if (p.tags && p.tags.length > 0) {
+                p.tags.forEach(t => {
+                    if (t && t.trim() !== '') {
+                        tagsSet.add(t.trim().toUpperCase());
+                    }
+                });
+            }
+        });
         setAvailableTags(Array.from(tagsSet).sort());
 
         setLoading(false);
@@ -47,7 +55,9 @@ export default function Projects() {
             gallery: project.gallery_images || [],
             description: project.description,
             type: project.tags?.[0] || 'Project',
-            year: project.year || (project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024')
+            year: project.year || (project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'),
+            live_url: project.live_url,
+            button_text: project.button_text
         } as any as ProjectData;
         setSelectedProject(modalData);
         setIsModalOpen(true);
