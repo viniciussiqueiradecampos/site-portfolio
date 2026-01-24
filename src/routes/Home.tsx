@@ -144,7 +144,8 @@ export default function Home() {
     // Title Slides: 100% visible from start. Scrolls horizontally.
     // Ensure it stops exactly when the text ends. 
     // We use a container width of 90vw (5% padding each side).
-    const heroTextX = useTransform(heroProgress, [0, 0.6], ['0px', 'calc(90vw - 100%)']);
+    // Title Slides: Smoother horizontal scroll
+    const heroTextX = useTransform(heroProgress, [0, 0.8], ['0px', '-50%']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -172,22 +173,43 @@ export default function Home() {
                         style={{
                             width: 'max-content',
                             textAlign: 'left',
-                            x: isMobile ? 0 : heroTextX, // No scroll transform on mobile, just wrap
+                            x: isMobile ? 0 : heroTextX,
                             opacity: 1,
-                            marginBottom: '40px',
-                            whiteSpace: isMobile ? 'normal' : 'nowrap'
+                            marginBottom: isMobile ? '20px' : '40px',
+                            whiteSpace: isMobile ? 'normal' : 'nowrap',
+                            maxWidth: isMobile ? '100%' : 'none'
                         }}
                     >
-                        <h1 className="hero-title" style={{ fontSize: isMobile ? '10vw' : '11vw', lineHeight: '0.9', margin: 0, textAlign: isMobile ? 'center' : 'left' }}>
+                        <h1 className="hero-title" style={{
+                            fontSize: isMobile ? 'clamp(32px, 12vw, 42px)' : '11vw',
+                            lineHeight: '0.9',
+                            margin: 0,
+                            textAlign: isMobile ? 'center' : 'left',
+                            wordBreak: isMobile ? 'break-word' : 'normal'
+                        }}>
                             {heroTitle}
                         </h1>
                     </motion.div>
 
-                    {/* Description - Narrower container for more line breaks */}
-                    <div style={{ maxWidth: isMobile ? '90%' : '450px', width: '100%', alignSelf: isMobile ? 'center' : 'flex-end', textAlign: isMobile ? 'center' : 'right' }}>
-                        <p style={{ fontSize: 'clamp(14px, 2vw, 20px)', lineHeight: '1.6', color: 'var(--text-muted)', fontFamily: 'var(--font-body)', display: 'flex', flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-end', gap: '6px' }}>
+                    {/* Description */}
+                    <div style={{
+                        maxWidth: isMobile ? '100%' : '450px',
+                        width: '100%',
+                        alignSelf: isMobile ? 'center' : 'flex-end',
+                        textAlign: isMobile ? 'center' : 'right',
+                        marginTop: isMobile ? '20px' : '0'
+                    }}>
+                        <p style={{
+                            fontSize: isMobile ? '16px' : 'clamp(14px, 2vw, 20px)',
+                            lineHeight: '1.6',
+                            color: 'var(--text-muted)',
+                            fontFamily: 'var(--font-body)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            justifyContent: isMobile ? 'center' : 'flex-end',
+                            gap: '6px'
+                        }}>
                             {isMobile ? heroDesc : descriptionText.map((word, i) => {
-                                // Start after title is done (0.45)
                                 const step = 0.45 / descriptionText.length;
                                 const start = 0.5 + (i * step);
                                 const end = start + step;
@@ -214,8 +236,8 @@ export default function Home() {
             <section ref={storyRef} className="story-section" style={{ height: '300vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
-                    display: 'flex', alignItems: 'start', justifyContent: 'center',
-                    paddingTop: '20vh'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: isMobile ? '0 20px' : '0'
                 }}>
                     <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center' }}>
                         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '15px' }}>
@@ -364,8 +386,8 @@ export default function Home() {
                     <div className="contact-links" style={{ display: 'flex', flexDirection: 'column', gap: '40px', fontFamily: 'var(--font-body)' }}>
                         <RevealText>
                             <a href="mailto:vinisiqueiradecampos@gmail.com" className="clickable footer-email-link" style={{
-                                fontSize: 'clamp(32px, 5vw, 64px)',
-                                fontWeight: 900,
+                                fontSize: 'clamp(20px, 3.5vw, 40px)',
+                                fontWeight: 600,
                                 color: 'var(--accent-color)',
                                 textDecoration: 'none',
                                 fontFamily: 'var(--font-display)',

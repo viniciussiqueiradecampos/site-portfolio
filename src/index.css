@@ -41,10 +41,21 @@
   /* Layout */
   --header-height: 80px;
   --container-max: 1400px;
-  /* Standardize max width */
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 32px;
+}
+
+[data-theme='light'] {
+  --bg-color: #FFFFFF;
+  --surface-color: #F5F5F5;
+  --text-color: #0A0A0A;
+  --accent-color: #C87A1A;
+  /* Darker orange for AAA contrast on white */
+  --text-muted: #4A4A4A;
+  --border-color: rgba(0, 0, 0, 0.15);
+  --border-hover: rgba(0, 0, 0, 0.4);
+  --header-bg: rgba(255, 255, 255, 0.85);
 }
 
 * {

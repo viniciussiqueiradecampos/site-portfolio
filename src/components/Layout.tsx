@@ -6,6 +6,7 @@ import { contentAPI } from '../lib/supabase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
@@ -38,12 +39,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     };
 
 
+    const toggleTheme = () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+    };
+
     const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
     return (
         <>
             {/* Noise Overlay Persistent */}
-            <div className="noise-overlay" />
+            <div className={`noise-overlay ${theme === 'light' ? 'light-mode' : ''}`} />
 
             {/* Global Header */}
             <motion.header
@@ -56,8 +63,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     zIndex: 1000,
                     padding: '0 5%',
-                    background: 'rgba(5, 5, 5, 0.9)',
-                    backdropFilter: 'blur(20px)',
+                    background: 'var(--header-bg)',
+                    backdropFilter: 'blur(10px)',
                     borderBottom: '1px solid var(--border-color)',
                     pointerEvents: 'auto',
                     width: '100%'
@@ -100,6 +107,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </nav>
 
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center', pointerEvents: 'auto' }}>
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        className="clickable"
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '50%',
+                            width: '40px', height: '40px',
+                            color: 'var(--text-color)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {theme === 'dark' ? '☀' : '☾'}
+                    </button>
 
                     {/* Mobile Menu Toggle */}
                     <button
