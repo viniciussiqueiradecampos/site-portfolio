@@ -131,9 +131,8 @@ export default function Home() {
     // Title Slides: 100% visible from start. Scrolls horizontally.
     // Range [0, 0.45] to give more space for the text to scroll.
     // Start at 100% (hidden right), End at -100% (hidden left)
-    // Range [0, 0.5]: Slides from right (100%) to a position where the end of the text is at the right edge.
-    // We use a negative translation based on the text width relative to the screen.
-    const heroTextX = useTransform(heroProgress, [0, 0.5], ['100%', 'calc(-100% + 90vw)']);
+    // Start from right edge (95vw) and scroll until the end of the text matches the right padding (90vw - 100%)
+    const heroTextX = useTransform(heroProgress, [0, 0.7], ['95vw', 'calc(90vw - 100%)']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -157,7 +156,7 @@ export default function Home() {
 
                     {/* Main Title - Horizontal Scroll Animation */}
                     <motion.div
-                        initial={{ opacity: 1, x: '100%' }}
+                        initial={{ opacity: 1 }}
                         style={{
                             width: 'max-content', // Essential for the 'calc' to work based on text width
                             textAlign: 'left',
