@@ -180,6 +180,21 @@ export default function AdminDashboard() {
         setEditingProject({ ...editingProject, tags: newTags });
     };
 
+    const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setSaving(true);
+        const url = await storageAPI.uploadImage(file, 'cv');
+        if (url) {
+            setCvUrl(url);
+            setMessage('✅ PDF do CV carregado!');
+        } else {
+            setMessage('❌ Erro no upload.');
+        }
+        setSaving(false);
+        setTimeout(() => setMessage(''), 3000);
+    };
+
     const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !editingProject) return;
@@ -287,8 +302,18 @@ export default function AdminDashboard() {
                                     <textarea value={heroDesc} onChange={e => setHeroDesc(e.target.value)} rows={4} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff', resize: 'vertical' }} /></div>
                                 <div><label style={{ display: 'block', marginBottom: '8px', color: '#888', fontSize: '14px' }}>Texto da História</label>
                                     <textarea value={storyText} onChange={e => setStoryText(e.target.value)} rows={3} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                <div><label style={{ display: 'block', marginBottom: '8px', color: '#888', fontSize: '14px' }}>Link do CV (PDF)</label>
-                                    <input value={cvUrl} onChange={e => setCvUrl(e.target.value)} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: '#888', fontSize: '14px' }}>Arquivo do CV (PDF)</label>
+                                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                        <div style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: cvUrl ? 'var(--accent-color)' : '#666', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {cvUrl ? '✓ PDF Carregado' : 'Nenhum arquivo selecionado'}
+                                        </div>
+                                        <input type="file" accept=".pdf" onChange={handleCVUpload} id="cv-file-upload" style={{ display: 'none' }} />
+                                        <label htmlFor="cv-file-upload" style={{ padding: '12px 20px', background: '#333', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                                            UPLOAD
+                                        </label>
+                                    </div>
+                                </div>
                                 <button onClick={saveContent} disabled={saving} style={{ padding: '15px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                                     <Save size={18} /> {saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                                 </button>
