@@ -275,7 +275,6 @@ END $$;
 -- ========================================
 -- 5. COMPREHENSIVE SEED DATA
 -- ========================================
-
 -- Hero & Storytelling
 INSERT INTO content (key, value, category) VALUES
     ('hero.title', 'figma • UI DESIGN • AI • BRANDING', 'hero'),
