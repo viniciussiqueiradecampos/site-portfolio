@@ -163,6 +163,13 @@ ALTER TABLE linkedin_ssi_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_configurations ENABLE ROW LEVEL SECURITY;
 
+-- Ensure columns exist in case tables were created previously
+ALTER TABLE content ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'general';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS gallery_images TEXT[] DEFAULT '{}';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE projects ALTER COLUMN image_url DROP NOT NULL; -- Make it optional during transition
+
 -- Permissive Policies (FOR DEV)
 -- Content
 DROP POLICY IF EXISTS "Permissive Policy" ON content;

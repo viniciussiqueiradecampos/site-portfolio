@@ -91,7 +91,7 @@ export default function Home() {
             description: project.description,
             type: project.tags?.[0] || 'Project',
             year: project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'
-        };
+        } as ProjectData;
         setSelectedProject(modalProject);
         setIsModalOpen(true);
     };

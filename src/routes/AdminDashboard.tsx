@@ -89,37 +89,56 @@ export default function AdminDashboard() {
 
     const saveContent = async () => {
         setSaving(true);
-        await contentAPI.update('hero.title', heroTitle);
-        await contentAPI.update('hero.description', heroDesc);
-        await contentAPI.update('storytelling.main', storyText);
-        setSaving(false);
-        setMessage('Content saved successfully!');
-        setTimeout(() => setMessage(''), 3000);
+        try {
+            const ok1 = await contentAPI.update('hero.title', heroTitle, 'hero');
+            const ok2 = await contentAPI.update('hero.description', heroDesc, 'hero');
+            const ok3 = await contentAPI.update('storytelling.main', storyText, 'storytelling');
+
+            if (ok1 && ok2 && ok3) {
+                setMessage('Content saved successfully!');
+            } else {
+                setMessage('Some content failed to save.');
+            }
+        } catch (err) {
+            console.error('Save content error:', err);
+            setMessage('Error connecting to database.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
+        }
     };
 
     const saveProject = async () => {
         if (!editingProject) return;
 
         setSaving(true);
-        // Ensure arrays are initialized
-        const projectToSave = {
-            ...editingProject,
-            tags: editingProject.tags || [],
-            gallery_images: editingProject.gallery_images || []
-        };
+        try {
+            // Ensure arrays are initialized and strip metadata
+            const { id, created_at, updated_at, ...projectData } = editingProject as any;
 
-        if (editingProject.id) {
-            await projectsAPI.update(editingProject.id, projectToSave);
-        } else {
-            // Remove empty id if creating
-            const { id, ...newProject } = projectToSave;
-            await projectsAPI.create(newProject);
+            const cleanData = {
+                ...projectData,
+                tags: projectData.tags || [],
+                gallery_images: projectData.gallery_images || []
+            };
+
+            if (editingProject.id && editingProject.id !== '') {
+                const ok = await projectsAPI.update(editingProject.id, cleanData);
+                if (!ok) throw new Error('Update failed');
+            } else {
+                const ok = await projectsAPI.create(cleanData);
+                if (!ok) throw new Error('Create failed');
+            }
+            await loadProjects();
+            setEditingProject(null);
+            setMessage('Project saved successfully!');
+        } catch (err) {
+            console.error('Save project error:', err);
+            setMessage('Error saving project. Check console.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
         }
-        await loadProjects();
-        setEditingProject(null);
-        setSaving(false);
-        setMessage('Project saved!');
-        setTimeout(() => setMessage(''), 3000);
     };
 
     const handleProjectCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,16 +174,26 @@ export default function AdminDashboard() {
         if (!editingCV) return;
 
         setSaving(true);
-        if (editingCV.id) {
-            await cvAPI.update(editingCV.id, editingCV);
-        } else {
-            await cvAPI.create(editingCV);
+        try {
+            const { id, created_at, updated_at, ...cvData } = editingCV as any;
+
+            if (editingCV.id && editingCV.id !== '') {
+                const ok = await cvAPI.update(editingCV.id, cvData);
+                if (!ok) throw new Error('Update failed');
+            } else {
+                const ok = await cvAPI.create(cvData);
+                if (!ok) throw new Error('Create failed');
+            }
+            await loadCV();
+            setEditingCV(null);
+            setMessage('CV section saved!');
+        } catch (err) {
+            console.error('Save CV error:', err);
+            setMessage('Error saving CV. Check console.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
         }
-        await loadCV();
-        setEditingCV(null);
-        setSaving(false);
-        setMessage('CV section saved!');
-        setTimeout(() => setMessage(''), 3000);
     };
 
     const deleteCV = async (id: string) => {
