@@ -131,7 +131,8 @@ export default function Home() {
     // Title Slides: 100% visible from start. Scrolls horizontally.
     // Range [0, 0.45] to give more space for the text to scroll.
     // Start at 100% (hidden right), End at -100% (hidden left)
-    const heroTextX = useTransform(heroProgress, [0, 0.45], ['100%', '-100%']);
+    // Extend range from -100% to -400% to ensure the end of long titles is visible.
+    const heroTextX = useTransform(heroProgress, [0, 0.6], ['100%', '-400%']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -170,8 +171,8 @@ export default function Home() {
                         </h1>
                     </motion.div>
 
-                    {/* Description - Appears below Title word by word */}
-                    <div style={{ maxWidth: '800px', width: '100%', alignSelf: 'flex-end', textAlign: 'right' }}>
+                    {/* Description - Narrower container for more line breaks */}
+                    <div style={{ maxWidth: '450px', width: '100%', alignSelf: 'flex-end', textAlign: 'right' }}>
                         <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', lineHeight: '1.6', color: 'var(--text-muted)', fontFamily: 'var(--font-body)', display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '6px' }}>
                             {descriptionText.map((word, i) => {
                                 // Start after title is done (0.45)
