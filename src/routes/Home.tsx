@@ -52,9 +52,9 @@ export default function Home() {
         const tStory = await contentAPI.getByKey('storytelling.main');
         if (tStory) setStoryText(tStory.value);
 
-        // Load Projects
+        // Load Projects - Limited to 4 for Home
         const projs = await projectsAPI.getAll();
-        setProjects(projs);
+        setProjects(projs.slice(0, 4));
     };
 
     // Hero Section Scroll Progress
@@ -131,8 +131,9 @@ export default function Home() {
     // Title Slides: 100% visible from start. Scrolls horizontally.
     // Range [0, 0.45] to give more space for the text to scroll.
     // Start at 100% (hidden right), End at -100% (hidden left)
-    // Extend range from -100% to -400% to ensure the end of long titles is visible.
-    const heroTextX = useTransform(heroProgress, [0, 0.5], ['100%', '0%']);
+    // Range [0, 0.5]: Slides from right (100%) to a position where the end of the text is at the right edge.
+    // We use a negative translation based on the text width relative to the screen.
+    const heroTextX = useTransform(heroProgress, [0, 0.5], ['100%', 'calc(-100% + 90vw)']);
 
     // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
@@ -158,8 +159,8 @@ export default function Home() {
                     <motion.div
                         initial={{ opacity: 1, x: '100%' }}
                         style={{
-                            width: '100%',
-                            textAlign: 'right', // Aligns to the right
+                            width: 'max-content', // Essential for the 'calc' to work based on text width
+                            textAlign: 'left',
                             x: isMobile ? 0 : heroTextX,
                             opacity: 1,
                             marginBottom: '80px',
