@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Home, BookOpen, FolderKanban } from 'lucide-react';
+import { Home, BookOpen, FolderKanban, FileText } from 'lucide-react';
 import RevealText from '../components/RevealText';
 
 export default function NotFound() {
@@ -113,7 +113,7 @@ export default function NotFound() {
                         <FolderKanban size={16} /> PORTFOLIO
                     </Link>
 
-                    <Link to="/blog" className="clickable" style={{
+                    <Link to="/cv" className="clickable" style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
@@ -126,7 +126,7 @@ export default function NotFound() {
                         fontSize: '13px',
                         border: '1px solid var(--border-color)'
                     }}>
-                        <BookOpen size={16} /> BLOG
+                        <FileText size={16} /> VIEW CV
                     </Link>
                 </div>
             </motion.div>

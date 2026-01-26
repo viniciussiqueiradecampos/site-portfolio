@@ -180,6 +180,25 @@ nav ul li a {
   }
 }
 
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-hover);
+}
+
 .horizontal-scroll-container::-webkit-scrollbar {
   display: none;
   /* Chrome Safari */

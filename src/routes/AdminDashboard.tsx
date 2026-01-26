@@ -68,6 +68,7 @@ export default function AdminDashboard() {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [tagInput, setTagInput] = useState('');
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [allProjectTags, setAllProjectTags] = useState<string[]>([]);
 
     // CV State
     const [cvProfile, setCvProfile] = useState({ name: '', bio: '', pdf_url: '' });
@@ -150,6 +151,7 @@ export default function AdminDashboard() {
             setProjects(data);
             const tags = new Set<string>();
             data.forEach(p => p.tags?.forEach((t: string) => tags.add(t.toUpperCase())));
+            setAllProjectTags(Array.from(tags).sort());
         }
     };
 
@@ -820,6 +822,16 @@ export default function AdminDashboard() {
                                         <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
                                     </div>
                                 </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '24px' }}>
+                                    <div>
+                                        <label style={labelStyle}>Light BG Color</label>
+                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Light Accent Color</label>
+                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                    </div>
+                                </div>
                             </div>
                             <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
                                 <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Socials</h3>
@@ -938,6 +950,11 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: '#111', padding: '12px', borderRadius: '8px' }}>
                                 {editingProject.tags?.map(t => <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold' }}>{t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: editingProject.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>)}
                                 <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '15px' }}>
+                                {allProjectTags.filter(t => !editingProject.tags.includes(t)).map(tag => (
+                                    <button key={tag} onClick={() => addTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>
+                                ))}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                 <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden' }}>
