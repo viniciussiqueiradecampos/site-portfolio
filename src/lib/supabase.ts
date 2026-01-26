@@ -106,7 +106,9 @@ export interface BlogPost {
     content: string;
     image_url?: string;
     category: string;
+    tags: string[]; // New field
     slug: string;
+    cover_position?: string;
     visible: boolean;
     created_at: string;
     updated_at: string;
@@ -674,12 +676,20 @@ export const analyticsAPI = {
             sourceCounts[s] = (sourceCounts[s] || 0) + 1;
         });
 
+        // History by day
+        const dayCounts: Record<string, number> = {};
+        views.forEach(v => {
+            const date = new Date(v.created_at).toISOString().split('T')[0];
+            dayCounts[date] = (dayCounts[date] || 0) + 1;
+        });
+
         return {
             pageViews: views.length,
             cvDownloads: downloads.length,
             projectClicks: clicks.length,
             pages: Object.entries(pageCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
-            sources: Object.entries(sourceCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+            sources: Object.entries(sourceCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+            history: Object.entries(dayCounts).map(([date, count]) => ({ date, count })).sort((a, b) => a.date.localeCompare(b.date))
         };
     }
 };
@@ -742,7 +752,7 @@ export const blogAPI = {
     },
 
     async create(post: Omit<BlogPost, 'id' | 'created_at' | 'updated_at' | 'slug'>): Promise<BlogPost | null> {
-        const slug = post.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        const slug = post.title.toLowerCase().trim().replace(/ /g, '-').replace(/[^\w-]+/g, '');
         const { data, error } = await supabase
             .from('blog_posts')
             .insert([{ ...post, slug }])
@@ -757,6 +767,7 @@ export const blogAPI = {
     },
 
     async update(id: string, updates: Partial<BlogPost>): Promise<boolean> {
+        // If title changes, we might want to update slug too, but let's keep it simple for now
         const { error } = await supabase
             .from('blog_posts')
             .update(updates)

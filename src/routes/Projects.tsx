@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectModal from '../components/ProjectModal';
-import { projectsAPI, type Project } from '../lib/supabase';
+import { projectsAPI, analyticsAPI, type Project } from '../lib/supabase';
 import { Eye } from 'lucide-react';
 
 export default function Projects() {
@@ -22,6 +22,7 @@ export default function Projects() {
 
     useEffect(() => {
         loadProjects();
+        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/projects' });
     }, []);
 
     useEffect(() => {

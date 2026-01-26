@@ -12,6 +12,7 @@ import AdminLogin from './routes/AdminLogin';
 import AdminDashboard from './routes/AdminDashboard';
 import TestSupabase from './routes/TestSupabase';
 import Blog from './routes/Blog';
+import Article from './routes/Article';
 import ScrollToTop from './ScrollToTop';
 
 // Custom Cursor Component
@@ -91,6 +92,7 @@ function AppContent() {
         <Route path="/cv" element={<Layout><CV /></Layout>} />
         <Route path="/projects" element={<Layout><Projects /></Layout>} />
         <Route path="/blog" element={<Layout><Blog /></Layout>} />
+        <Route path="/blog/:slug" element={<Layout><Article /></Layout>} />
       </Routes>
     </>
   );

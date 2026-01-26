@@ -213,6 +213,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             {branding.navHome && <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>HOME</NavLink>}
                             {branding.navCV && <NavLink onClick={toggleMenu} to="/cv" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>CV</NavLink>}
                             {branding.navPortfolio && <NavLink onClick={toggleMenu} to="/projects" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>PORTFOLIO</NavLink>}
+                            {branding.navBlog && <NavLink onClick={toggleMenu} to="/blog" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>BLOG</NavLink>}
                             {branding.navGetInTouch && (
                                 <a
                                     href="/#contact"

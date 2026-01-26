@@ -17,13 +17,17 @@ import {
     FileText,
     BarChart3, User, Globe,
     Download,
-    Target, Activity, Plus, X, Image as ImageIcon, Video,
+    Target, Activity, X, Image as ImageIcon,
     Briefcase, GraduationCap, Award, Star, Heart, Menu,
     ArrowUp, ArrowDown,
     BookOpen
 } from 'lucide-react';
 import { storageAPI } from '../lib/storage';
 import ProjectModal from '../components/ProjectModal';
+import {
+    BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+    PieChart, Pie, Cell, LineChart, Line, CartesianGrid
+} from 'recharts';
 
 const modalInputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '10px', whiteSpace: 'pre-wrap' as any };
 const labelStyle = { display: 'block', fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: '500' };
@@ -38,6 +42,7 @@ export default function AdminDashboard() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
     const [activeTab, setActiveTab] = useState<'analytics' | 'content' | 'projects' | 'cv' | 'blog' | 'settings'>('analytics');
     const [cvSubTab, setCvSubTab] = useState<'profile' | 'experience' | 'education' | 'skills' | 'certification' | 'hobbies'>('profile');
 
@@ -63,7 +68,6 @@ export default function AdminDashboard() {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [tagInput, setTagInput] = useState('');
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const [allUsedTags, setAllUsedTags] = useState<string[]>([]);
 
     // CV State
     const [cvProfile, setCvProfile] = useState({ name: '', bio: '', pdf_url: '' });
@@ -73,6 +77,7 @@ export default function AdminDashboard() {
     // Blog State
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+    const [allBlogTags, setAllBlogTags] = useState<string[]>([]);
 
     // Settings State
     const [branding, setBranding] = useState({
@@ -93,6 +98,7 @@ export default function AdminDashboard() {
         navContact: true,
         navGetInTouch: true,
         navBlog: false,
+        navNewsletter: false,
         logoImageUrl: ''
     });
 
@@ -111,7 +117,8 @@ export default function AdminDashboard() {
             loadCV(),
             loadSettings(),
             loadStats(),
-            loadBlog()
+            loadBlog(),
+            loadAllBlogTags()
         ]);
         setSaving(false);
     };
@@ -141,11 +148,8 @@ export default function AdminDashboard() {
         const { data, error } = await supabase.from('projects').select('*').order('order_index', { ascending: true });
         if (!error && data) {
             setProjects(data);
-
-            // Extract all unique tags used across projects
             const tags = new Set<string>();
             data.forEach(p => p.tags?.forEach((t: string) => tags.add(t.toUpperCase())));
-            setAllUsedTags(Array.from(tags).sort());
         }
     };
 
@@ -182,6 +186,7 @@ export default function AdminDashboard() {
             navContact: (await contentAPI.getByKey('nav.contact'))?.value !== 'false',
             navGetInTouch: (await contentAPI.getByKey('nav.get_in_touch'))?.value !== 'false',
             navBlog: (await contentAPI.getByKey('nav.blog'))?.value === 'true',
+            navNewsletter: (await contentAPI.getByKey('nav.newsletter'))?.value === 'true',
             logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || ''
         });
     };
@@ -189,6 +194,25 @@ export default function AdminDashboard() {
     const loadBlog = async () => {
         const data = await blogAPI.getAll();
         setPosts(data);
+    };
+
+    const loadAllBlogTags = async () => {
+        const data = await blogAPI.getAll();
+        const tags = new Set<string>();
+        data.forEach(p => p.tags?.forEach((t: string) => tags.add(t.toUpperCase())));
+        setAllBlogTags(Array.from(tags).sort());
+    };
+
+    const addBlogTag = (tag?: string) => {
+        const value = tag || tagInput.trim();
+        if (value && editingPost) {
+            const newTags = [...(editingPost.tags || [])];
+            if (!newTags.includes(value.toUpperCase())) {
+                newTags.push(value.toUpperCase());
+                setEditingPost({ ...editingPost, tags: newTags });
+            }
+            if (!tag) setTagInput('');
+        }
     };
 
     const savePost = async () => {
@@ -202,6 +226,7 @@ export default function AdminDashboard() {
                 await blogAPI.create(postData);
             }
             await loadBlog();
+            await loadAllBlogTags();
             setEditingPost(null);
             setMessage('✅ Post saved!');
         } catch (err: any) {
@@ -210,6 +235,41 @@ export default function AdminDashboard() {
             setMessage('❌ Error.');
         }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
+    };
+
+    const insertMarkdown = (tag: string) => {
+        if (!editingPost) return;
+        const textarea = document.getElementById('post-content-area') as HTMLTextAreaElement;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = editingPost.content;
+        const selection = text.substring(start, end) || 'text';
+
+        let before = '';
+        let after = '';
+        if (tag === 'bold') { before = '**'; after = '**'; }
+        if (tag === 'italic') { before = '*'; after = '*'; }
+        if (tag === 'link') { before = '['; after = '](url)'; }
+        if (tag === 'quote') { before = '> '; after = ''; }
+
+        const newContent = text.substring(0, start) + before + selection + after + text.substring(end);
+        setEditingPost({ ...editingPost, content: newContent });
+
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + before.length, start + before.length + selection.length);
+        }, 10);
+    };
+
+    const handleBlogImageUpload = async (file: File) => {
+        if (!editingPost) return;
+        const url = await storageAPI.uploadImage(file, 'blog');
+        if (url) {
+            const markdown = `\n![Image Description](${url})\n`;
+            setEditingPost({ ...editingPost, content: editingPost.content + markdown });
+        }
     };
 
     const handleLogout = async () => {
@@ -237,7 +297,6 @@ export default function AdminDashboard() {
         if (!editingProject) return;
         setSaving(true);
         try {
-            // EXTREMELY MINIMAL PAYLOAD TO PREVENT SCHEMA ERRORS
             const dataToSave: any = {
                 title: editingProject.title || '',
                 description: editingProject.description || '',
@@ -251,26 +310,16 @@ export default function AdminDashboard() {
             };
 
             const id = editingProject.id;
-            let result;
-
             if (id && id !== '' && id !== 'new') {
-                result = await supabase.from('projects').update(dataToSave).eq('id', id);
+                await supabase.from('projects').update(dataToSave).eq('id', id);
             } else {
-                result = await supabase.from('projects').insert([dataToSave]).select();
+                await supabase.from('projects').insert([dataToSave]);
             }
-
-            if (result.error) {
-                console.error('Supabase Error:', result.error);
-                alert(`Supabase Error: ${result.error.message}\n${result.error.details}\nColumn likely missing: check browser console for payload.`);
-                setMessage('❌ Failed.');
-            } else {
-                await loadProjects();
-                setEditingProject(null);
-                setMessage('✅ Saved!');
-            }
+            await loadProjects();
+            setEditingProject(null);
+            setMessage('✅ Saved!');
         } catch (err: any) {
-            console.error('Save Error:', err);
-            alert('CRITICAL ERROR: ' + err.message);
+            alert('Save Error: ' + err.message);
             setMessage('❌ Error.');
         } finally {
             setSaving(false);
@@ -296,21 +345,14 @@ export default function AdminDashboard() {
         setSaving(true);
         try {
             const { id, created_at, updated_at, ...sectionData } = editingCV as any;
-            let result;
             if (id && id !== '' && id !== 'new') {
-                result = await supabase.from('cv_sections').update(sectionData).eq('id', id);
+                await supabase.from('cv_sections').update(sectionData).eq('id', id);
             } else {
-                result = await supabase.from('cv_sections').insert([sectionData]).select();
+                await supabase.from('cv_sections').insert([sectionData]);
             }
-
-            if (result.error) {
-                console.error('CV Save Error:', result.error);
-                alert('DB Error: ' + result.error.message);
-            } else {
-                loadCV();
-                setEditingCV(null);
-                setMessage('✅ CV Saved!');
-            }
+            loadCV();
+            setEditingCV(null);
+            setMessage('✅ CV Saved!');
         } catch (err) { setMessage('❌ Error.'); }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
@@ -328,24 +370,9 @@ export default function AdminDashboard() {
     };
 
     const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0] && editingProject) {
+        if (e.target.files?.[0] && editingProject) {
             const url = await storageAPI.uploadImage(e.target.files[0], 'projects');
-            if (url) {
-                setEditingProject({ ...editingProject, image_url: url });
-            }
-        }
-    };
-
-    const addGalleryItem = async (type: 'image' | 'video', file: File) => {
-        const url = await storageAPI.uploadImage(file, 'projects');
-        if (url && editingProject) {
-            if (type === 'image') {
-                const gallery = [...(editingProject.gallery_images || []), url];
-                setEditingProject({ ...editingProject, gallery_images: gallery });
-            } else {
-                const gallery = [...(editingProject.gallery_videos || []), url];
-                setEditingProject({ ...editingProject, gallery_videos: gallery });
-            }
+            if (url) setEditingProject({ ...editingProject, image_url: url });
         }
     };
 
@@ -370,6 +397,7 @@ export default function AdminDashboard() {
                 contentAPI.update('nav.contact', String(branding.navContact), 'nav'),
                 contentAPI.update('nav.get_in_touch', String(branding.navGetInTouch), 'nav'),
                 contentAPI.update('nav.blog', String(branding.navBlog), 'nav'),
+                contentAPI.update('nav.newsletter', String(branding.navNewsletter), 'nav'),
                 contentAPI.update('general.logo_image_url', branding.logoImageUrl, 'general')
             ]);
             setMessage('✅ Settings saved!');
@@ -383,12 +411,9 @@ export default function AdminDashboard() {
         const newProjects = [...projects];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
         if (targetIndex < 0 || targetIndex >= newProjects.length) return;
-
-        // Swap order_index
         const temp = newProjects[index].order_index;
         newProjects[index].order_index = newProjects[targetIndex].order_index;
         newProjects[targetIndex].order_index = temp;
-
         setSaving(true);
         try {
             await Promise.all([
@@ -404,7 +429,6 @@ export default function AdminDashboard() {
         const subSections = cvSections.filter(s => s.section_type === cvSubTab).sort((a, b) => a.order_index - b.order_index);
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
         if (targetIndex < 0 || targetIndex >= subSections.length) return;
-
         setSaving(true);
         try {
             await Promise.all([
@@ -418,7 +442,6 @@ export default function AdminDashboard() {
 
     return (
         <div className="admin-dashboard" style={{ display: 'flex', minHeight: '100vh', background: '#050505', color: '#fff' }}>
-            {/* Sidebar - LOCKED TO SIDE */}
             <div style={{
                 width: '260px',
                 background: '#0a0a0a',
@@ -473,7 +496,6 @@ export default function AdminDashboard() {
                 <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><LogOut size={20} /> Sign Out</button>
             </div>
 
-            {/* Content Area - Adjusted for Fixed Sidebar */}
             <div style={{ flex: 1, minWidth: 0, marginLeft: isDesktop ? '260px' : 0 }}>
                 <header style={{ height: '72px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 50, justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -489,28 +511,90 @@ export default function AdminDashboard() {
                 <main style={{ padding: isDesktop ? '40px' : '20px', maxWidth: '1200px', margin: '0 auto' }}>
                     {message && <div style={{ position: 'fixed', bottom: '24px', right: '24px', padding: '16px 24px', background: '#fff', color: '#000', borderRadius: '12px', zIndex: 10000, fontWeight: '700' }}>{message}</div>}
                     {isMobileNavOpen && !isDesktop && (
-                        <div
-                            onClick={() => setIsMobileNavOpen(false)}
-                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
-                        />
+                        <div onClick={() => setIsMobileNavOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />
                     )}
 
                     {activeTab === 'analytics' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
-                                <Globe size={20} color="var(--accent-color)" />
-                                <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.pageViews}</div>
-                                <div style={{ color: '#666', fontSize: '12px' }}>Total Page Views</div>
+                        <div style={{ display: 'grid', gap: '32px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                                <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                    <Globe size={20} color="var(--accent-color)" />
+                                    <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.pageViews}</div>
+                                    <div style={{ color: '#666', fontSize: '12px' }}>Total Page Views</div>
+                                </div>
+                                <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                    <Download size={20} color="var(--accent-color)" />
+                                    <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.cvDownloads}</div>
+                                    <div style={{ color: '#666', fontSize: '12px' }}>CV Downloads</div>
+                                </div>
+                                <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                    <Activity size={20} color="var(--accent-color)" />
+                                    <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.projectClicks}</div>
+                                    <div style={{ color: '#666', fontSize: '12px' }}>Project Interactions</div>
+                                </div>
                             </div>
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
-                                <Download size={20} color="var(--accent-color)" />
-                                <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.cvDownloads}</div>
-                                <div style={{ color: '#666', fontSize: '12px' }}>CV Downloads</div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
+                                <div style={{ background: '#0a0a0a', padding: '32px', borderRadius: '24px', border: '1px solid #1a1a1a' }}>
+                                    <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase' }}>Popular Pages</h4>
+                                    <div style={{ height: '300px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={stats.pages.slice(0, 6)}>
+                                                <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
+                                                <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                                                <Tooltip
+                                                    contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
+                                                    itemStyle={{ color: 'var(--accent-color)' }}
+                                                />
+                                                <Bar dataKey="count" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                                <div style={{ background: '#0a0a0a', padding: '32px', borderRadius: '24px', border: '1px solid #1a1a1a' }}>
+                                    <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase' }}>Traffic Sources</h4>
+                                    <div style={{ height: '300px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={stats.sources.length > 0 ? stats.sources : [{ name: 'None', count: 1 }]}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    fill="#8884d8"
+                                                    paddingAngle={5}
+                                                    dataKey="count"
+                                                >
+                                                    {[...Array(6)].map((_, index) => (
+                                                        <Cell key={`cell-${index}`} fill={index === 0 ? 'var(--accent-color)' : `rgba(255,255,255,${0.1 + index * 0.1})`} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip
+                                                    contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
                             </div>
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
-                                <Activity size={20} color="var(--accent-color)" />
-                                <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.projectClicks}</div>
-                                <div style={{ color: '#666', fontSize: '12px' }}>Project Interactions</div>
+
+                            <div style={{ background: '#0a0a0a', padding: '32px', borderRadius: '24px', border: '1px solid #1a1a1a' }}>
+                                <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase' }}>Traffic Trends (Last Days)</h4>
+                                <div style={{ height: '300px' }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={(stats as any).history || []}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+                                            <XAxis dataKey="date" fontSize={10} axisLine={false} tickLine={false} />
+                                            <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                                            <Tooltip
+                                                contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
+                                                itemStyle={{ color: 'var(--accent-color)' }}
+                                            />
+                                            <Line type="monotone" dataKey="count" stroke="var(--accent-color)" strokeWidth={3} dot={{ fill: 'var(--accent-color)', r: 4 }} activeDot={{ r: 6 }} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -544,7 +628,6 @@ export default function AdminDashboard() {
                             {cvSubTab === 'profile' ? (
                                 <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
                                     <h3 style={{ marginBottom: '24px', fontFamily: 'var(--font-display)', fontSize: '16px' }}>Public Identity</h3>
-
                                     <div style={{ marginBottom: '32px', padding: '24px', background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a' }}>
                                         <label style={labelStyle}>CV DOCUMENT (PDF)</label>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -554,7 +637,7 @@ export default function AdminDashboard() {
                                             <label className="clickable" style={{ padding: '15px 25px', background: '#fff', color: '#000', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
                                                 UPLOAD PDF
                                                 <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
-                                                    if (e.target.files && e.target.files[0]) {
+                                                    if (e.target.files?.[0]) {
                                                         const url = await storageAPI.uploadImage(e.target.files[0], 'general');
                                                         if (url) setCvProfile({ ...cvProfile, pdf_url: url });
                                                     }
@@ -562,23 +645,20 @@ export default function AdminDashboard() {
                                             </label>
                                         </div>
                                     </div>
-
                                     <div style={{ marginBottom: '20px' }}>
                                         <label style={labelStyle}>Full Name</label>
                                         <input placeholder="Name" value={cvProfile.name} onChange={e => setCvProfile({ ...cvProfile, name: e.target.value })} style={modalInputStyle} />
                                     </div>
-
                                     <div style={{ marginBottom: '30px' }}>
                                         <label style={labelStyle}>Professional Summary (Profile Bio)</label>
                                         <textarea
-                                            placeholder="Write your bio here... (New lines are preserved)"
+                                            placeholder="Write your bio here..."
                                             value={cvProfile.bio}
                                             onChange={e => setCvProfile({ ...cvProfile, bio: e.target.value })}
                                             rows={8}
                                             style={{ ...modalInputStyle, height: 'auto', minHeight: '150px' }}
                                         />
                                     </div>
-
                                     <button onClick={saveCVProfile} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', width: '100%', fontSize: '14px', fontFamily: 'var(--font-display)', letterSpacing: '1px' }}>
                                         {saving ? 'SAVING...' : 'UPDATE CV IDENTITY'}
                                     </button>
@@ -608,7 +688,6 @@ export default function AdminDashboard() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {filteredCV.length === 0 && <div style={{ textAlign: 'center', padding: '40px', color: '#444' }}>No items yet.</div>}
                                     </div>
                                 </div>
                             )}
@@ -619,7 +698,7 @@ export default function AdminDashboard() {
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
                                 <h3>Portfolio Projects</h3>
-                                <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], year: '2026', order_index: projects.length, is_published: false, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
+                                <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], order_index: projects.length, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                 {projects.map((p, idx) => (
@@ -652,183 +731,18 @@ export default function AdminDashboard() {
                                     <textarea placeholder="Small Description" value={heroDesc} onChange={e => setHeroDesc(e.target.value)} rows={2} style={modalInputStyle} />
                                 </div>
                             </div>
-
                             <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
-                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)' }}>Storytelling (Who's this for?)</h3>
+                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)' }}>Storytelling</h3>
                                 <div style={{ display: 'grid', gap: '24px' }}>
-                                    <div>
-                                        <label style={labelStyle}>Main Big Text (Who's this for? ...)</label>
-                                        <textarea placeholder="The words that appear as you scroll" value={storyText} onChange={e => setStoryText(e.target.value)} rows={4} style={modalInputStyle} />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>Pitch Description (Text below)</label>
-                                        <textarea placeholder="The paragraph that appears after scrolling" value={pitchDesc} onChange={e => setPitchDesc(e.target.value)} rows={4} style={modalInputStyle} />
-                                    </div>
+                                    <textarea placeholder="Main Big Text" value={storyText} onChange={e => setStoryText(e.target.value)} rows={4} style={modalInputStyle} />
+                                    <textarea placeholder="Pitch Description" value={pitchDesc} onChange={e => setPitchDesc(e.target.value)} rows={4} style={modalInputStyle} />
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                        <div>
-                                            <label style={labelStyle}>CTA Button Text</label>
-                                            <input placeholder="Let's Work Together" value={pitchBtnText} onChange={e => setPitchBtnText(e.target.value)} style={modalInputStyle} />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>CTA Button Link</label>
-                                            <input placeholder="#contact" value={pitchBtnLink} onChange={e => setPitchBtnLink(e.target.value)} style={modalInputStyle} />
-                                        </div>
+                                        <input placeholder="CTA Button Text" value={pitchBtnText} onChange={e => setPitchBtnText(e.target.value)} style={modalInputStyle} />
+                                        <input placeholder="CTA Button Link" value={pitchBtnLink} onChange={e => setPitchBtnLink(e.target.value)} style={modalInputStyle} />
                                     </div>
                                 </div>
                             </div>
-
                             <button onClick={saveContent} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '800' }}>PUBLISH CHANGES</button>
-                        </div>
-                    )}
-
-                    {activeTab === 'settings' && (
-                        <div style={{ display: 'grid', gap: '32px' }}>
-                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
-                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Visual Identity</h3>
-
-                                <div style={{ marginBottom: '32px', padding: '24px', background: '#111', borderRadius: '16px', border: '1px solid #222' }}>
-                                    <label style={labelStyle}>Logo / Symbol</label>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                        <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #333' }}>
-                                            {branding.logoImageUrl ? (
-                                                <img src={branding.logoImageUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                            ) : (
-                                                <Target size={32} />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="clickable" style={{ display: 'inline-block', padding: '12px 24px', background: '#222', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', border: '1px solid #333' }}>
-                                                CHANGE LOGO
-                                                <input type="file" style={{ display: 'none' }} onChange={async (e) => {
-                                                    if (e.target.files && e.target.files[0]) {
-                                                        const url = await storageAPI.uploadImage(e.target.files[0], 'general');
-                                                        if (url) setBranding({ ...branding, logoImageUrl: url });
-                                                    }
-                                                }} />
-                                            </label>
-                                            {branding.logoImageUrl && (
-                                                <button onClick={() => setBranding({ ...branding, logoImageUrl: '' })} style={{ marginLeft: '12px', background: 'transparent', border: 'none', color: '#ff4444', fontSize: '13px', cursor: 'pointer' }}>Remove</button>
-                                            )}
-                                            <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>This logo will appear next to your name in the dashboard sidebar and on the main site.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                                    <div>
-                                        <label style={labelStyle}>Logo First Word</label>
-                                        <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={modalInputStyle} />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>Logo Second Word</label>
-                                        <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={modalInputStyle} />
-                                    </div>
-                                </div>
-
-                                <div style={{ marginTop: '32px' }}>
-                                    <label style={{ ...labelStyle, fontSize: '14px', color: '#fff' }}>Theme Colors</label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '16px' }}>
-                                        {/* Dark Mode Palette */}
-                                        <div style={{ padding: '24px', background: '#111', borderRadius: '20px', border: '1px solid #222' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366f1' }} />
-                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#666' }}>DEEP DARK MODE</span>
-                                            </div>
-
-                                            <div style={{ display: 'grid', gap: '20px' }}>
-                                                <div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                                        <span style={{ fontSize: '12px', color: '#888' }}>Background</span>
-                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#444' }}>{branding.bgColor.toUpperCase()}</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
-                                                        <div style={{ flex: 1, height: '40px', background: branding.bgColor, borderRadius: '8px', border: '1px solid #333' }} />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                                        <span style={{ fontSize: '12px', color: '#888' }}>Primary Accent</span>
-                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#444' }}>{branding.accentColor.toUpperCase()}</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
-                                                        <div style={{ flex: 1, height: '40px', background: branding.accentColor, borderRadius: '8px', border: '1px solid #333' }} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Light Mode Palette */}
-                                        <div style={{ padding: '24px', background: '#f5f5f5', borderRadius: '20px', border: '1px solid #ddd' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
-                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#999' }}>CLEAN LIGHT MODE</span>
-                                            </div>
-
-                                            <div style={{ display: 'grid', gap: '20px' }}>
-                                                <div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                                        <span style={{ fontSize: '12px', color: '#666' }}>Background</span>
-                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#bbb' }}>{branding.lightBgColor.toUpperCase()}</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
-                                                        <div style={{ flex: 1, height: '40px', background: branding.lightBgColor, borderRadius: '8px', border: '1px solid #ddd' }} />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                                        <span style={{ fontSize: '12px', color: '#666' }}>Primary Accent</span>
-                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#bbb' }}>{branding.lightAccentColor.toUpperCase()}</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
-                                                        <div style={{ flex: 1, height: '40px', background: branding.lightAccentColor, borderRadius: '8px', border: '1px solid #ddd' }} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
-                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Social & Contact</h3>
-                                <div style={{ display: 'grid', gap: '24px' }}>
-                                    <input placeholder="LinkedIn URL" value={branding.linkedin} onChange={e => setBranding({ ...branding, linkedin: e.target.value })} style={modalInputStyle} />
-                                    <input placeholder="Instagram URL" value={branding.instagram} onChange={e => setBranding({ ...branding, instagram: e.target.value })} style={modalInputStyle} />
-                                    <input placeholder="Public Email" value={branding.footerEmail} onChange={e => setBranding({ ...branding, footerEmail: e.target.value })} style={modalInputStyle} />
-                                    <input placeholder="Phone Number" value={branding.phone} onChange={e => setBranding({ ...branding, phone: e.target.value })} style={modalInputStyle} />
-                                    <textarea placeholder="Footer Copyright Text" value={branding.footerText} onChange={e => setBranding({ ...branding, footerText: e.target.value })} rows={2} style={modalInputStyle} />
-                                </div>
-                            </div>
-
-                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
-                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Navigation Toggles</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
-                                    {[
-                                        { id: 'navHome', label: 'Home Page' },
-                                        { id: 'navCV', label: 'CV / History' },
-                                        { id: 'navPortfolio', label: 'Portfolio Tab' },
-                                        { id: 'navContact', label: 'Contact Section' },
-                                        { id: 'navGetInTouch', label: 'Get In Touch' },
-                                        { id: 'navBlog', label: 'Blog Section' },
-                                    ].map(toggle => (
-                                        <label key={toggle.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={(branding as any)[toggle.id]}
-                                                onChange={e => setBranding({ ...branding, [toggle.id]: e.target.checked })}
-                                                style={{ width: '20px', height: '20px' }}
-                                            />
-                                            <span style={{ fontSize: '14px' }}>{toggle.label}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button onClick={saveSettings} style={{ padding: '24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', fontSize: '16px' }}>SAVE GLOBAL CONFIGURATION</button>
                         </div>
                     )}
 
@@ -836,7 +750,7 @@ export default function AdminDashboard() {
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
                                 <h3>Blog Posts</h3>
-                                <button onClick={() => setEditingPost({ id: 'new', title: '', content: '', category: 'Design', visible: true } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW POST</button>
+                                <button onClick={() => setEditingPost({ id: 'new', title: '', content: '', category: 'Design', tags: [], visible: true } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW POST</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                 {posts.map(post => (
@@ -851,154 +765,172 @@ export default function AdminDashboard() {
                                             </div>
                                             <div style={{ display: 'flex', gap: '8px' }}>
                                                 <button onClick={() => setEditingPost(post)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
-                                                <button onClick={() => { if (confirm('Delete post?')) blogAPI.delete(post.id).then(loadBlog) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                <button onClick={() => { if (confirm('Delete?')) blogAPI.delete(post.id).then(loadBlog) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
-                                {posts.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px', color: '#333' }}>No blog posts found.</div>}
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'settings' && (
+                        <div style={{ display: 'grid', gap: '32px' }}>
+                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
+                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Visual Identity</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '32px' }}>
+                                    <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #333' }}>
+                                        {branding.logoImageUrl ? <img src={branding.logoImageUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Target size={32} />}
+                                    </div>
+                                    <label className="clickable" style={{ padding: '12px 24px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333' }}>
+                                        CHANGE LOGO
+                                        <input type="file" style={{ display: 'none' }} onChange={async (e) => { if (e.target.files?.[0]) { const url = await storageAPI.uploadImage(e.target.files[0], 'general'); if (url) setBranding({ ...branding, logoImageUrl: url }); } }} />
+                                    </label>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                                    <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={modalInputStyle} />
+                                    <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '32px' }}>
+                                    <div>
+                                        <label style={labelStyle}>BG Color</label>
+                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Accent Color</label>
+                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Socials</h3>
+                                <input placeholder="LinkedIn" value={branding.linkedin} onChange={e => setBranding({ ...branding, linkedin: e.target.value })} style={modalInputStyle} />
+                                <input placeholder="Instagram" value={branding.instagram} onChange={e => setBranding({ ...branding, instagram: e.target.value })} style={modalInputStyle} />
+                                <input placeholder="Email" value={branding.footerEmail} onChange={e => setBranding({ ...branding, footerEmail: e.target.value })} style={modalInputStyle} />
+                                <input placeholder="Phone" value={branding.phone} onChange={e => setBranding({ ...branding, phone: e.target.value })} style={modalInputStyle} />
+                            </div>
+                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Navigation Toggles</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
+                                    {[
+                                        { id: 'navHome', label: 'Home' },
+                                        { id: 'navCV', label: 'CV' },
+                                        { id: 'navPortfolio', label: 'Portfolio' },
+                                        { id: 'navBlog', label: 'Blog' },
+                                        { id: 'navNewsletter', label: 'Newsletter' },
+                                    ].map(toggle => (
+                                        <label key={toggle.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                            <input type="checkbox" checked={(branding as any)[toggle.id]} onChange={e => setBranding({ ...branding, [toggle.id]: e.target.checked })} style={{ width: '18px', height: '18px' }} />
+                                            {toggle.label}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            <button onClick={saveSettings} style={{ padding: '24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900' }}>SAVE CONFIGURATION</button>
                         </div>
                     )}
                 </main>
             </div>
 
-            {/* PROJECT MODAL */}
-            {editingProject && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                            <h3 style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-0.5px' }}>EDITAR PROJETO</h3>
-                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
-                                <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#666' }}><X size={24} /></button>
-                            </div>
+            {/* BLOG MODAL (Detailed with Toolbar) */}
+            {editingPost && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '800px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                            <h3>{editingPost.id === 'new' ? 'NEW POST' : 'EDIT POST'}</h3>
+                            <button onClick={() => setEditingPost(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={24} /></button>
                         </div>
-
-                        <div style={{ display: 'grid', gap: '24px' }}>
+                        <div style={{ display: 'grid', gap: '20px' }}>
                             <div>
-                                <label style={labelStyle}>Título</label>
-                                <input value={editingProject.title} onChange={e => setEditingProject({ ...editingProject, title: e.target.value })} style={modalInputStyle} />
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div>
-                                    <label style={labelStyle}>Ordem</label>
-                                    <input type="number" value={editingProject.order_index} onChange={e => setEditingProject({ ...editingProject, order_index: parseInt(e.target.value) })} style={modalInputStyle} />
+                                <label style={labelStyle}>Image</label>
+                                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                    <div style={{ width: '120px', aspectRatio: '16/9', background: '#111', borderRadius: '8px', overflow: 'hidden' }}>
+                                        {editingPost.image_url ? <img src={editingPost.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+                                    </div>
+                                    <label className="clickable" style={{ padding: '8px 16px', background: '#222', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                                        UPLOAD
+                                        <input type="file" style={{ display: 'none' }} onChange={async (e) => { if (e.target.files?.[0]) { const url = await storageAPI.uploadImage(e.target.files[0], 'blog'); if (url) setEditingPost({ ...editingPost, image_url: url }); } }} />
+                                    </label>
                                 </div>
+                                {editingPost.image_url && (
+                                    <div style={{ marginTop: '15px' }}>
+                                        <label style={labelStyle}>Image Focus / Position (e.g. center, 50% 20%, right top)</label>
+                                        <input
+                                            placeholder="center"
+                                            value={editingPost.cover_position || ''}
+                                            onChange={e => setEditingPost({ ...editingPost, cover_position: e.target.value })}
+                                            style={modalInputStyle}
+                                        />
+                                    </div>
+                                )}
                             </div>
-
+                            <input placeholder="Title" value={editingPost.title} onChange={e => setEditingPost({ ...editingPost, title: e.target.value })} style={modalInputStyle} />
                             <div>
                                 <label style={labelStyle}>Tags</label>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: '#111', padding: '12px', borderRadius: '8px', border: '1px solid #222' }}>
-                                    {editingProject.tags?.map(t => (
-                                        <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            {t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: (editingProject.tags || []).filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} />
-                                        </span>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', background: '#111', padding: '10px', borderRadius: '8px' }}>
+                                    {editingPost.tags?.map(t => (
+                                        <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '4px 10px', borderRadius: '100px', fontSize: '11px', fontWeight: 'bold' }}>{t} <X size={10} onClick={() => setEditingPost({ ...editingPost, tags: editingPost.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>
                                     ))}
-                                    <input
-                                        placeholder="Add tag..."
-                                        value={tagInput}
-                                        onChange={e => setTagInput(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && addTag()}
-                                        style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '14px', outline: 'none', flex: 1, minWidth: '100px' }}
-                                    />
+                                    <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addBlogTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
                                 </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                    {(allUsedTags.length > 0 ? allUsedTags : ['ELEMENTOR', 'FIGMA', 'AGROTECH', 'DESIGN SYSTEM', 'WIREFRAMES']).map(suggestion => (
-                                        <button
-                                            key={suggestion}
-                                            onClick={() => addTag(suggestion)}
-                                            style={{ background: '#1a1a1a', border: '1px solid #222', color: '#888', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
-                                        >
-                                            + {suggestion}
-                                        </button>
-                                    ))}
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {allBlogTags.slice(0, 5).map(tag => <button key={tag} onClick={() => addBlogTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#888', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>)}
                                 </div>
                             </div>
-
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <input placeholder="Category" value={editingPost.category} onChange={e => setEditingPost({ ...editingPost, category: e.target.value })} style={modalInputStyle} />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <input type="checkbox" checked={editingPost.visible} onChange={e => setEditingPost({ ...editingPost, visible: e.target.checked })} />
+                                    Visible
+                                </div>
+                            </div>
                             <div>
-                                <label style={labelStyle}>Capa do Projeto</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                    <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222' }}>
-                                        {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333' }}><ImageIcon size={24} /></div>}
-                                    </div>
-                                    <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', border: '1px solid #333' }}>
-                                        Upload Capa
-                                        <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} />
+                                <label style={labelStyle}>Content (Markdown Toolbar)</label>
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', background: '#1a1a1a', padding: '8px', borderRadius: '8px' }}>
+                                    <button onClick={() => insertMarkdown('bold')} style={{ background: '#333', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>B</button>
+                                    <button onClick={() => insertMarkdown('italic')} style={{ background: '#333', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>I</button>
+                                    <button onClick={() => insertMarkdown('link')} style={{ background: '#333', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Link</button>
+                                    <label className="clickable" style={{ background: 'var(--accent-color)', color: '#000', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+                                        + PHOTO
+                                        <input type="file" style={{ display: 'none' }} onChange={e => { if (e.target.files?.[0]) handleBlogImageUpload(e.target.files[0]) }} />
                                     </label>
                                 </div>
+                                <textarea id="post-content-area" rows={12} value={editingPost.content} onChange={e => setEditingPost({ ...editingPost, content: e.target.value })} style={modalInputStyle} />
                             </div>
-
-                            <div style={{ background: '#0d0d0d', padding: '24px', borderRadius: '16px', border: '1px solid #1a1a1a' }}>
-                                <label style={{ ...labelStyle, fontSize: '15px', color: '#fff' }}>Galeria Adicional (Fotos & Vídeos)</label>
-                                <p style={{ fontSize: '12px', color: '#555', marginBottom: '20px' }}>Itens que aparecerão no carrossel do projeto.</p>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '15px', marginBottom: '20px' }}>
-                                    {editingProject.gallery_images?.map((url, idx) => (
-                                        <div key={`img-${idx}`} style={{ position: 'relative', aspectRatio: '1/1', background: '#111', borderRadius: '10px', overflow: 'hidden', border: '1px solid #222' }}>
-                                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            <button onClick={() => setEditingProject({ ...editingProject, gallery_images: (editingProject.gallery_images || []).filter((_, i) => i !== idx) })} style={{ position: 'absolute', top: '5px', right: '5px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
-                                        </div>
-                                    ))}
-                                    {editingProject.gallery_videos?.map((_, idx) => (
-                                        <div key={`v-${idx}`} style={{ position: 'relative', aspectRatio: '1/1', background: '#111', borderRadius: '10px', overflow: 'hidden', border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Video color="var(--accent-color)" size={32} />
-                                            <button onClick={() => setEditingProject({ ...editingProject, gallery_videos: (editingProject.gallery_videos || []).filter((_, i) => i !== idx) })} style={{ position: 'absolute', top: '5px', right: '5px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
-                                        </div>
-                                    ))}
-
-                                    <label className="clickable" style={{ aspectRatio: '1/1', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '2px dashed #222', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
-                                        <Plus size={20} color="#444" />
-                                        <span style={{ fontSize: '10px', color: '#444', fontWeight: 'bold' }}>ADD FOTO</span>
-                                        <input type="file" onChange={(e) => e.target.files && addGalleryItem('image', e.target.files[0])} style={{ display: 'none' }} />
-                                    </label>
-
-                                    <label className="clickable" style={{ aspectRatio: '1/1', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '2px dashed #222', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
-                                        <Video size={20} color="#444" />
-                                        <span style={{ fontSize: '10px', color: '#444', fontWeight: 'bold' }}>ADD VÍDEO</span>
-                                        <input type="file" onChange={(e) => e.target.files && addGalleryItem('video', e.target.files[0])} style={{ display: 'none' }} />
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label style={labelStyle}>Descrição</label>
-                                <textarea
-                                    value={editingProject.description || ''}
-                                    onChange={e => setEditingProject({ ...editingProject, description: e.target.value })}
-                                    rows={6}
-                                    style={{ ...modalInputStyle, resize: 'vertical' }}
-                                />
-                            </div>
-
-                            <button
-                                onClick={saveProject}
-                                disabled={saving}
-                                style={{
-                                    width: '100%',
-                                    padding: '20px',
-                                    background: 'var(--accent-color)',
-                                    color: '#000',
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    fontWeight: '900',
-                                    fontSize: '16px',
-                                    marginTop: '20px',
-                                    cursor: 'pointer',
-                                    transition: '0.3s'
-                                }}
-                            >
-                                {saving ? 'SALVANDO...' : 'SALVAR PROJETO'}
-                            </button>
+                            <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'PUBLISH POST'}</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* PREVIEW MODALS */}
-            {isPreviewOpen && editingProject && (
-                <ProjectModal project={editingProject} isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
+            {/* PROJECT EDIT MODAL (Existing logic) */}
+            {editingProject && !editingPost && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                            <h3 style={{ fontSize: '28px', fontWeight: '900' }}>EDIT PROJECT</h3>
+                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
+                                <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#666' }}><X size={24} /></button>
+                            </div>
+                        </div>
+                        <div style={{ display: 'grid', gap: '24px' }}>
+                            <input placeholder="Title" value={editingProject.title} onChange={e => setEditingProject({ ...editingProject, title: e.target.value })} style={modalInputStyle} />
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: '#111', padding: '12px', borderRadius: '8px' }}>
+                                {editingProject.tags?.map(t => <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold' }}>{t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: editingProject.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>)}
+                                <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden' }}>
+                                    {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={24} color="#333" />}
+                                </div>
+                                <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', cursor: 'pointer' }}>UPLOAD CAPA <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} /></label>
+                            </div>
+                            <textarea value={editingProject.description || ''} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} rows={6} style={modalInputStyle} />
+                            <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {editingCV && (
@@ -1017,60 +949,9 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {editingPost && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '800px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px' }}>{editingPost.id === 'new' ? 'NEW BLOG POST' : 'EDIT POST'}</h3>
-                            <button onClick={() => setEditingPost(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={24} /></button>
-                        </div>
-
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            <div>
-                                <label style={labelStyle}>Post Image</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                    <div style={{ width: '150px', aspectRatio: '16/9', background: '#111', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222' }}>
-                                        {editingPost.image_url ? <img src={editingPost.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={24} color="#333" /></div>}
-                                    </div>
-                                    <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                        UPLOAD IMAGE
-                                        <input type="file" onChange={async (e) => {
-                                            if (e.target.files && e.target.files[0]) {
-                                                const url = await storageAPI.uploadImage(e.target.files[0], 'blog');
-                                                if (url) setEditingPost({ ...editingPost, image_url: url });
-                                            }
-                                        }} style={{ display: 'none' }} />
-                                    </label>
-                                </div>
-                            </div>
-
-                            <input placeholder="Post Title" value={editingPost.title} onChange={e => setEditingPost({ ...editingPost, title: e.target.value })} style={modalInputStyle} />
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div>
-                                    <label style={labelStyle}>Category</label>
-                                    <input placeholder="e.g. Design, UI, News" value={editingPost.category} onChange={e => setEditingPost({ ...editingPost, category: e.target.value })} style={modalInputStyle} />
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '25px' }}>
-                                    <input type="checkbox" checked={editingPost.visible} onChange={e => setEditingPost({ ...editingPost, visible: e.target.checked })} style={{ width: '20px', height: '20px' }} />
-                                    <label>Visible on Blog</label>
-                                </div>
-                            </div>
-
-                            <textarea
-                                placeholder="Post content (Markdown supported)..."
-                                value={editingPost.content}
-                                onChange={e => setEditingPost({ ...editingPost, content: e.target.value })}
-                                rows={12}
-                                style={{ ...modalInputStyle, fontSize: '16px', lineHeight: '1.6' }}
-                            />
-
-                            <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', fontSize: '14px', fontFamily: 'var(--font-display)' }}>
-                                {saving ? 'SAVING...' : 'PUBLISH POST'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {/* PREVIEW MODAL */}
+            {isPreviewOpen && editingProject && (
+                <ProjectModal project={editingProject} isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
             )}
         </div>
     );
