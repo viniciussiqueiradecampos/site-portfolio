@@ -16,7 +16,8 @@ import {
     BarChart3, User, Globe,
     Download,
     Target, Activity, Plus, X, Image as ImageIcon, Video,
-    Briefcase, GraduationCap, Award, Star, Heart, Menu
+    Briefcase, GraduationCap, Award, Star, Heart, Menu,
+    ArrowUp, ArrowDown
 } from 'lucide-react';
 import { storageAPI } from '../lib/storage';
 import ProjectModal from '../components/ProjectModal';
@@ -339,7 +340,44 @@ export default function AdminDashboard() {
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
-    const filteredCV = cvSections.filter(s => s.section_type === cvSubTab);
+    const filteredCV = cvSections.filter(s => s.section_type === cvSubTab).sort((a, b) => a.order_index - b.order_index);
+
+    const reorderProject = async (index: number, direction: 'up' | 'down') => {
+        const newProjects = [...projects];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= newProjects.length) return;
+
+        // Swap order_index
+        const temp = newProjects[index].order_index;
+        newProjects[index].order_index = newProjects[targetIndex].order_index;
+        newProjects[targetIndex].order_index = temp;
+
+        setSaving(true);
+        try {
+            await Promise.all([
+                supabase.from('projects').update({ order_index: newProjects[index].order_index }).eq('id', newProjects[index].id),
+                supabase.from('projects').update({ order_index: newProjects[targetIndex].order_index }).eq('id', newProjects[targetIndex].id)
+            ]);
+            await loadProjects();
+        } catch (err) { setMessage('❌ Error reordering'); }
+        finally { setSaving(false); }
+    };
+
+    const reorderCV = async (index: number, direction: 'up' | 'down') => {
+        const subSections = cvSections.filter(s => s.section_type === cvSubTab).sort((a, b) => a.order_index - b.order_index);
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= subSections.length) return;
+
+        setSaving(true);
+        try {
+            await Promise.all([
+                supabase.from('cv_sections').update({ order_index: subSections[targetIndex].order_index }).eq('id', subSections[index].id),
+                supabase.from('cv_sections').update({ order_index: subSections[index].order_index }).eq('id', subSections[targetIndex].id)
+            ]);
+            await loadCV();
+        } catch (err) { setMessage('❌ Error reordering'); }
+        finally { setSaving(false); }
+    };
 
     return (
         <div className="admin-dashboard" style={{ display: 'flex', minHeight: '100vh', background: '#050505', color: '#fff' }}>
@@ -514,15 +552,21 @@ export default function AdminDashboard() {
                                         <button onClick={() => setEditingCV({ id: 'new', section_type: cvSubTab, title: '', subtitle: '', date_range: '', description: '', order_index: cvSections.length, visible: true } as any)} style={{ background: '#fff', color: '#000', padding: '10px 20px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ ADD {cvSubTab.toUpperCase()}</button>
                                     </div>
                                     <div style={{ display: 'grid', gap: '15px' }}>
-                                        {filteredCV.map(s => (
-                                            <div key={s.id} style={{ background: '#111', padding: '24px', borderRadius: '16px', border: '1px solid #222', display: 'flex', justifyContent: 'space-between' }}>
-                                                <div>
-                                                    <h4 style={{ margin: '0 0 5px 0' }}>{s.title}</h4>
-                                                    <p style={{ margin: 0, fontSize: '13px', color: '#888' }}>{s.subtitle} • {s.date_range}</p>
+                                        {filteredCV.map((s, idx) => (
+                                            <div key={s.id} style={{ background: '#111', padding: '24px', borderRadius: '16px', border: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        <button disabled={idx === 0 || saving} onClick={() => reorderCV(idx, 'up')} style={{ background: 'transparent', border: 'none', color: idx === 0 ? '#222' : '#666', cursor: 'pointer' }}><ArrowUp size={14} /></button>
+                                                        <button disabled={idx === filteredCV.length - 1 || saving} onClick={() => reorderCV(idx, 'down')} style={{ background: 'transparent', border: 'none', color: idx === filteredCV.length - 1 ? '#222' : '#666', cursor: 'pointer' }}><ArrowDown size={14} /></button>
+                                                    </div>
+                                                    <div>
+                                                        <h4 style={{ margin: '0 0 5px 0' }}>{s.title}</h4>
+                                                        <p style={{ margin: 0, fontSize: '13px', color: '#888' }}>{s.subtitle} • {s.date_range}</p>
+                                                    </div>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <button onClick={() => setEditingCV(s)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><Settings size={18} /></button>
-                                                    <button onClick={() => { if (confirm('Delete?')) cvAPI.delete(s.id).then(loadCV) }} style={{ background: 'transparent', border: 'none', color: '#ff4444' }}><Trash2 size={18} /></button>
+                                                    <button onClick={() => setEditingCV(s)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                    <button onClick={() => { if (confirm('Delete?')) cvAPI.delete(s.id).then(loadCV) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                 </div>
                                             </div>
                                         ))}
@@ -540,14 +584,19 @@ export default function AdminDashboard() {
                                 <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], year: '2026', order_index: projects.length, is_published: false, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                                {projects.map(p => (
+                                {projects.map((p, idx) => (
                                     <div key={p.id} style={{ background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a', overflow: 'hidden' }}>
-                                        <div style={{ height: '180px', background: `url(${p.image_url}) center/cover` }} />
-                                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between' }}>
-                                            <span>{p.title}</span>
+                                        <div style={{ height: '180px', background: `url(${p.image_url}) center/cover`, position: 'relative' }}>
+                                            <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '5px' }}>
+                                                <button disabled={idx === 0 || saving} onClick={() => reorderProject(idx, 'up')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowUp size={14} /></button>
+                                                <button disabled={idx === projects.length - 1 || saving} onClick={() => reorderProject(idx, 'down')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowDown size={14} /></button>
+                                            </div>
+                                        </div>
+                                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '14px', fontWeight: '600' }}>{p.title}</span>
                                             <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><Settings size={18} /></button>
-                                                <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444' }}><Trash2 size={18} /></button>
+                                                <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                             </div>
                                         </div>
                                     </div>

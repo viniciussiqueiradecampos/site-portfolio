@@ -146,23 +146,26 @@ export default function CV() {
                                         <div className="cv-timeline-content" style={{ paddingLeft: isMobile ? '0' : '20px' }}>
                                             <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{job.title} @ {job.subtitle}</h4>
                                             {job.description && (
-                                                <div style={{ marginTop: '15px' }}>
-                                                    {job.description.split('\n').map((line, idx) => (
-                                                        <div key={idx} style={{
-                                                            marginBottom: '10px',
-                                                            color: 'var(--text-muted)',
-                                                            fontSize: '15px',
-                                                            position: 'relative',
-                                                            paddingLeft: '15px'
-                                                        }}>
-                                                            {line.trim().startsWith('•') || line.trim().startsWith('-') ? (
-                                                                <>
-                                                                    <span style={{ position: 'absolute', left: 0, color: 'var(--accent-color)' }}>•</span>
-                                                                    {line.trim().substring(1).trim()}
-                                                                </>
-                                                            ) : line}
-                                                        </div>
-                                                    ))}
+                                                <div style={{ marginTop: '15px', whiteSpace: 'pre-wrap' }}>
+                                                    {job.description.split('\n').map((line, idx) => {
+                                                        const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
+                                                        return (
+                                                            <div key={idx} style={{
+                                                                marginBottom: '10px',
+                                                                color: 'var(--text-muted)',
+                                                                fontSize: '15px',
+                                                                position: 'relative',
+                                                                paddingLeft: isBullet ? '15px' : '0'
+                                                            }}>
+                                                                {isBullet ? (
+                                                                    <>
+                                                                        <span style={{ position: 'absolute', left: 0, color: 'var(--accent-color)' }}>•</span>
+                                                                        {line.trim().substring(1)}
+                                                                    </>
+                                                                ) : line}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             )}
                                         </div>
