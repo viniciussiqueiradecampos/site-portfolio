@@ -97,12 +97,20 @@ export default function Projects() {
                 {/* Tag Filter Bar */}
                 <div style={{
                     display: 'flex',
+                    alignItems: 'center',
                     flexWrap: 'wrap',
                     gap: '12px',
                     marginBottom: '80px',
                     borderBottom: '1px solid var(--border-color)',
                     paddingBottom: '30px'
                 }}>
+                    <span style={{
+                        fontSize: '11px',
+                        fontFamily: 'var(--font-display)',
+                        color: 'var(--text-muted)',
+                        marginRight: '15px',
+                        letterSpacing: '1px'
+                    }}>FILTER BY:</span>
                     <button
                         onClick={() => setActiveTag('ALL')}
                         style={{
