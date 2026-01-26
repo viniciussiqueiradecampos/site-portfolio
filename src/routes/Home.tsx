@@ -119,8 +119,8 @@ export default function Home() {
     const handleCarouselScroll = () => {
         if (scrollContainerRef.current) {
             const { scrollLeft } = scrollContainerRef.current;
-            const cardWidth = window.innerWidth * 0.48;
-            const gap = 50;
+            const cardWidth = isMobile ? window.innerWidth * 0.85 : window.innerWidth * 0.48;
+            const gap = isMobile ? 20 : 50;
             const scrollAmount = cardWidth + gap;
             const calculatedIndex = Math.round(scrollLeft / scrollAmount);
             setCurrentProjectIndex(calculatedIndex);
@@ -129,8 +129,8 @@ export default function Home() {
 
     const scrollToProject = (index: number) => {
         if (scrollContainerRef.current) {
-            const cardWidth = window.innerWidth * 0.48;
-            const gap = 50;
+            const cardWidth = isMobile ? window.innerWidth * 0.85 : window.innerWidth * 0.48;
+            const gap = isMobile ? 20 : 50;
             const scrollAmount = cardWidth + gap;
             scrollContainerRef.current.scrollTo({
                 left: index * scrollAmount,

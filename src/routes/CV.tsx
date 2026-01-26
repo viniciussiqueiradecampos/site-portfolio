@@ -51,11 +51,11 @@ export default function CV() {
             <div className="container">
                 <div className="cv-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px' }}>
                     <h1 className="cv-title" style={{
-                        fontSize: isMobile ? '36px' : '60px',
+                        fontSize: isMobile ? 'clamp(32px, 8vw, 42px)' : '60px',
                         lineHeight: 1,
                         margin: 0,
                         color: 'var(--accent-color)',
-                        fontFamily: 'var(--font-body)',
+                        fontFamily: 'var(--font-display)',
                         textTransform: 'uppercase',
                         fontWeight: 900
                     }}>
@@ -90,7 +90,7 @@ export default function CV() {
                     <div>
                         <div style={{ marginBottom: '60px' }}>
                             <h3 style={{ fontSize: '24px', marginBottom: '20px' }}>PROFILE</h3>
-                            <p style={{ lineHeight: 1.6, color: 'var(--text-muted)' }}>
+                            <p style={{ lineHeight: 1.6, color: 'var(--text-muted)', whiteSpace: 'pre-wrap' }}>
                                 {profileSummary || "Senior Product Designer combining aesthetic precision with technical robustness."}
                             </p>
                         </div>

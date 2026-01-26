@@ -16,7 +16,7 @@ import {
     BarChart3, User, Globe,
     Download,
     Target, Activity, Plus, X, Image as ImageIcon, Video,
-    Briefcase, GraduationCap, Award, Star, Heart
+    Briefcase, GraduationCap, Award, Star, Heart, Menu
 } from 'lucide-react';
 import { storageAPI } from '../lib/storage';
 import ProjectModal from '../components/ProjectModal';
@@ -26,6 +26,14 @@ const labelStyle = { display: 'block', fontSize: '13px', color: '#666', marginBo
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth > 1024);
+
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth > 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const [activeTab, setActiveTab] = useState<'analytics' | 'content' | 'projects' | 'cv' | 'settings'>('analytics');
     const [cvSubTab, setCvSubTab] = useState<'profile' | 'experience' | 'education' | 'skills' | 'certification' | 'hobbies'>('profile');
 
@@ -54,7 +62,7 @@ export default function AdminDashboard() {
     const [allUsedTags, setAllUsedTags] = useState<string[]>([]);
 
     // CV State
-    const [cvProfile, setCvProfile] = useState({ name: '', bio: '' });
+    const [cvProfile, setCvProfile] = useState({ name: '', bio: '', pdf_url: '' });
     const [cvSections, setCvSections] = useState<CVSection[]>([]);
     const [editingCV, setEditingCV] = useState<CVSection | null>(null);
 
@@ -137,9 +145,11 @@ export default function AdminDashboard() {
 
         const name = await contentAPI.getByKey('cv.name');
         const bio = await contentAPI.getByKey('cv.bio');
+        const pdf = await contentAPI.getByKey('cv.pdf_url');
         setCvProfile({
             name: name?.value || '',
-            bio: bio?.value || ''
+            bio: bio?.value || '',
+            pdf_url: pdf?.value || ''
         });
     };
 
@@ -236,7 +246,8 @@ export default function AdminDashboard() {
         try {
             await Promise.all([
                 contentAPI.update('cv.name', cvProfile.name, 'cv'),
-                contentAPI.update('cv.bio', cvProfile.bio, 'cv')
+                contentAPI.update('cv.bio', cvProfile.bio, 'cv'),
+                contentAPI.update('cv.pdf_url', cvProfile.pdf_url, 'cv')
             ]);
             setMessage('✅ Profile updated!');
         } catch (err) { setMessage('❌ Error.'); }
@@ -332,13 +343,41 @@ export default function AdminDashboard() {
 
     return (
         <div className="admin-dashboard" style={{ display: 'flex', minHeight: '100vh', background: '#050505', color: '#fff' }}>
-            {/* Sidebar */}
-            <div style={{ width: '260px', background: '#0a0a0a', borderRight: '1px solid #1a1a1a', display: 'flex', flexDirection: 'column', padding: '24px 12px', position: 'sticky', top: 0, height: '100vh', zIndex: 100 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 12px', marginBottom: '40px' }}>
-                    <div style={{ width: '36px', height: '36px', background: 'var(--accent-color)', borderRadius: '10px', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        <Target size={20} />
+            {/* Sidebar - LOCKED TO SIDE */}
+            <div style={{
+                width: '260px',
+                background: '#0a0a0a',
+                borderRight: '1px solid #1a1a1a',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '24px 12px',
+                position: 'fixed',
+                left: isDesktop || isMobileNavOpen ? 0 : '-260px',
+                top: 0,
+                bottom: 0,
+                height: '100vh',
+                zIndex: 1000,
+                transition: 'left 0.3s ease'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', padding: '0 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '40px', height: '40px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '10px', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: branding.logoImageUrl ? '1px solid #1a1a1a' : 'none' }}>
+                            {branding.logoImageUrl ? (
+                                <img src={branding.logoImageUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            ) : (
+                                <Target size={20} />
+                            )}
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: '700', fontSize: '15px' }}>{branding.logoText1}</div>
+                            <div style={{ fontWeight: '700', fontSize: '15px', marginTop: '-4px' }}>{branding.logoText2}</div>
+                        </div>
                     </div>
-                    <span style={{ fontWeight: '700', fontSize: '16px' }}>{branding.logoText1} {branding.logoText2}</span>
+                    {!isDesktop && (
+                        <button onClick={() => setIsMobileNavOpen(false)} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>
+                            <X size={20} />
+                        </button>
+                    )}
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -349,23 +388,36 @@ export default function AdminDashboard() {
                         { id: 'cv', label: 'Curriculum', icon: FileText },
                         { id: 'settings', label: 'Settings', icon: Settings },
                     ].map(item => (
-                        <button key={item.id} onClick={() => setActiveTab(item.id as any)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent', border: 'none', borderRadius: '10px', color: activeTab === item.id ? '#fff' : '#666', cursor: 'pointer', textAlign: 'left' }}>
-                            <item.icon size={20} />
-                            <span style={{ fontSize: '14px', fontWeight: activeTab === item.id ? '600' : '400' }}>{item.label}</span>
+                        <button key={item.id} onClick={() => setActiveTab(item.id as any)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 12px', background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent', border: 'none', borderRadius: '10px', color: activeTab === item.id ? '#fff' : '#666', cursor: 'pointer', textAlign: 'left', transition: '0.2s' }}>
+                            <item.icon size={18} />
+                            <span style={{ fontSize: '10px', fontWeight: '900', fontFamily: 'var(--font-display)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{item.label}</span>
                         </button>
                     ))}
                 </div>
                 <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><LogOut size={20} /> Sign Out</button>
             </div>
 
-            {/* Content Area */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <header style={{ height: '72px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', padding: '0 32px', position: 'sticky', top: 0, zIndex: 50 }}>
-                    <h2 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: '#444', letterSpacing: '1px' }}>{activeTab} Workspace</h2>
+            {/* Content Area - Adjusted for Fixed Sidebar */}
+            <div style={{ flex: 1, minWidth: 0, marginLeft: isDesktop ? '260px' : 0 }}>
+                <header style={{ height: '72px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 50, justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        {!isDesktop && (
+                            <button onClick={() => setIsMobileNavOpen(true)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                <Menu size={24} />
+                            </button>
+                        )}
+                        <h2 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: '#444', letterSpacing: '1px' }}>{activeTab} Workspace</h2>
+                    </div>
                 </header>
 
-                <main style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+                <main style={{ padding: isDesktop ? '40px' : '20px', maxWidth: '1200px', margin: '0 auto' }}>
                     {message && <div style={{ position: 'fixed', bottom: '24px', right: '24px', padding: '16px 24px', background: '#fff', color: '#000', borderRadius: '12px', zIndex: 10000, fontWeight: '700' }}>{message}</div>}
+                    {isMobileNavOpen && !isDesktop && (
+                        <div
+                            onClick={() => setIsMobileNavOpen(false)}
+                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
+                        />
+                    )}
 
                     {activeTab === 'analytics' && (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
@@ -415,10 +467,45 @@ export default function AdminDashboard() {
 
                             {cvSubTab === 'profile' ? (
                                 <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
-                                    <h3 style={{ marginBottom: '24px' }}>Public Identity</h3>
-                                    <input placeholder="Name" value={cvProfile.name} onChange={e => setCvProfile({ ...cvProfile, name: e.target.value })} style={modalInputStyle} />
-                                    <textarea placeholder="Bio Summary" value={cvProfile.bio} onChange={e => setCvProfile({ ...cvProfile, bio: e.target.value })} rows={8} style={modalInputStyle} />
-                                    <button onClick={saveCVProfile} style={{ padding: '16px 32px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: 'bold', width: '100%' }}>UPDATE PROFILE</button>
+                                    <h3 style={{ marginBottom: '24px', fontFamily: 'var(--font-display)', fontSize: '16px' }}>Public Identity</h3>
+
+                                    <div style={{ marginBottom: '32px', padding: '24px', background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a' }}>
+                                        <label style={labelStyle}>CV DOCUMENT (PDF)</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                            <div style={{ padding: '15px 25px', background: '#111', borderRadius: '12px', border: '1px solid #333', fontSize: '12px', color: cvProfile.pdf_url ? 'var(--accent-color)' : '#444', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {cvProfile.pdf_url ? cvProfile.pdf_url.split('/').pop() : 'No PDF uploaded'}
+                                            </div>
+                                            <label className="clickable" style={{ padding: '15px 25px', background: '#fff', color: '#000', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                                                UPLOAD PDF
+                                                <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
+                                                    if (e.target.files && e.target.files[0]) {
+                                                        const url = await storageAPI.uploadImage(e.target.files[0], 'general');
+                                                        if (url) setCvProfile({ ...cvProfile, pdf_url: url });
+                                                    }
+                                                }} />
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={labelStyle}>Full Name</label>
+                                        <input placeholder="Name" value={cvProfile.name} onChange={e => setCvProfile({ ...cvProfile, name: e.target.value })} style={modalInputStyle} />
+                                    </div>
+
+                                    <div style={{ marginBottom: '30px' }}>
+                                        <label style={labelStyle}>Professional Summary (Profile Bio)</label>
+                                        <textarea
+                                            placeholder="Write your bio here... (New lines are preserved)"
+                                            value={cvProfile.bio}
+                                            onChange={e => setCvProfile({ ...cvProfile, bio: e.target.value })}
+                                            rows={8}
+                                            style={{ ...modalInputStyle, height: 'auto', minHeight: '150px' }}
+                                        />
+                                    </div>
+
+                                    <button onClick={saveCVProfile} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', width: '100%', fontSize: '14px', fontFamily: 'var(--font-display)', letterSpacing: '1px' }}>
+                                        {saving ? 'SAVING...' : 'UPDATE CV IDENTITY'}
+                                    </button>
                                 </div>
                             ) : (
                                 <div>
@@ -509,8 +596,37 @@ export default function AdminDashboard() {
 
                     {activeTab === 'settings' && (
                         <div style={{ display: 'grid', gap: '32px' }}>
-                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
                                 <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Visual Identity</h3>
+
+                                <div style={{ marginBottom: '32px', padding: '24px', background: '#111', borderRadius: '16px', border: '1px solid #222' }}>
+                                    <label style={labelStyle}>Logo / Symbol</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                        <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #333' }}>
+                                            {branding.logoImageUrl ? (
+                                                <img src={branding.logoImageUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                            ) : (
+                                                <Target size={32} />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="clickable" style={{ display: 'inline-block', padding: '12px 24px', background: '#222', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', border: '1px solid #333' }}>
+                                                CHANGE LOGO
+                                                <input type="file" style={{ display: 'none' }} onChange={async (e) => {
+                                                    if (e.target.files && e.target.files[0]) {
+                                                        const url = await storageAPI.uploadImage(e.target.files[0], 'general');
+                                                        if (url) setBranding({ ...branding, logoImageUrl: url });
+                                                    }
+                                                }} />
+                                            </label>
+                                            {branding.logoImageUrl && (
+                                                <button onClick={() => setBranding({ ...branding, logoImageUrl: '' })} style={{ marginLeft: '12px', background: 'transparent', border: 'none', color: '#ff4444', fontSize: '13px', cursor: 'pointer' }}>Remove</button>
+                                            )}
+                                            <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>This logo will appear next to your name in the dashboard sidebar and on the main site.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                     <div>
                                         <label style={labelStyle}>Logo First Word</label>
@@ -522,29 +638,70 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
-                                    <div>
-                                        <label style={labelStyle}>🌙 Dark Mode: Background</label>
-                                        <div style={{ padding: '12px', background: branding.bgColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #333', minHeight: '40px' }} />
-                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', cursor: 'pointer' }} />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>🌙 Dark Mode: Accent</label>
-                                        <div style={{ padding: '12px', background: branding.accentColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #333', minHeight: '40px' }} />
-                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', cursor: 'pointer' }} />
-                                    </div>
-                                </div>
+                                <div style={{ marginTop: '32px' }}>
+                                    <label style={{ ...labelStyle, fontSize: '14px', color: '#fff' }}>Theme Colors</label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '16px' }}>
+                                        {/* Dark Mode Palette */}
+                                        <div style={{ padding: '24px', background: '#111', borderRadius: '20px', border: '1px solid #222' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366f1' }} />
+                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#666' }}>DEEP DARK MODE</span>
+                                            </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
-                                    <div>
-                                        <label style={labelStyle}>☀️ Light Mode: Background</label>
-                                        <div style={{ padding: '12px', background: branding.lightBgColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #ddd', minHeight: '40px' }} />
-                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', background: '#fff', cursor: 'pointer' }} />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>☀️ Light Mode: Accent</label>
-                                        <div style={{ padding: '12px', background: branding.lightAccentColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #ddd', minHeight: '40px' }} />
-                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', cursor: 'pointer' }} />
+                                            <div style={{ display: 'grid', gap: '20px' }}>
+                                                <div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                                        <span style={{ fontSize: '12px', color: '#888' }}>Background</span>
+                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#444' }}>{branding.bgColor.toUpperCase()}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                                                        <div style={{ flex: 1, height: '40px', background: branding.bgColor, borderRadius: '8px', border: '1px solid #333' }} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                                        <span style={{ fontSize: '12px', color: '#888' }}>Primary Accent</span>
+                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#444' }}>{branding.accentColor.toUpperCase()}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                                                        <div style={{ flex: 1, height: '40px', background: branding.accentColor, borderRadius: '8px', border: '1px solid #333' }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Light Mode Palette */}
+                                        <div style={{ padding: '24px', background: '#f5f5f5', borderRadius: '20px', border: '1px solid #ddd' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
+                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#999' }}>CLEAN LIGHT MODE</span>
+                                            </div>
+
+                                            <div style={{ display: 'grid', gap: '20px' }}>
+                                                <div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                                        <span style={{ fontSize: '12px', color: '#666' }}>Background</span>
+                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#bbb' }}>{branding.lightBgColor.toUpperCase()}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                                                        <div style={{ flex: 1, height: '40px', background: branding.lightBgColor, borderRadius: '8px', border: '1px solid #ddd' }} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                                        <span style={{ fontSize: '12px', color: '#666' }}>Primary Accent</span>
+                                                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#bbb' }}>{branding.lightAccentColor.toUpperCase()}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                                                        <div style={{ flex: 1, height: '40px', background: branding.lightAccentColor, borderRadius: '8px', border: '1px solid #ddd' }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

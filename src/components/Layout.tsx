@@ -19,7 +19,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         navCV: true,
         navPortfolio: true,
         navContact: true,
-        navGetInTouch: true
+        navGetInTouch: true,
+        logoImageUrl: ''
     });
 
     useEffect(() => {
@@ -50,7 +51,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             navCV: nc?.value !== 'false',
             navPortfolio: np?.value !== 'false',
             navContact: nco?.value !== 'false',
-            navGetInTouch: ng?.value !== 'false'
+            navGetInTouch: ng?.value !== 'false',
+            logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || ''
         });
     };
 
@@ -94,12 +96,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     width: '100%'
                 }}
             >
-                <div className="logo clickable" style={{ pointerEvents: 'auto', width: '120px' }}>
-                    <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
-                            <text x="0" y="15" fontFamily="var(--font-display)" fontSize="16" fontWeight="900" fill="currentColor">{branding.logoText1}</text>
-                            <text x="0" y="32" fontFamily="var(--font-display)" fontSize="16" fontWeight="900" fill="currentColor">{branding.logoText2}</text>
-                        </svg>
+                <div className="logo clickable" style={{ pointerEvents: 'auto', minWidth: '120px' }}>
+                    <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText1}</span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText2}</span>
+                        </div>
                     </NavLink>
                 </div>
 

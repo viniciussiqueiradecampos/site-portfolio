@@ -9,7 +9,8 @@ import {
     Menu,
     X
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { contentAPI } from '../lib/supabase';
 
 interface AdminLayoutProps {
     children: ReactNode;
@@ -17,6 +18,19 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const [logoUrl, setLogoUrl] = useState('');
+    const [logoText, setLogoText] = useState('ADMIN');
+
+    useEffect(() => {
+        const fetchBranding = async () => {
+            const url = await contentAPI.getByKey('general.logo_image_url');
+            const l1 = await contentAPI.getByKey('general.logo_text1');
+            const l2 = await contentAPI.getByKey('general.logo_text2');
+            if (url) setLogoUrl(url.value);
+            if (l1 || l2) setLogoText(`${l1?.value || ''} ${l2?.value || ''}`.trim() || 'ADMIN');
+        };
+        fetchBranding();
+    }, []);
 
     const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
@@ -44,10 +58,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 zIndex: 100
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', padding: '0 10px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', flexShrink: 0 }} />
+                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: logoUrl ? 'transparent' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {logoUrl ? <img src={logoUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : null}
+                    </div>
                     {isSidebarOpen && (
-                        <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700 }}>
-                            ADMIN
+                        <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 700, textTransform: 'uppercase' }}>
+                            {logoText}
                         </span>
                     )}
                 </div>
@@ -72,8 +88,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                                 justifyContent: isSidebarOpen ? 'flex-start' : 'center'
                             })}
                         >
-                            <item.icon size={20} />
-                            {isSidebarOpen && <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px' }}>{item.label}</span>}
+                            <item.icon size={18} />
+                            {isSidebarOpen && <span style={{ fontFamily: 'var(--font-display)', fontSize: '10px', fontWeight: '900', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{item.label}</span>}
                         </NavLink>
                     ))}
                 </nav>

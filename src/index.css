@@ -79,12 +79,27 @@ h2,
 h3,
 h4,
 h5,
-.nav-link,
-.menu-link,
-nav ul li a,
 .logo {
   font-family: var(--font-display) !important;
   text-transform: uppercase;
+}
+
+.nav-link,
+.menu-link,
+nav ul li a {
+  font-family: var(--font-display) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  /* Increased spacing for better legibility */
+  font-weight: 900;
+  font-size: 13px;
+  /* Slightly smaller to accommodate more spacing */
+}
+
+.mobile-link {
+  font-family: var(--font-display) !important;
+  letter-spacing: 0.4em;
+  /* Even more spacing for mobile impact */
 }
 
 @media (pointer: fine) {
@@ -268,8 +283,8 @@ nav ul li a,
   }
 
   .hero-section {
-    height: 100vh !important;
-    overflow: hidden;
+    min-height: 100vh;
+    /* Removed restrictive overflow to allow scroll */
   }
 
   .hero-section .sticky-wrapper {
