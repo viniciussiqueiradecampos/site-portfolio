@@ -475,6 +475,31 @@ export default function AdminDashboard() {
                                     <textarea placeholder="Small Description" value={heroDesc} onChange={e => setHeroDesc(e.target.value)} rows={2} style={modalInputStyle} />
                                 </div>
                             </div>
+
+                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
+                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)' }}>Storytelling (Who's this for?)</h3>
+                                <div style={{ display: 'grid', gap: '24px' }}>
+                                    <div>
+                                        <label style={labelStyle}>Main Big Text (Who's this for? ...)</label>
+                                        <textarea placeholder="The words that appear as you scroll" value={storyText} onChange={e => setStoryText(e.target.value)} rows={4} style={modalInputStyle} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Pitch Description (Text below)</label>
+                                        <textarea placeholder="The paragraph that appears after scrolling" value={pitchDesc} onChange={e => setPitchDesc(e.target.value)} rows={4} style={modalInputStyle} />
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                        <div>
+                                            <label style={labelStyle}>CTA Button Text</label>
+                                            <input placeholder="Let's Work Together" value={pitchBtnText} onChange={e => setPitchBtnText(e.target.value)} style={modalInputStyle} />
+                                        </div>
+                                        <div>
+                                            <label style={labelStyle}>CTA Button Link</label>
+                                            <input placeholder="#contact" value={pitchBtnLink} onChange={e => setPitchBtnLink(e.target.value)} style={modalInputStyle} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button onClick={saveContent} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '800' }}>PUBLISH CHANGES</button>
                         </div>
                     )}
@@ -635,7 +660,7 @@ export default function AdminDashboard() {
                                             <button onClick={() => setEditingProject({ ...editingProject, gallery_images: (editingProject.gallery_images || []).filter((_, i) => i !== idx) })} style={{ position: 'absolute', top: '5px', right: '5px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
                                         </div>
                                     ))}
-                                    {editingProject.gallery_videos?.map((url, idx) => (
+                                    {editingProject.gallery_videos?.map((_, idx) => (
                                         <div key={`v-${idx}`} style={{ position: 'relative', aspectRatio: '1/1', background: '#111', borderRadius: '10px', overflow: 'hidden', border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Video color="var(--accent-color)" size={32} />
                                             <button onClick={() => setEditingProject({ ...editingProject, gallery_videos: (editingProject.gallery_videos || []).filter((_, i) => i !== idx) })} style={{ position: 'absolute', top: '5px', right: '5px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>

@@ -182,11 +182,13 @@ nav ul li a,
   scroll-snap-align: start;
 }
 
-.home-project-card:hover .card-hover-overlay {
+.home-project-card:hover .card-hover-overlay,
+.project-card:hover .card-hover-overlay {
   opacity: 1 !important;
 }
 
-.home-project-card:hover .project-image-wrapper img {
+.home-project-card:hover .project-image-wrapper img,
+.project-card:hover .project-image-wrapper img {
   transform: scale(1.05);
 }
 

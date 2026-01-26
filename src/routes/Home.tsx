@@ -105,14 +105,20 @@ export default function Home() {
         offset: ["start start", "end end"]
     });
 
-    const [activeProjectIndex, setActiveProjectIndex] = useState(0);
+    const [showPitch, setShowPitch] = useState(false);
+
+    useEffect(() => {
+        const unsubscribe = storyProgress.on("change", (latest) => {
+            setShowPitch(latest > 0.8);
+        });
+        return () => unsubscribe();
+    }, [storyProgress]);
 
     const handleCarouselScroll = () => {
         if (scrollContainerRef.current) {
             const { scrollLeft } = scrollContainerRef.current;
             const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
             const index = Math.round(scrollLeft / scrollAmount);
-            setActiveProjectIndex(index);
         }
     };
 
@@ -219,8 +225,8 @@ export default function Home() {
                             justifyContent: 'center',
                             gap: '15px',
                             transition: 'all 0.5s ease',
-                            opacity: storyProgress > 0.8 ? 0.3 : 1, // Soften the big text when content below appears
-                            transform: `translateY(${storyProgress > 0.8 ? '-20px' : '0'})`
+                            opacity: showPitch ? 0.3 : 1, // Soften the big text when content below appears
+                            transform: `translateY(${showPitch ? '-20px' : '0'})`
                         }}>
                             {storyWords.map((word, i) => {
                                 const step = 0.6 / storyWords.length;
@@ -246,7 +252,7 @@ export default function Home() {
 
                         {/* FADE IN PITCH CONTENT - DELAYED UNTIL SCROLLY WORDS FINISH */}
                         <AnimatePresence>
-                            {storyProgress > 0.8 && (
+                            {showPitch && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 30 }}
                                     animate={{ opacity: 1, y: 0 }}

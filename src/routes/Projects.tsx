@@ -12,6 +12,13 @@ export default function Projects() {
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [activeTag, setActiveTag] = useState('ALL');
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         loadProjects();
@@ -132,7 +139,7 @@ export default function Projects() {
 
                 <div className="projects-grid" style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
                     gap: '40px'
                 }}>
                     <AnimatePresence mode="popLayout">
