@@ -110,7 +110,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
                 <nav className="desktop-nav" style={{ pointerEvents: 'auto' }}>
                     <ul style={{ display: 'flex', gap: '40px', listStyle: 'none', margin: 0, padding: 0 }}>
-                        {branding.navHome && <li><NavLink to="/" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>HOME</NavLink></li>}
+                        {branding.navHome && (
+                            <li>
+                                <NavLink
+                                    to="/"
+                                    onClick={(e) => {
+                                        if (window.location.pathname === '/') {
+                                            e.preventDefault();
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }
+                                    }}
+                                    className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}
+                                >
+                                    HOME
+                                </NavLink>
+                            </li>
+                        )}
                         {branding.navCV && <li><NavLink to="/cv" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>CV</NavLink></li>}
                         {branding.navPortfolio && <li><NavLink to="/projects" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>PORTFOLIO</NavLink></li>}
                         {branding.navBlog && <li><NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>BLOG</NavLink></li>}

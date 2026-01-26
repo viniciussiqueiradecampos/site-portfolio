@@ -419,12 +419,13 @@ export default function Home() {
                                         <div className="project-tags-container" style={{
                                             display: 'flex',
                                             gap: '10px',
-                                            flexWrap: isMobile ? 'nowrap' : 'wrap',
-                                            overflowX: isMobile ? 'auto' : 'visible',
-                                            paddingBottom: isMobile ? '10px' : '0',
+                                            flexWrap: 'nowrap',
+                                            overflowX: 'auto',
+                                            paddingBottom: '5px',
                                             width: '100%',
                                             msOverflowStyle: 'none',
-                                            scrollbarWidth: 'none'
+                                            scrollbarWidth: 'none',
+                                            WebkitOverflowScrolling: 'touch'
                                         }}>
                                             {item.tags?.map(tag => (
                                                 <RevealText key={tag}>

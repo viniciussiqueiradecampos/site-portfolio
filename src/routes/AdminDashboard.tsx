@@ -204,7 +204,11 @@ export default function AdminDashboard() {
             await loadBlog();
             setEditingPost(null);
             setMessage('✅ Post saved!');
-        } catch (err) { setMessage('❌ Error.'); }
+        } catch (err: any) {
+            console.error('Save error:', err);
+            alert('Error saving post: ' + err.message);
+            setMessage('❌ Error.');
+        }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
