@@ -302,8 +302,10 @@ export default function AdminDashboard() {
                 description: editingProject.description || '',
                 image_url: editingProject.image_url || '',
                 tags: editingProject.tags || [],
-                gallery_images: editingProject.gallery_images || [],
-                gallery_videos: editingProject.gallery_videos || [],
+                gallery_images: [
+                    ...(editingProject.gallery_images || []),
+                    ...(editingProject.gallery_videos || [])
+                ],
                 live_url: editingProject.live_url || '',
                 button_text: editingProject.button_text || '',
                 order_index: editingProject.order_index || 0,
@@ -554,6 +556,7 @@ export default function AdminDashboard() {
                                                 <Tooltip
                                                     contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
                                                     itemStyle={{ color: 'var(--accent-color)' }}
+                                                    labelStyle={{ color: '#fff' }}
                                                 />
                                                 <Bar dataKey="count" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
                                             </BarChart>
@@ -582,6 +585,8 @@ export default function AdminDashboard() {
                                                 </Pie>
                                                 <Tooltip
                                                     contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
+                                                    itemStyle={{ color: '#fff' }}
+                                                    labelStyle={{ color: '#fff' }}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>
@@ -600,6 +605,7 @@ export default function AdminDashboard() {
                                             <Tooltip
                                                 contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
                                                 itemStyle={{ color: 'var(--accent-color)' }}
+                                                labelStyle={{ color: '#fff' }}
                                             />
                                             <Line type="monotone" dataKey="count" stroke="var(--accent-color)" strokeWidth={3} dot={{ fill: 'var(--accent-color)', r: 4 }} activeDot={{ r: 6 }} />
                                         </LineChart>
