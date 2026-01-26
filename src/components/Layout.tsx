@@ -180,7 +180,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             zIndex: 2000,
                             display: 'flex',
                             flexDirection: 'column',
-                            padding: '30px'
+                            padding: '60px 40px',
+                            alignItems: 'flex-end',
+                            textAlign: 'right'
                         }}
                     >
                         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', marginBottom: '60px' }}>
@@ -188,10 +190,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 <X size={40} />
                             </button>
                         </div>
-                        <nav style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '30px', width: '100%' }}>
-                            {branding.navHome && <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={{ fontSize: '32px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>HOME</NavLink>}
-                            {branding.navCV && <NavLink onClick={toggleMenu} to="/cv" className="mobile-link" style={{ fontSize: '32px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>CV</NavLink>}
-                            {branding.navPortfolio && <NavLink onClick={toggleMenu} to="/projects" className="mobile-link" style={{ fontSize: '32px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}>PORTFOLIO</NavLink>}
+                        <nav style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '30px', width: '100%', textAlign: 'right' }}>
+                            {branding.navHome && <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>HOME</NavLink>}
+                            {branding.navCV && <NavLink onClick={toggleMenu} to="/cv" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>CV</NavLink>}
+                            {branding.navPortfolio && <NavLink onClick={toggleMenu} to="/projects" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>PORTFOLIO</NavLink>}
                             {branding.navGetInTouch && (
                                 <a
                                     href="/#contact"
@@ -206,7 +208,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                         }, 300);
                                     }}
                                     className="mobile-link get-in-touch-mobile"
-                                    style={{ fontSize: '40px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)' }}
+                                    style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right', whiteSpace: 'nowrap' }}
                                 >
                                     GET IN TOUCH
                                 </a>

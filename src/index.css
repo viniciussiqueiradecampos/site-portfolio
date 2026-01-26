@@ -347,14 +347,15 @@ nav ul li a {
 
   /* Mobile Menu Styles */
   .mobile-nav-overlay {
-    align-items: flex-start !important;
+    align-items: flex-end !important;
     padding: 60px 40px !important;
+    text-align: right !important;
   }
 
   .mobile-link {
-    font-size: 28px !important;
-    /* Reduced from 40px */
-    text-align: left !important;
+    font-size: 24px !important;
+    letter-spacing: 0 !important;
+    text-align: right !important;
   }
 
   .get-in-touch-mobile {
@@ -412,8 +413,7 @@ nav ul li a {
 
   .project-tags-container {
     gap: 8px !important;
-    flex-wrap: nowrap !important;
-    overflow: hidden;
+    flex-wrap: wrap !important;
   }
 
   /* CV Page Hero */

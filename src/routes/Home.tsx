@@ -207,7 +207,7 @@ export default function Home() {
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
-            <section ref={heroRef} className="hero-section" style={{ height: '300vh', position: 'relative' }}>
+            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? '180vh' : '300vh', position: 'relative' }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
@@ -270,7 +270,7 @@ export default function Home() {
             </section>
 
             {/* SECTION 2: STORYTELLING */}
-            <section ref={storyRef} className="story-section" style={{ height: '350vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
+            <section ref={storyRef} className="story-section" style={{ height: isMobile ? '250vh' : '350vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 'var(--header-height)', height: 'calc(100vh - var(--header-height))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -298,10 +298,11 @@ export default function Home() {
                                         start={start}
                                         end={end}
                                         style={{
-                                            fontSize: 'clamp(40px, 5vw, 90px)',
+                                            fontSize: isMobile ? 'clamp(30px, 8vw, 42px)' : 'clamp(40px, 5vw, 90px)',
                                             fontWeight: 900,
                                             fontFamily: 'var(--font-display)',
-                                            lineHeight: 1.1
+                                            lineHeight: 1.1,
+                                            textAlign: isMobile ? 'center' : 'left'
                                         }}
                                     />
                                 );
@@ -328,14 +329,14 @@ export default function Home() {
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '15px',
-                                        padding: '18px 40px',
+                                        padding: isMobile ? '14px 30px' : '18px 40px',
                                         border: '1px solid var(--accent-color)',
                                         borderRadius: '100px',
                                         color: 'var(--accent-color)',
                                         textDecoration: 'none',
                                         fontFamily: 'var(--font-display)',
-                                        fontSize: '14px',
-                                        letterSpacing: '2px'
+                                        fontSize: isMobile ? '12px' : '14px',
+                                        letterSpacing: '1px'
                                     }}>
                                         {pitchData.btnText} →
                                     </a>
@@ -349,10 +350,32 @@ export default function Home() {
             {/* SECTION 3: PORTFOLIO */}
             <section id="portfolio" className="portfolio-section" style={{ padding: '60px 0 120px', background: 'var(--bg-color)', position: 'relative', zIndex: 10 }}>
                 <div className="container" style={{ maxWidth: '100%', padding: '0 5%', position: 'relative' }}>
-                    <div className="portfolio-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)', width: '100%' }}>
-                        <RevealText><h2 style={{ fontSize: 'clamp(40px, 8vw, 80px)', margin: 0 }}>PORTFOLIO</h2></RevealText>
-                        <Link to="/projects" className="clickable" style={{ fontSize: '20px', textDecoration: 'none', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span className="view-all-text">VIEW ALL</span> <span style={{ fontSize: '24px' }}>→</span>
+                    <div className="portfolio-title-row" style={{
+                        display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        justifyContent: 'space-between',
+                        alignItems: isMobile ? 'center' : 'flex-end',
+                        marginBottom: isMobile ? '40px' : '80px',
+                        paddingBottom: '20px',
+                        borderBottom: isMobile ? 'none' : '1px solid var(--border-color)',
+                        width: '100%',
+                        gap: isMobile ? '20px' : '0'
+                    }}>
+                        <RevealText><h2 style={{ fontSize: isMobile ? 'clamp(40px, 8vw, 50px)' : 'clamp(40px, 8vw, 80px)', margin: 0, textAlign: isMobile ? 'center' : 'left' }}>PORTFOLIO</h2></RevealText>
+                        <Link to="/projects" className="clickable" style={{
+                            padding: '10px 30px',
+                            background: '#fff',
+                            color: '#000',
+                            borderRadius: '100px',
+                            textDecoration: 'none',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            fontFamily: 'var(--font-display)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            VIEW ALL
                         </Link>
                     </div>
 
