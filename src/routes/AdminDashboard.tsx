@@ -30,7 +30,7 @@ import {
 } from 'recharts';
 
 const modalInputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '10px', whiteSpace: 'pre-wrap' as any };
-const labelStyle = { display: 'block', fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: '500' };
+const labelStyle = { display: 'block', fontSize: '13px', color: '#A0A0A0', marginBottom: '8px', fontWeight: '500' };
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -302,10 +302,10 @@ export default function AdminDashboard() {
                 description: editingProject.description || '',
                 image_url: editingProject.image_url || '',
                 tags: editingProject.tags || [],
-                gallery_images: [
-                    ...(editingProject.gallery_images || []),
-                    ...(editingProject.gallery_videos || [])
-                ],
+                gallery_images: editingProject.gallery_images || [],
+                gallery_videos: editingProject.gallery_videos || [],
+                live_url: editingProject.live_url || '',
+                button_text: editingProject.button_text || '',
                 order_index: editingProject.order_index || 0
             };
 
@@ -472,7 +472,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                     {!isDesktop && (
-                        <button onClick={() => setIsMobileNavOpen(false)} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>
+                        <button onClick={() => setIsMobileNavOpen(false)} style={{ background: 'transparent', border: 'none', color: '#A0A0A0', cursor: 'pointer' }}>
                             <X size={20} />
                         </button>
                     )}
@@ -487,7 +487,7 @@ export default function AdminDashboard() {
                         { id: 'blog', label: 'Blog', icon: BookOpen },
                         { id: 'settings', label: 'Settings', icon: Settings },
                     ].map(item => (
-                        <button key={item.id} onClick={() => setActiveTab(item.id as any)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 12px', background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent', border: 'none', borderRadius: '10px', color: activeTab === item.id ? '#fff' : '#666', cursor: 'pointer', textAlign: 'left', transition: '0.2s' }}>
+                        <button key={item.id} onClick={() => setActiveTab(item.id as any)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 12px', background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent', border: 'none', borderRadius: '10px', color: activeTab === item.id ? '#fff' : '#A0A0A0', cursor: 'pointer', textAlign: 'left', transition: '0.2s' }}>
                             <item.icon size={18} />
                             <span style={{ fontSize: '10px', fontWeight: '900', fontFamily: 'var(--font-display)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{item.label}</span>
                         </button>
@@ -504,7 +504,7 @@ export default function AdminDashboard() {
                                 <Menu size={24} />
                             </button>
                         )}
-                        <h2 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: '#444', letterSpacing: '1px' }}>{activeTab} Workspace</h2>
+                        <h2 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: '#999', letterSpacing: '1px' }}>{activeTab} Workspace</h2>
                     </div>
                 </header>
 
@@ -520,17 +520,17 @@ export default function AdminDashboard() {
                                 <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
                                     <Globe size={20} color="var(--accent-color)" />
                                     <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.pageViews}</div>
-                                    <div style={{ color: '#666', fontSize: '12px' }}>Total Page Views</div>
+                                    <div style={{ color: '#A0A0A0', fontSize: '12px' }}>Total Page Views</div>
                                 </div>
                                 <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
                                     <Download size={20} color="var(--accent-color)" />
                                     <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.cvDownloads}</div>
-                                    <div style={{ color: '#666', fontSize: '12px' }}>CV Downloads</div>
+                                    <div style={{ color: '#A0A0A0', fontSize: '12px' }}>CV Downloads</div>
                                 </div>
                                 <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
                                     <Activity size={20} color="var(--accent-color)" />
                                     <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.projectClicks}</div>
-                                    <div style={{ color: '#666', fontSize: '12px' }}>Project Interactions</div>
+                                    <div style={{ color: '#A0A0A0', fontSize: '12px' }}>Project Interactions</div>
                                 </div>
                             </div>
 
@@ -616,7 +616,7 @@ export default function AdminDashboard() {
                                         style={{
                                             display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px',
                                             background: cvSubTab === tab.id ? 'var(--accent-color)' : 'transparent',
-                                            color: cvSubTab === tab.id ? '#000' : '#666', border: 'none', borderRadius: '10px',
+                                            color: cvSubTab === tab.id ? '#000' : '#A0A0A0', border: 'none', borderRadius: '10px',
                                             fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap'
                                         }}
                                     >
@@ -631,7 +631,7 @@ export default function AdminDashboard() {
                                     <div style={{ marginBottom: '32px', padding: '24px', background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a' }}>
                                         <label style={labelStyle}>CV DOCUMENT (PDF)</label>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                            <div style={{ padding: '15px 25px', background: '#111', borderRadius: '12px', border: '1px solid #333', fontSize: '12px', color: cvProfile.pdf_url ? 'var(--accent-color)' : '#444', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            <div style={{ padding: '15px 25px', background: '#111', borderRadius: '12px', border: '1px solid #333', fontSize: '12px', color: cvProfile.pdf_url ? 'var(--accent-color)' : '#999', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {cvProfile.pdf_url ? cvProfile.pdf_url.split('/').pop() : 'No PDF uploaded'}
                                             </div>
                                             <label className="clickable" style={{ padding: '15px 25px', background: '#fff', color: '#000', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
@@ -674,12 +674,12 @@ export default function AdminDashboard() {
                                             <div key={s.id} style={{ background: '#111', padding: '24px', borderRadius: '16px', border: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <button disabled={idx === 0 || saving} onClick={() => reorderCV(idx, 'up')} style={{ background: 'transparent', border: 'none', color: idx === 0 ? '#222' : '#666', cursor: 'pointer' }}><ArrowUp size={14} /></button>
-                                                        <button disabled={idx === filteredCV.length - 1 || saving} onClick={() => reorderCV(idx, 'down')} style={{ background: 'transparent', border: 'none', color: idx === filteredCV.length - 1 ? '#222' : '#666', cursor: 'pointer' }}><ArrowDown size={14} /></button>
+                                                        <button disabled={idx === 0 || saving} onClick={() => reorderCV(idx, 'up')} style={{ background: 'transparent', border: 'none', color: idx === 0 ? '#333' : '#A0A0A0', cursor: 'pointer' }}><ArrowUp size={14} /></button>
+                                                        <button disabled={idx === filteredCV.length - 1 || saving} onClick={() => reorderCV(idx, 'down')} style={{ background: 'transparent', border: 'none', color: idx === filteredCV.length - 1 ? '#333' : '#A0A0A0', cursor: 'pointer' }}><ArrowDown size={14} /></button>
                                                     </div>
                                                     <div>
                                                         <h4 style={{ margin: '0 0 5px 0' }}>{s.title}</h4>
-                                                        <p style={{ margin: 0, fontSize: '13px', color: '#888' }}>{s.subtitle} • {s.date_range}</p>
+                                                        <p style={{ margin: 0, fontSize: '13px', color: '#C0C0C0' }}>{s.subtitle} • {s.date_range}</p>
                                                     </div>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -761,7 +761,7 @@ export default function AdminDashboard() {
                                         <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <div>
                                                 <span style={{ fontSize: '14px', fontWeight: '600', display: 'block' }}>{post.title}</span>
-                                                <span style={{ fontSize: '11px', color: '#666' }}>{post.category} • {new Date(post.created_at).toLocaleDateString()}</span>
+                                                <span style={{ fontSize: '11px', color: '#A0A0A0' }}>{post.category} • {new Date(post.created_at).toLocaleDateString()}</span>
                                             </div>
                                             <div style={{ display: 'flex', gap: '8px' }}>
                                                 <button onClick={() => setEditingPost(post)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
@@ -874,7 +874,7 @@ export default function AdminDashboard() {
                                     <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addBlogTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
-                                    {allBlogTags.slice(0, 5).map(tag => <button key={tag} onClick={() => addBlogTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#888', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>)}
+                                    {allBlogTags.slice(0, 5).map(tag => <button key={tag} onClick={() => addBlogTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>)}
                                 </div>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
@@ -911,7 +911,7 @@ export default function AdminDashboard() {
                             <h3 style={{ fontSize: '28px', fontWeight: '900' }}>EDIT PROJECT</h3>
                             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                 <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
-                                <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#666' }}><X size={24} /></button>
+                                <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#A0A0A0' }}><X size={24} /></button>
                             </div>
                         </div>
                         <div style={{ display: 'grid', gap: '24px' }}>
@@ -924,9 +924,88 @@ export default function AdminDashboard() {
                                 <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden' }}>
                                     {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={24} color="#333" />}
                                 </div>
-                                <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', cursor: 'pointer' }}>UPLOAD CAPA <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} /></label>
+                                <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333' }}>
+                                    UPLOAD CAPA
+                                    <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} />
+                                </label>
                             </div>
+
+                            {/* GALLERY SECTION */}
+                            <div style={{ border: '1px solid #222', padding: '24px', borderRadius: '16px', background: '#0a0a0a' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                    <h4 style={{ fontSize: '14px', fontWeight: 'bold' }}>PROJECT GALLERY (IMAGES & VIDEOS)</h4>
+                                    <label className="clickable" style={{ padding: '8px 16px', background: 'var(--accent-color)', color: '#000', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                                        + ADD MEDIA
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*,video/*"
+                                            style={{ display: 'none' }}
+                                            onChange={async (e) => {
+                                                if (e.target.files?.length) {
+                                                    const files = Array.from(e.target.files);
+                                                    const newImages = [...(editingProject.gallery_images || [])];
+                                                    const newVideos = [...(editingProject.gallery_videos || [])];
+
+                                                    for (const file of files) {
+                                                        const url = await storageAPI.uploadImage(file, 'projects');
+                                                        if (url) {
+                                                            if (file.type.startsWith('video')) newVideos.push(url);
+                                                            else newImages.push(url);
+                                                        }
+                                                    }
+                                                    setEditingProject({ ...editingProject, gallery_images: newImages, gallery_videos: newVideos });
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                                    {/* Gallery Images */}
+                                    {editingProject.gallery_images?.map((url, i) => (
+                                        <div key={`img-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222' }}>
+                                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <button
+                                                onClick={() => {
+                                                    const news = [...editingProject.gallery_images!];
+                                                    news.splice(i, 1);
+                                                    setEditingProject({ ...editingProject, gallery_images: news });
+                                                }}
+                                                style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
+                                            >
+                                                <X size={10} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {/* Gallery Videos */}
+                                    {editingProject.gallery_videos?.map((url, i) => (
+                                        <div key={`vid-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222', background: '#000' }}>
+                                            <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                                                <Activity size={16} color="var(--accent-color)" />
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const news = [...editingProject.gallery_videos!];
+                                                    news.splice(i, 1);
+                                                    setEditingProject({ ...editingProject, gallery_videos: news });
+                                                }}
+                                                style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
+                                            >
+                                                <X size={10} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <textarea value={editingProject.description || ''} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} rows={6} style={modalInputStyle} />
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <input placeholder="Live Link (URL)" value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={modalInputStyle} />
+                                <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={modalInputStyle} />
+                            </div>
                             <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
                         </div>
                     </div>

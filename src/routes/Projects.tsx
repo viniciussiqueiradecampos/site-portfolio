@@ -177,7 +177,7 @@ export default function Projects() {
                                         <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
                                     </div>
 
-                                    <img src={p.image_url} alt={p.title} style={{
+                                    <img src={p.image_url} alt={p.title} loading="lazy" decoding="async" style={{
                                         width: '100%', height: '100%', objectFit: 'cover',
                                         transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
                                         position: 'relative', zIndex: 1

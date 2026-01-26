@@ -155,6 +155,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <button
                         onClick={toggleTheme}
                         className="clickable"
+                        aria-label="Toggle Theme"
                         style={{
                             background: 'transparent',
                             border: '1px solid var(--border-color)',
@@ -171,6 +172,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <button
                         className="mobile-menu-toggle clickable"
                         onClick={toggleMenu}
+                        aria-label="Open Mobile Menu"
                         style={{
                             background: 'transparent',
                             border: 'none',
@@ -205,7 +207,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         }}
                     >
                         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', marginBottom: '60px' }}>
-                            <button onClick={toggleMenu} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}>
+                            <button
+                                onClick={toggleMenu}
+                                aria-label="Close Mobile Menu"
+                                style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}
+                            >
                                 <X size={40} />
                             </button>
                         </div>

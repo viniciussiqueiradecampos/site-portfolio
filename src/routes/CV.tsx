@@ -68,6 +68,7 @@ export default function CV() {
                         rel="noreferrer"
                         download
                         onClick={handleDownloadClick}
+                        aria-label="Download CV as PDF"
                         className="clickable"
                         style={{
                             padding: '12px 24px',

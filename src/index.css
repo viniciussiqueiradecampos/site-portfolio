@@ -1,18 +1,18 @@
-/* Fonts Setup */
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Jost:wght@300;400;500;700&display=swap');
+/* Fonts Setup - Optimized in index.html */
 
 @font-face {
   font-family: 'Akira Expanded';
   src: local('Akira Expanded'), local('Akira-Expanded'), url('https://fonts.cdnfonts.com/s/37506/Akira%20Expanded%20Demo.woff') format('woff');
   font-weight: normal;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
   /* Force wait for font */
 }
 
 @font-face {
   font-family: 'Futura Md BT';
   src: local('Futura Md BT'), local('Futura-Md-BT'), url('https://fonts.cdnfonts.com/s/15830/FuturaMdBTMedium.woff') format('woff');
+  font-display: swap;
 }
 
 :root {

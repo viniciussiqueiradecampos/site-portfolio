@@ -83,21 +83,43 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                         }}
                     >
                         {/* CLOSE BUTTON */}
-                        <button onClick={onClose} style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 100, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '44px', height: '44px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={20} /></button>
-
+                        <button
+                            onClick={onClose}
+                            aria-label="Close Project Details"
+                            style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 100, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '44px', height: '44px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        >
+                            <X size={20} />
+                        </button>
                         {/* MEDIA LEFT */}
                         <div style={{ flex: isMobile ? 'none' : 1.6, height: isMobile ? '40%' : '100%', position: 'relative', background: '#000' }}>
                             {allMedia[currentMediaIndex].type === 'image' ? (
-                                <img src={allMedia[currentMediaIndex].url} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img
+                                    src={allMedia[currentMediaIndex].url}
+                                    alt={project.title}
+                                    loading="lazy"
+                                    decoding="async"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
                             ) : (
                                 <video src={allMedia[currentMediaIndex].url} controls autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             )}
 
                             {hasMultipleMedia && (
                                 <>
-                                    <button onClick={prevMedia} style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '48px', height: '48px', color: '#fff', cursor: 'pointer' }}><ChevronLeft size={24} /></button>
-                                    <button onClick={nextMedia} style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '48px', height: '48px', color: '#fff', cursor: 'pointer' }}><ChevronRight size={24} /></button>
-                                    <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', padding: '6px 16px', borderRadius: '100px', fontSize: '11px', color: '#fff' }}>
+                                    <button
+                                        onClick={prevMedia}
+                                        aria-label="Previous Media"
+                                        style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '48px', height: '48px', color: '#fff', cursor: 'pointer' }}
+                                    >
+                                        <ChevronLeft size={24} />
+                                    </button>
+                                    <button
+                                        onClick={nextMedia}
+                                        aria-label="Next Media"
+                                        style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '48px', height: '48px', color: '#fff', cursor: 'pointer' }}
+                                    >
+                                        <ChevronRight size={24} />
+                                    </button>                                    <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', padding: '6px 16px', borderRadius: '100px', fontSize: '11px', color: '#fff' }}>
                                         {currentMediaIndex + 1} / {allMedia.length}
                                     </div>
                                 </>

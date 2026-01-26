@@ -398,7 +398,7 @@ export default function Home() {
                                     position: 'relative'
                                 }}>
                                     <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
-                                        <img src={item.image_url} alt={item.image_alt || item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={item.image_url} alt={item.image_alt || item.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 
                                         {/* HOVER OVERLAY WITH EYE ICON */}
                                         <div className="card-hover-overlay" style={{

@@ -13,6 +13,7 @@ import AdminDashboard from './routes/AdminDashboard';
 import TestSupabase from './routes/TestSupabase';
 import Blog from './routes/Blog';
 import Article from './routes/Article';
+import NotFound from './routes/NotFound';
 import ScrollToTop from './ScrollToTop';
 
 // Custom Cursor Component
@@ -93,6 +94,7 @@ function AppContent() {
         <Route path="/projects" element={<Layout><Projects /></Layout>} />
         <Route path="/blog" element={<Layout><Blog /></Layout>} />
         <Route path="/blog/:slug" element={<Layout><Article /></Layout>} />
+        <Route path="*" element={<Layout><NotFound /></Layout>} />
       </Routes>
     </>
   );

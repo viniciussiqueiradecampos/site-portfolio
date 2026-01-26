@@ -44,7 +44,11 @@ export default function Article() {
         >
             <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%' }}>
 
-                <Link to="/blog" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', textDecoration: 'none', marginBottom: '40px', fontSize: '14px', fontWeight: 'bold' }}>
+                <Link
+                    to="/blog"
+                    aria-label="Back to Stories"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', textDecoration: 'none', marginBottom: '40px', fontSize: '14px', fontWeight: 'bold' }}
+                >
                     <ArrowLeft size={16} /> BACK TO STORIES
                 </Link>
 
@@ -75,6 +79,8 @@ export default function Article() {
                         <img
                             src={post.image_url}
                             alt={post.title}
+                            loading="lazy"
+                            decoding="async"
                             style={{
                                 width: '100%',
                                 height: '100%',

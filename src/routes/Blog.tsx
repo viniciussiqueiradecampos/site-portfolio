@@ -100,7 +100,7 @@ export default function Blog() {
                                     background: '#111'
                                 }}>
                                     {post.image_url ? (
-                                        <img src={post.image_url} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={post.image_url} alt={post.title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     ) : (
                                         <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <BookOpen size={48} color="var(--border-color)" />
