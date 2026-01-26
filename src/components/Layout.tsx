@@ -20,6 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         navPortfolio: true,
         navContact: true,
         navGetInTouch: true,
+        navBlog: false,
         logoImageUrl: ''
     });
 
@@ -39,6 +40,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         const np = await contentAPI.getByKey('nav.portfolio');
         const nco = await contentAPI.getByKey('nav.contact');
         const ng = await contentAPI.getByKey('nav.get_in_touch');
+        const nb = await contentAPI.getByKey('nav.blog');
 
         setBranding({
             logoText1: l1?.value || 'VINICIUS',
@@ -52,6 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             navPortfolio: np?.value !== 'false',
             navContact: nco?.value !== 'false',
             navGetInTouch: ng?.value !== 'false',
+            navBlog: nb?.value === 'true',
             logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || ''
         });
     };
@@ -110,6 +113,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         {branding.navHome && <li><NavLink to="/" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>HOME</NavLink></li>}
                         {branding.navCV && <li><NavLink to="/cv" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>CV</NavLink></li>}
                         {branding.navPortfolio && <li><NavLink to="/projects" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>PORTFOLIO</NavLink></li>}
+                        {branding.navBlog && <li><NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>BLOG</NavLink></li>}
                         {branding.navGetInTouch && (
                             <li>
                                 <a

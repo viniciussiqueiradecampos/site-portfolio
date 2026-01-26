@@ -100,6 +100,18 @@ export interface CVSection {
     updated_at: string;
 }
 
+export interface BlogPost {
+    id: string;
+    title: string;
+    content: string;
+    image_url?: string;
+    category: string;
+    slug: string;
+    visible: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
 export const crmAPI = {
     async getAll(): Promise<CRMLead[]> {
         const { data, error } = await supabase
@@ -695,6 +707,76 @@ export const apiConfigAPI = {
 
         if (error) {
             console.error('Error updating API config:', error);
+            return false;
+        }
+        return true;
+    }
+};
+
+export const blogAPI = {
+    async getAll(): Promise<BlogPost[]> {
+        const { data, error } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching blog posts:', error);
+            return [];
+        }
+        return data || [];
+    },
+
+    async getBySlug(slug: string): Promise<BlogPost | null> {
+        const { data, error } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+
+        if (error) {
+            console.error('Error fetching blog post:', error);
+            return null;
+        }
+        return data;
+    },
+
+    async create(post: Omit<BlogPost, 'id' | 'created_at' | 'updated_at' | 'slug'>): Promise<BlogPost | null> {
+        const slug = post.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        const { data, error } = await supabase
+            .from('blog_posts')
+            .insert([{ ...post, slug }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating blog post:', error);
+            return null;
+        }
+        return data;
+    },
+
+    async update(id: string, updates: Partial<BlogPost>): Promise<boolean> {
+        const { error } = await supabase
+            .from('blog_posts')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating blog post:', error);
+            return false;
+        }
+        return true;
+    },
+
+    async delete(id: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('blog_posts')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting blog post:', error);
             return false;
         }
         return true;

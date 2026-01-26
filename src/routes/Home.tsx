@@ -416,7 +416,16 @@ export default function Home() {
                                 <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap', marginTop: '20px' }}>
                                     <div style={{ flex: 1, minWidth: '200px' }}>
                                         <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: '0 0 10px 0' }}>{item.title}</h3></RevealText>
-                                        <div className="project-tags-container" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                        <div className="project-tags-container" style={{
+                                            display: 'flex',
+                                            gap: '10px',
+                                            flexWrap: isMobile ? 'nowrap' : 'wrap',
+                                            overflowX: isMobile ? 'auto' : 'visible',
+                                            paddingBottom: isMobile ? '10px' : '0',
+                                            width: '100%',
+                                            msOverflowStyle: 'none',
+                                            scrollbarWidth: 'none'
+                                        }}>
                                             {item.tags?.map(tag => (
                                                 <RevealText key={tag}>
                                                     <div className="project-tag" style={{

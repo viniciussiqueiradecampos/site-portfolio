@@ -5,8 +5,10 @@ import {
     projectsAPI,
     cvAPI,
     analyticsAPI,
+    blogAPI,
     type Project,
-    type CVSection
+    type CVSection,
+    type BlogPost
 } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,7 +19,8 @@ import {
     Download,
     Target, Activity, Plus, X, Image as ImageIcon, Video,
     Briefcase, GraduationCap, Award, Star, Heart, Menu,
-    ArrowUp, ArrowDown
+    ArrowUp, ArrowDown,
+    BookOpen
 } from 'lucide-react';
 import { storageAPI } from '../lib/storage';
 import ProjectModal from '../components/ProjectModal';
@@ -35,7 +38,7 @@ export default function AdminDashboard() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-    const [activeTab, setActiveTab] = useState<'analytics' | 'content' | 'projects' | 'cv' | 'settings'>('analytics');
+    const [activeTab, setActiveTab] = useState<'analytics' | 'content' | 'projects' | 'cv' | 'blog' | 'settings'>('analytics');
     const [cvSubTab, setCvSubTab] = useState<'profile' | 'experience' | 'education' | 'skills' | 'certification' | 'hobbies'>('profile');
 
     // Analytics State
@@ -67,6 +70,10 @@ export default function AdminDashboard() {
     const [cvSections, setCvSections] = useState<CVSection[]>([]);
     const [editingCV, setEditingCV] = useState<CVSection | null>(null);
 
+    // Blog State
+    const [posts, setPosts] = useState<BlogPost[]>([]);
+    const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+
     // Settings State
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
@@ -85,6 +92,7 @@ export default function AdminDashboard() {
         navPortfolio: true,
         navContact: true,
         navGetInTouch: true,
+        navBlog: false,
         logoImageUrl: ''
     });
 
@@ -102,7 +110,8 @@ export default function AdminDashboard() {
             loadProjects(),
             loadCV(),
             loadSettings(),
-            loadStats()
+            loadStats(),
+            loadBlog()
         ]);
         setSaving(false);
     };
@@ -172,8 +181,31 @@ export default function AdminDashboard() {
             navPortfolio: (await contentAPI.getByKey('nav.portfolio'))?.value !== 'false',
             navContact: (await contentAPI.getByKey('nav.contact'))?.value !== 'false',
             navGetInTouch: (await contentAPI.getByKey('nav.get_in_touch'))?.value !== 'false',
+            navBlog: (await contentAPI.getByKey('nav.blog'))?.value === 'true',
             logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || ''
         });
+    };
+
+    const loadBlog = async () => {
+        const data = await blogAPI.getAll();
+        setPosts(data);
+    };
+
+    const savePost = async () => {
+        if (!editingPost) return;
+        setSaving(true);
+        try {
+            const { id, created_at, updated_at, slug, ...postData } = editingPost as any;
+            if (id && id !== 'new') {
+                await blogAPI.update(id, postData);
+            } else {
+                await blogAPI.create(postData);
+            }
+            await loadBlog();
+            setEditingPost(null);
+            setMessage('✅ Post saved!');
+        } catch (err) { setMessage('❌ Error.'); }
+        finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
     const handleLogout = async () => {
@@ -333,6 +365,7 @@ export default function AdminDashboard() {
                 contentAPI.update('nav.portfolio', String(branding.navPortfolio), 'nav'),
                 contentAPI.update('nav.contact', String(branding.navContact), 'nav'),
                 contentAPI.update('nav.get_in_touch', String(branding.navGetInTouch), 'nav'),
+                contentAPI.update('nav.blog', String(branding.navBlog), 'nav'),
                 contentAPI.update('general.logo_image_url', branding.logoImageUrl, 'general')
             ]);
             setMessage('✅ Settings saved!');
@@ -424,6 +457,7 @@ export default function AdminDashboard() {
                         { id: 'content', label: 'Home Page', icon: LayoutDashboard },
                         { id: 'projects', label: 'Portfolio', icon: FolderKanban },
                         { id: 'cv', label: 'Curriculum', icon: FileText },
+                        { id: 'blog', label: 'Blog', icon: BookOpen },
                         { id: 'settings', label: 'Settings', icon: Settings },
                     ].map(item => (
                         <button key={item.id} onClick={() => setActiveTab(item.id as any)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 12px', background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent', border: 'none', borderRadius: '10px', color: activeTab === item.id ? '#fff' : '#666', cursor: 'pointer', textAlign: 'left', transition: '0.2s' }}>
@@ -775,6 +809,7 @@ export default function AdminDashboard() {
                                         { id: 'navPortfolio', label: 'Portfolio Tab' },
                                         { id: 'navContact', label: 'Contact Section' },
                                         { id: 'navGetInTouch', label: 'Get In Touch' },
+                                        { id: 'navBlog', label: 'Blog Section' },
                                     ].map(toggle => (
                                         <label key={toggle.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                                             <input
@@ -790,6 +825,35 @@ export default function AdminDashboard() {
                             </div>
 
                             <button onClick={saveSettings} style={{ padding: '24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', fontSize: '16px' }}>SAVE GLOBAL CONFIGURATION</button>
+                        </div>
+                    )}
+
+                    {activeTab === 'blog' && (
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
+                                <h3>Blog Posts</h3>
+                                <button onClick={() => setEditingPost({ id: 'new', title: '', content: '', category: 'Design', visible: true } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW POST</button>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                                {posts.map(post => (
+                                    <div key={post.id} style={{ background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a', overflow: 'hidden' }}>
+                                        <div style={{ height: '180px', background: post.image_url ? `url(${post.image_url}) center/cover` : '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {!post.image_url && <BookOpen size={40} color="#222" />}
+                                        </div>
+                                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <span style={{ fontSize: '14px', fontWeight: '600', display: 'block' }}>{post.title}</span>
+                                                <span style={{ fontSize: '11px', color: '#666' }}>{post.category} • {new Date(post.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button onClick={() => setEditingPost(post)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                <button onClick={() => { if (confirm('Delete post?')) blogAPI.delete(post.id).then(loadBlog) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {posts.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px', color: '#333' }}>No blog posts found.</div>}
+                            </div>
                         </div>
                     )}
                 </main>
@@ -945,6 +1009,62 @@ export default function AdminDashboard() {
                         <input placeholder="Dates" value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={modalInputStyle} />
                         <textarea placeholder="Details" value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={4} style={modalInputStyle} />
                         <button onClick={saveCVSection} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: 'bold', width: '100%' }}>SAVE {editingCV.section_type.toUpperCase()}</button>
+                    </div>
+                </div>
+            )}
+
+            {editingPost && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '800px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px' }}>{editingPost.id === 'new' ? 'NEW BLOG POST' : 'EDIT POST'}</h3>
+                            <button onClick={() => setEditingPost(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={24} /></button>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '20px' }}>
+                            <div>
+                                <label style={labelStyle}>Post Image</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <div style={{ width: '150px', aspectRatio: '16/9', background: '#111', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222' }}>
+                                        {editingPost.image_url ? <img src={editingPost.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={24} color="#333" /></div>}
+                                    </div>
+                                    <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
+                                        UPLOAD IMAGE
+                                        <input type="file" onChange={async (e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                const url = await storageAPI.uploadImage(e.target.files[0], 'blog');
+                                                if (url) setEditingPost({ ...editingPost, image_url: url });
+                                            }
+                                        }} style={{ display: 'none' }} />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <input placeholder="Post Title" value={editingPost.title} onChange={e => setEditingPost({ ...editingPost, title: e.target.value })} style={modalInputStyle} />
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label style={labelStyle}>Category</label>
+                                    <input placeholder="e.g. Design, UI, News" value={editingPost.category} onChange={e => setEditingPost({ ...editingPost, category: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '25px' }}>
+                                    <input type="checkbox" checked={editingPost.visible} onChange={e => setEditingPost({ ...editingPost, visible: e.target.checked })} style={{ width: '20px', height: '20px' }} />
+                                    <label>Visible on Blog</label>
+                                </div>
+                            </div>
+
+                            <textarea
+                                placeholder="Post content (Markdown supported)..."
+                                value={editingPost.content}
+                                onChange={e => setEditingPost({ ...editingPost, content: e.target.value })}
+                                rows={12}
+                                style={{ ...modalInputStyle, fontSize: '16px', lineHeight: '1.6' }}
+                            />
+
+                            <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', fontSize: '14px', fontFamily: 'var(--font-display)' }}>
+                                {saving ? 'SAVING...' : 'PUBLISH POST'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
