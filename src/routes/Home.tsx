@@ -207,7 +207,7 @@ export default function Home() {
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
-            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? '180vh' : '300vh', position: 'relative' }}>
+            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? 'auto' : '300vh', marginBottom: isMobile ? '120px' : '0', position: 'relative' }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
@@ -270,7 +270,7 @@ export default function Home() {
             </section>
 
             {/* SECTION 2: STORYTELLING */}
-            <section ref={storyRef} className="story-section" style={{ height: isMobile ? '250vh' : '350vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
+            <section ref={storyRef} className="story-section" style={{ height: isMobile ? '180vh' : '250vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 'var(--header-height)', height: 'calc(100vh - var(--header-height))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -281,9 +281,11 @@ export default function Home() {
                             display: 'flex',
                             flexWrap: 'wrap',
                             justifyContent: 'center',
-                            gap: '15px',
+                            gap: '12px',
+                            maxWidth: isMobile ? '300px' : 'none', // Force wrapping to ~3 words
+                            margin: '0 auto',
                             transition: 'all 0.5s ease',
-                            opacity: showPitch ? 1 : 1, // Keep fully visible even when pitch appears
+                            opacity: showPitch ? 1 : 1,
                             transform: `translateY(${showPitch ? '-20px' : '0'})`
                         }}>
                             {storyWords.map((word, i) => {
@@ -319,7 +321,7 @@ export default function Home() {
                                     transition={{ duration: 0.8, ease: "easeOut" }}
                                     style={{
                                         marginTop: '40px',
-                                        paddingBottom: '120px' // Margin of 120px to portfolio
+                                        paddingBottom: isMobile ? '60px' : '120px'
                                     }}
                                 >
                                     <p style={{ fontSize: '20px', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 40px', lineHeight: 1.6 }}>

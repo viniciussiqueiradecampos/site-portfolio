@@ -289,12 +289,14 @@ nav ul li a {
 
   .hero-section .sticky-wrapper {
     position: relative !important;
-    height: 100vh !important;
+    height: auto !important;
+    min-height: 60vh !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
-    padding: 0 5% !important;
+    padding: 100px 5% 60px !important;
+    /* Managed top/bottom padding */
   }
 
   /* Keep storytelling effect on mobile */
@@ -305,12 +307,13 @@ nav ul li a {
 
   .story-section .sticky-wrapper {
     position: sticky !important;
-    top: 0;
-    height: 100vh !important;
+    top: var(--header-height);
+    height: auto !important;
+    min-height: 70vh !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding-top: 0 !important;
+    padding: 80px 20px !important;
   }
 
   h2 {
