@@ -160,7 +160,7 @@ export default function Projects() {
                                 <div style={{
                                     borderRadius: 'var(--radius-md)',
                                     overflow: 'hidden',
-                                    height: '450px',
+                                    height: '320px',
                                     marginBottom: '20px',
                                     background: 'var(--surface-color)',
                                     position: 'relative'

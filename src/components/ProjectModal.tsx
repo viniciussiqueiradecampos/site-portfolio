@@ -118,17 +118,6 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                 <ReactMarkdown>{project.description || ''}</ReactMarkdown>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '60px', padding: '32px 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
-                                <div>
-                                    <div style={{ fontSize: '11px', color: 'var(--accent-color)', fontWeight: '800', marginBottom: '8px' }}>YEAR</div>
-                                    <div style={{ fontSize: '20px', fontWeight: '500' }}>{project.year || '2026'}</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '11px', color: 'var(--accent-color)', fontWeight: '800', marginBottom: '8px' }}>INDUSTRY</div>
-                                    <div style={{ fontSize: '20px', fontWeight: '500' }}>{project.tags?.[0] || 'Design'}</div>
-                                </div>
-                            </div>
-
                             {project.live_url && (
                                 <a href={project.live_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'var(--accent-color)', color: '#000', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                                     {project.button_text || 'VIEW LIVE PROJECT'} <ExternalLink size={20} />

@@ -114,13 +114,41 @@ export default function Home() {
         return () => unsubscribe();
     }, [storyProgress]);
 
+    const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
+
     const handleCarouselScroll = () => {
         if (scrollContainerRef.current) {
             const { scrollLeft } = scrollContainerRef.current;
-            const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
-            const index = Math.round(scrollLeft / scrollAmount);
+            const cardWidth = window.innerWidth * 0.48;
+            const gap = 50;
+            const scrollAmount = cardWidth + gap;
+            const calculatedIndex = Math.round(scrollLeft / scrollAmount);
+            setCurrentProjectIndex(calculatedIndex);
         }
     };
+
+    const scrollToProject = (index: number) => {
+        if (scrollContainerRef.current) {
+            const cardWidth = window.innerWidth * 0.48;
+            const gap = 50;
+            const scrollAmount = cardWidth + gap;
+            scrollContainerRef.current.scrollTo({
+                left: index * scrollAmount,
+                behavior: 'smooth'
+            });
+            setCurrentProjectIndex(index);
+        }
+    };
+
+    // Auto-scroll effect
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const nextIndex = (currentProjectIndex + 1) % projects.length;
+            scrollToProject(nextIndex);
+        }, 7000);
+
+        return () => clearInterval(interval);
+    }, [currentProjectIndex, projects.length]);
 
     // Modal State
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -140,7 +168,8 @@ export default function Home() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    const heroTextX = useTransform(heroProgress, [0, 0.7], ['0px', '-100%']);
+    // Marquee scrolls left using vw units to align last letter with description
+    const heroTextX = useTransform(heroProgress, [0, 0.7], ['0vw', isMobile ? '0vw' : '-50vw']);
     const descriptionText = heroDesc.split(" ");
     const storyWords = storyText.split(" ");
 
@@ -225,7 +254,7 @@ export default function Home() {
                             justifyContent: 'center',
                             gap: '15px',
                             transition: 'all 0.5s ease',
-                            opacity: showPitch ? 0.3 : 1, // Soften the big text when content below appears
+                            opacity: showPitch ? 1 : 1, // Keep fully visible even when pitch appears
                             transform: `translateY(${showPitch ? '-20px' : '0'})`
                         }}>
                             {storyWords.map((word, i) => {
@@ -260,7 +289,7 @@ export default function Home() {
                                     transition={{ duration: 0.8, ease: "easeOut" }}
                                     style={{
                                         marginTop: '40px',
-                                        paddingBottom: '0'
+                                        paddingBottom: '120px' // Margin of 120px to portfolio
                                     }}
                                 >
                                     <p style={{ fontSize: '20px', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 40px', lineHeight: 1.6 }}>
@@ -369,6 +398,26 @@ export default function Home() {
                                     </div>
                                 </div>
                             </div>
+                        ))}
+                    </div>
+
+                    {/* Pagination Dots */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '40px' }}>
+                        {projects.map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => scrollToProject(idx)}
+                                className="clickable"
+                                style={{
+                                    width: currentProjectIndex === idx ? '32px' : '12px',
+                                    height: '12px',
+                                    borderRadius: '100px',
+                                    background: currentProjectIndex === idx ? 'var(--accent-color)' : 'var(--border-color)',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            />
                         ))}
                     </div>
                 </div>

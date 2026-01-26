@@ -75,7 +75,8 @@ export default function AdminDashboard() {
         navCV: true,
         navPortfolio: true,
         navContact: true,
-        navGetInTouch: true
+        navGetInTouch: true,
+        logoImageUrl: ''
     });
 
     const [saving, setSaving] = useState(false);
@@ -159,7 +160,8 @@ export default function AdminDashboard() {
             navCV: (await contentAPI.getByKey('nav.cv'))?.value !== 'false',
             navPortfolio: (await contentAPI.getByKey('nav.portfolio'))?.value !== 'false',
             navContact: (await contentAPI.getByKey('nav.contact'))?.value !== 'false',
-            navGetInTouch: (await contentAPI.getByKey('nav.get_in_touch'))?.value !== 'false'
+            navGetInTouch: (await contentAPI.getByKey('nav.get_in_touch'))?.value !== 'false',
+            logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || ''
         });
     };
 
@@ -318,7 +320,8 @@ export default function AdminDashboard() {
                 contentAPI.update('nav.cv', String(branding.navCV), 'nav'),
                 contentAPI.update('nav.portfolio', String(branding.navPortfolio), 'nav'),
                 contentAPI.update('nav.contact', String(branding.navContact), 'nav'),
-                contentAPI.update('nav.get_in_touch', String(branding.navGetInTouch), 'nav')
+                contentAPI.update('nav.get_in_touch', String(branding.navGetInTouch), 'nav'),
+                contentAPI.update('general.logo_image_url', branding.logoImageUrl, 'general')
             ]);
             setMessage('✅ Settings saved!');
         } catch (err) { setMessage('❌ Error.'); }
@@ -521,23 +524,27 @@ export default function AdminDashboard() {
 
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
                                     <div>
-                                        <label style={labelStyle}>Dark Theme: Background</label>
-                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px' }} />
+                                        <label style={labelStyle}>🌙 Dark Mode: Background</label>
+                                        <div style={{ padding: '12px', background: branding.bgColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #333', minHeight: '40px' }} />
+                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', cursor: 'pointer' }} />
                                     </div>
                                     <div>
-                                        <label style={labelStyle}>Dark Theme: Accent</label>
-                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px' }} />
+                                        <label style={labelStyle}>🌙 Dark Mode: Accent</label>
+                                        <div style={{ padding: '12px', background: branding.accentColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #333', minHeight: '40px' }} />
+                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', cursor: 'pointer' }} />
                                     </div>
                                 </div>
 
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
                                     <div>
-                                        <label style={labelStyle}>Light Theme: Background</label>
-                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', background: '#fff' }} />
+                                        <label style={labelStyle}>☀️ Light Mode: Background</label>
+                                        <div style={{ padding: '12px', background: branding.lightBgColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #ddd', minHeight: '40px' }} />
+                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', background: '#fff', cursor: 'pointer' }} />
                                     </div>
                                     <div>
-                                        <label style={labelStyle}>Light Theme: Accent</label>
-                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px' }} />
+                                        <label style={labelStyle}>☀️ Light Mode: Accent</label>
+                                        <div style={{ padding: '12px', background: branding.lightAccentColor, borderRadius: '8px', marginBottom: '8px', border: '1px solid #ddd', minHeight: '40px' }} />
+                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', cursor: 'pointer' }} />
                                     </div>
                                 </div>
                             </div>
