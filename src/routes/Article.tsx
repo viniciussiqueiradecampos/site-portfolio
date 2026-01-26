@@ -19,7 +19,11 @@ export default function Article() {
         setPost(data);
         setLoading(false);
         window.scrollTo(0, 0);
-        analyticsAPI.logEvent({ event_type: 'page_view', page_path: `/blog/${slug}` });
+        analyticsAPI.logEvent({
+            event_type: 'page_view',
+            page_path: `/blog/${slug}`,
+            referrer: document.referrer
+        });
     };
 
     if (loading) return (

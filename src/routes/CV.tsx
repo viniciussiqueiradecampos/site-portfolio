@@ -10,7 +10,11 @@ export default function CV() {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/cv' });
+        analyticsAPI.logEvent({
+            event_type: 'page_view',
+            page_path: '/cv',
+            referrer: document.referrer
+        });
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);

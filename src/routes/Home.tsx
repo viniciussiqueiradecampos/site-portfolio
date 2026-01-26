@@ -41,7 +41,11 @@ export default function Home() {
     const storyRef = useRef(null);
 
     useEffect(() => {
-        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/' });
+        analyticsAPI.logEvent({
+            event_type: 'page_view',
+            page_path: '/',
+            referrer: document.referrer
+        });
         loadData();
         // Handle hash scroll
         if (window.location.hash === '#contact') {
@@ -53,6 +57,7 @@ export default function Home() {
             }, 500);
         }
     }, []);
+
 
     const loadData = async () => {
         // Load Content
@@ -169,6 +174,56 @@ export default function Home() {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Mouse Drag to Scroll
+    const isDragging = useRef(false);
+    const startX = useRef(0);
+    const scrollLeftValue = useRef(0);
+
+    useEffect(() => {
+        const slider = scrollContainerRef.current;
+        if (!slider || isMobile) return;
+
+        const handleMouseDown = (e: MouseEvent) => {
+            isDragging.current = true;
+            slider.style.cursor = 'grabbing';
+            slider.style.userSelect = 'none';
+            startX.current = e.pageX - slider.offsetLeft;
+            scrollLeftValue.current = slider.scrollLeft;
+        };
+
+        const handleMouseLeave = () => {
+            isDragging.current = false;
+            slider.style.cursor = 'grab';
+        };
+
+        const handleMouseUp = () => {
+            isDragging.current = false;
+            slider.style.cursor = 'grab';
+            slider.style.removeProperty('user-select');
+        };
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDragging.current) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX.current) * 1.5; // Scroll speed
+            slider.scrollLeft = scrollLeftValue.current - walk;
+        };
+
+        slider.style.cursor = 'grab';
+        slider.addEventListener('mousedown', handleMouseDown);
+        slider.addEventListener('mouseleave', handleMouseLeave);
+        slider.addEventListener('mouseup', handleMouseUp);
+        slider.addEventListener('mousemove', handleMouseMove);
+
+        return () => {
+            slider.removeEventListener('mousedown', handleMouseDown);
+            slider.removeEventListener('mouseleave', handleMouseLeave);
+            slider.removeEventListener('mouseup', handleMouseUp);
+            slider.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, [isMobile]);
 
     // Calculate Dynamic Marquee Translation
     useEffect(() => {
@@ -386,7 +441,10 @@ export default function Home() {
                             <div
                                 key={i}
                                 className="home-project-card clickable"
-                                onClick={() => openModal(item)}
+                                onClick={() => {
+                                    if (isDragging.current) return;
+                                    openModal(item);
+                                }}
                                 style={{
                                     marginLeft: i === 0 ? '0px' : '0px' // Initial state, will adjust if needed
                                 }}

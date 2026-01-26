@@ -22,7 +22,11 @@ export default function Projects() {
 
     useEffect(() => {
         loadProjects();
-        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/projects' });
+        analyticsAPI.logEvent({
+            event_type: 'page_view',
+            page_path: '/projects',
+            referrer: document.referrer
+        });
     }, []);
 
     useEffect(() => {

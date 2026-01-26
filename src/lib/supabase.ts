@@ -669,18 +669,28 @@ export const analyticsAPI = {
             pageCounts[p] = (pageCounts[p] || 0) + 1;
         });
 
-        // Source breakdown
-        const sourceCounts: Record<string, number> = {};
-        logs.forEach(l => {
-            const s = l.referrer ? new URL(l.referrer).hostname : 'Direct / Unknown';
-            sourceCounts[s] = (sourceCounts[s] || 0) + 1;
-        });
-
         // History by day
         const dayCounts: Record<string, number> = {};
         views.forEach(v => {
             const date = new Date(v.created_at).toISOString().split('T')[0];
             dayCounts[date] = (dayCounts[date] || 0) + 1;
+        });
+
+        const parseHostname = (urlStr?: string) => {
+            if (!urlStr || urlStr === '' || urlStr === 'Direct') return 'Direct / Unknown';
+            try {
+                if (!urlStr.startsWith('http')) return urlStr;
+                return new URL(urlStr).hostname;
+            } catch (e) {
+                return urlStr;
+            }
+        };
+
+        // Source breakdown
+        const sourceCounts: Record<string, number> = {};
+        logs.forEach(l => {
+            const s = parseHostname(l.referrer);
+            sourceCounts[s] = (sourceCounts[s] || 0) + 1;
         });
 
         return {

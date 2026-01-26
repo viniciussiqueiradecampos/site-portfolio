@@ -567,9 +567,10 @@ export default function AdminDashboard() {
                                                     paddingAngle={5}
                                                     dataKey="count"
                                                 >
-                                                    {[...Array(6)].map((_, index) => (
-                                                        <Cell key={`cell-${index}`} fill={index === 0 ? 'var(--accent-color)' : `rgba(255,255,255,${0.1 + index * 0.1})`} />
-                                                    ))}
+                                                    {[...Array(6)].map((_, index) => {
+                                                        const colors = ['var(--accent-color)', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+                                                        return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                                                    })}
                                                 </Pie>
                                                 <Tooltip
                                                     contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
