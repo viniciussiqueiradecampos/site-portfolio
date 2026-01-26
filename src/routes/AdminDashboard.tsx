@@ -21,7 +21,7 @@ import {
 import { storageAPI } from '../lib/storage';
 import ProjectModal from '../components/ProjectModal';
 
-const modalInputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '10px' };
+const modalInputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '10px', whiteSpace: 'pre-wrap' as any };
 const labelStyle = { display: 'block', fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: '500' };
 
 export default function AdminDashboard() {
