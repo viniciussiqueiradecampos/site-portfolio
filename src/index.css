@@ -290,13 +290,12 @@ nav ul li a {
   .hero-section .sticky-wrapper {
     position: relative !important;
     height: auto !important;
-    min-height: 60vh !important;
+    min-height: 75vh !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     align-items: center !important;
-    padding: 100px 5% 60px !important;
-    /* Managed top/bottom padding */
+    padding: 180px 5% 40px !important;
   }
 
   /* Keep storytelling effect on mobile */
@@ -309,11 +308,13 @@ nav ul li a {
     position: sticky !important;
     top: var(--header-height);
     height: auto !important;
-    min-height: 70vh !important;
+    min-height: 50vh !important;
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
+    /* Stop centering vertically */
     justify-content: center !important;
-    padding: 80px 20px !important;
+    padding: 20px 20px 40px !important;
+    /* Reduced top gap significantly */
   }
 
   h2 {

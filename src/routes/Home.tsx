@@ -207,7 +207,7 @@ export default function Home() {
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
-            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? 'auto' : '300vh', marginBottom: isMobile ? '120px' : '0', position: 'relative' }}>
+            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? 'auto' : '300vh', marginBottom: isMobile ? '20px' : '0', position: 'relative' }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
@@ -281,8 +281,8 @@ export default function Home() {
                             display: 'flex',
                             flexWrap: 'wrap',
                             justifyContent: 'center',
-                            gap: '12px',
-                            maxWidth: isMobile ? '300px' : 'none', // Force wrapping to ~3 words
+                            gap: isMobile ? '8px' : '12px',
+                            maxWidth: isMobile ? '260px' : 'none', // Even tighter for 3 words
                             margin: '0 auto',
                             transition: 'all 0.5s ease',
                             opacity: showPitch ? 1 : 1,
@@ -290,7 +290,7 @@ export default function Home() {
                         }}>
                             {storyWords.map((word, i) => {
                                 const step = 0.6 / storyWords.length;
-                                const start = 0.1 + (i * step);
+                                const start = isMobile ? (i * step) : 0.1 + (i * step); // Start sooner on mobile
                                 const end = start + step;
                                 return (
                                     <ScrollyWord
