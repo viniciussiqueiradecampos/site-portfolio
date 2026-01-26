@@ -145,7 +145,7 @@ export default function AdminDashboard() {
     };
 
     const loadProjects = async () => {
-        const { data, error } = await supabase.from('projects').select('*').order('order_index', { ascending: true });
+        const { data, error } = await supabase.from('projects').select('*').order('order_index', { ascending: true }).limit(1000);
         if (!error && data) {
             setProjects(data);
             const tags = new Set<string>();
@@ -311,14 +311,22 @@ export default function AdminDashboard() {
             };
 
             const id = editingProject.id;
+            let result;
             if (id && id !== '' && id !== 'new') {
-                await supabase.from('projects').update(dataToSave).eq('id', id);
+                result = await supabase.from('projects').update(dataToSave).eq('id', id);
             } else {
-                await supabase.from('projects').insert([dataToSave]);
+                result = await supabase.from('projects').insert([dataToSave]).select();
             }
-            await loadProjects();
-            setEditingProject(null);
-            setMessage('✅ Saved!');
+
+            if (result.error) {
+                console.error('❌ Supabase Error:', result.error);
+                alert(`DB Error: ${result.error.message}`);
+                setMessage('❌ Fail');
+            } else {
+                await loadProjects();
+                setEditingProject(null);
+                setMessage('✅ Saved!');
+            }
         } catch (err: any) {
             alert('Save Error: ' + err.message);
             setMessage('❌ Error.');
@@ -698,8 +706,11 @@ export default function AdminDashboard() {
 
                     {activeTab === 'projects' && (
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
-                                <h3>Portfolio Projects</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', alignItems: 'center' }}>
+                                <div>
+                                    <h3 style={{ margin: 0 }}>Portfolio Projects</h3>
+                                    <span style={{ fontSize: '11px', color: '#A0A0A0', letterSpacing: '1px' }}>{projects.length} ITEMS TOTAL</span>
+                                </div>
                                 <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], order_index: projects.length, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
