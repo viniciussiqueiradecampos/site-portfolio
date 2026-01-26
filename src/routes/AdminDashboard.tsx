@@ -306,7 +306,8 @@ export default function AdminDashboard() {
                 gallery_videos: editingProject.gallery_videos || [],
                 live_url: editingProject.live_url || '',
                 button_text: editingProject.button_text || '',
-                order_index: editingProject.order_index || 0
+                order_index: editingProject.order_index || 0,
+                visible: editingProject.visible !== false
             };
 
             const id = editingProject.id;
@@ -1004,7 +1005,15 @@ export default function AdminDashboard() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                 <input placeholder="Live Link (URL)" value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={modalInputStyle} />
-                                <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={modalInputStyle} />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
+                                    </div>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#A0A0A0' }}>
+                                        <input type="checkbox" checked={editingProject.visible !== false} onChange={e => setEditingProject({ ...editingProject, visible: e.target.checked })} />
+                                        VISIBLE
+                                    </label>
+                                </div>
                             </div>
                             <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
                         </div>

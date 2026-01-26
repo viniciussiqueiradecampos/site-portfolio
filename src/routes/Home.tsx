@@ -77,7 +77,7 @@ export default function Home() {
 
         // Load Projects - Limited to 4 for Home
         const projs = await projectsAPI.getAll();
-        setProjects(projs.slice(0, 4));
+        setProjects(projs);
 
         // Load Socials & Footer
         const ln = await contentAPI.getByKey('social.linkedin');

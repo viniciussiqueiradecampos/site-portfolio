@@ -91,18 +91,20 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                             <X size={20} />
                         </button>
                         {/* MEDIA LEFT */}
-                        <div style={{ flex: isMobile ? 'none' : 1.6, height: isMobile ? '40%' : '100%', position: 'relative', background: '#000' }}>
-                            {allMedia[currentMediaIndex].type === 'image' ? (
-                                <img
-                                    src={allMedia[currentMediaIndex].url}
-                                    alt={project.title}
-                                    loading="lazy"
-                                    decoding="async"
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                />
-                            ) : (
-                                <video src={allMedia[currentMediaIndex].url} controls autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            )}
+                        <div style={{ flex: isMobile ? 'none' : 1.6, height: isMobile ? '40%' : '100%', position: 'relative', background: '#000', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden' }} className="hide-scrollbar">
+                                {allMedia[currentMediaIndex].type === 'image' ? (
+                                    <img
+                                        src={allMedia[currentMediaIndex].url}
+                                        alt={project.title}
+                                        loading="lazy"
+                                        decoding="async"
+                                        style={{ width: '100%', height: 'auto', minHeight: '100%', display: 'block', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <video src={allMedia[currentMediaIndex].url} controls autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                )}
+                            </div>
 
                             {hasMultipleMedia && (
                                 <>
