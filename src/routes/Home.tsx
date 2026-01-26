@@ -13,8 +13,10 @@ const ScrollyWord = ({ word, progress, start, end, style }: { word: string, prog
 };
 
 export default function Home() {
-    const containerRef = useRef(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const titleRef = useRef<HTMLHeadingElement>(null);
+    const [maxX, setMaxX] = useState(0);
 
     // Data State
     const [heroTitle, setHeroTitle] = useState('figma • UI DESIGN • AI • WEB DESIGN');
@@ -168,8 +170,35 @@ export default function Home() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Marquee scrolls left using vw units to align last letter with description
-    const heroTextX = useTransform(heroProgress, [0, 0.7], ['0vw', isMobile ? '0vw' : '-50vw']);
+    // Calculate Dynamic Marquee Translation
+    useEffect(() => {
+        const calculateMaxX = () => {
+            if (titleRef.current) {
+                const titleWidth = titleRef.current.scrollWidth;
+                const windowWidth = window.innerWidth;
+                const padding = windowWidth * 0.1; // 5% each side
+                const visibleWidth = windowWidth - padding;
+
+                if (titleWidth > visibleWidth) {
+                    // Move the title left until its end aligns with the right padding
+                    setMaxX(-(titleWidth - visibleWidth));
+                } else {
+                    setMaxX(0);
+                }
+            }
+        };
+
+        // Initial calculation with a slight delay to ensure fonts/layout are ready
+        const timer = setTimeout(calculateMaxX, 100);
+        window.addEventListener('resize', calculateMaxX);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', calculateMaxX);
+        };
+    }, [heroTitle, isMobile]);
+
+    // Marquee scrolls left dynamically based on content width
+    const heroTextX = useTransform(heroProgress, [0, 0.7], [0, isMobile ? 0 : maxX]);
     const descriptionText = heroDesc.split(" ");
     const storyWords = storyText.split(" ");
 
@@ -199,7 +228,7 @@ export default function Home() {
                             maxWidth: isMobile ? '100%' : 'none'
                         }}
                     >
-                        <h1 className="hero-title" style={{
+                        <h1 ref={titleRef} className="hero-title" style={{
                             fontSize: isMobile ? 'clamp(32px, 12vw, 42px)' : '11vw',
                             lineHeight: '0.9',
                             margin: 0,
