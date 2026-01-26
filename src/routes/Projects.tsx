@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectModal from '../components/ProjectModal';
-import { projectsAPI, type Project, type ProjectData } from '../lib/supabase';
+import { projectsAPI, type Project } from '../lib/supabase';
+import { Eye } from 'lucide-react';
 
 export default function Projects() {
-    const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [projects, setProjects] = useState<Project[]>([]);
     const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
@@ -17,10 +18,22 @@ export default function Projects() {
     }, []);
 
     useEffect(() => {
+        // Show all visible projects
+        const visibleProjects = projects;
+
         if (activeTag === 'ALL') {
-            setFilteredProjects(projects);
+            setFilteredProjects(visibleProjects);
         } else {
-            setFilteredProjects(projects.filter(p => p.tags.includes(activeTag)));
+            // Filter projects that explicitly contain the active tag
+            const results = visibleProjects.filter(p => p.tags && Array.isArray(p.tags) && p.tags.map(t => t.toUpperCase()).includes(activeTag));
+
+            // Reassurance: If for some reason the tag selection leads to nothing, 
+            // but the UI allowed selecting it, we show all (though extraction prevents this).
+            if (results.length === 0) {
+                setFilteredProjects(visibleProjects);
+            } else {
+                setFilteredProjects(results);
+            }
         }
     }, [activeTag, projects]);
 
@@ -29,7 +42,7 @@ export default function Projects() {
         setProjects(data);
         setFilteredProjects(data);
 
-        // Extract unique tags and format them (only tags that are actually used)
+        // Extract unique tags and format them (from all visible projects)
         const tagsSet = new Set<string>();
         data.forEach(p => {
             if (p.tags && p.tags.length > 0) {
@@ -46,20 +59,7 @@ export default function Projects() {
     };
 
     const openModal = (project: Project) => {
-        const modalData = {
-            title: project.title,
-            image_url: project.image_url,
-            img: project.image_url,
-            tags: project.tags,
-            gallery_images: project.gallery_images || [],
-            gallery: project.gallery_images || [],
-            description: project.description,
-            type: project.tags?.[0] || 'Project',
-            year: project.year || (project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'),
-            live_url: project.live_url,
-            button_text: project.button_text
-        } as any as ProjectData;
-        setSelectedProject(modalData);
+        setSelectedProject(project);
         setIsModalOpen(true);
     };
 
@@ -131,11 +131,12 @@ export default function Projects() {
                 </div>
 
                 <div className="projects-grid" style={{
-                    columns: '3 320px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
                     gap: '40px'
                 }}>
                     <AnimatePresence mode="popLayout">
-                        {filteredProjects.map((p, i) => (
+                        {filteredProjects.map((p) => (
                             <motion.div
                                 key={p.id}
                                 layout
@@ -146,27 +147,32 @@ export default function Projects() {
                                 className="clickable project-card"
                                 onClick={() => openModal(p)}
                                 style={{
-                                    breakInside: 'avoid',
-                                    marginBottom: '60px',
                                     position: 'relative'
                                 }}
                             >
                                 <div style={{
                                     borderRadius: 'var(--radius-md)',
                                     overflow: 'hidden',
-                                    height: (i % 2 === 0 ? '400px' : '500px'),
+                                    height: '450px',
                                     marginBottom: '20px',
                                     background: 'var(--surface-color)',
                                     position: 'relative'
-                                }}>
+                                }} className="project-image-wrapper">
                                     <div style={{
-                                        position: 'absolute', inset: 0, background: '#000', opacity: 0,
-                                        zIndex: 2, transition: 'opacity 0.3s'
-                                    }} className="hover-overlay" />
+                                        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                        gap: '12px', opacity: 0, transition: '0.3s ease', zIndex: 5
+                                    }} className="card-hover-overlay">
+                                        <div style={{ padding: '20px', background: '#fff', borderRadius: '50%', color: '#000' }}>
+                                            <Eye size={32} />
+                                        </div>
+                                        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
+                                    </div>
 
                                     <img src={p.image_url} alt={p.title} style={{
                                         width: '100%', height: '100%', objectFit: 'cover',
-                                        transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)'
+                                        transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+                                        position: 'relative', zIndex: 1
                                     }} className="card-img" />
                                 </div>
 
@@ -185,8 +191,25 @@ export default function Projects() {
                                             ))}
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                        <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--accent-color)', opacity: 0.8 }}>{p.year || (p.created_at ? new Date(p.created_at).getFullYear() : '2026')}</div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{
+                                            padding: '12px 32px',
+                                            background: '#fff',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '100px',
+                                            fontSize: '11px',
+                                            fontWeight: '900',
+                                            color: '#000',
+                                            letterSpacing: '1px',
+                                            textTransform: 'uppercase',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                                            transition: 'all 0.3s'
+                                        }} className="learn-more-btn-pill">
+                                            LEARN MORE →
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

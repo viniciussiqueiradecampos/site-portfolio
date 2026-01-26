@@ -1,15 +1,16 @@
 
-
 import { useState, useEffect } from 'react';
-import { cvAPI, contentAPI, type CVSection } from '../lib/supabase';
+import { cvAPI, contentAPI, analyticsAPI, type CVSection } from '../lib/supabase';
 
 export default function CV() {
     const [sections, setSections] = useState<CVSection[]>([]);
     const [cvPdfLink, setCvPdfLink] = useState('');
+    const [profileSummary, setProfileSummary] = useState('');
     const [loading, setLoading] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
+        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/cv' });
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -23,9 +24,16 @@ export default function CV() {
     const loadData = async () => {
         const data = await cvAPI.getAll();
         const cvLink = await contentAPI.getByKey('cv.pdf_url');
+        const summary = await contentAPI.getByKey('cv.bio');
+
         setSections(data);
         if (cvLink) setCvPdfLink(cvLink.value);
+        if (summary) setProfileSummary(summary.value);
         setLoading(false);
+    };
+
+    const handleDownloadClick = () => {
+        analyticsAPI.logEvent({ event_type: 'cv_download' });
     };
 
     const skills = sections.filter(s => s.section_type === 'skills').sort((a, b) => a.order_index - b.order_index);
@@ -43,7 +51,7 @@ export default function CV() {
             <div className="container">
                 <div className="cv-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px' }}>
                     <h1 className="cv-title" style={{
-                        fontSize: '60px',
+                        fontSize: isMobile ? '36px' : '60px',
                         lineHeight: 1,
                         margin: 0,
                         color: 'var(--accent-color)',
@@ -59,6 +67,7 @@ export default function CV() {
                         target="_blank"
                         rel="noreferrer"
                         download
+                        onClick={handleDownloadClick}
                         className="clickable"
                         style={{
                             padding: '12px 24px',
@@ -75,14 +84,14 @@ export default function CV() {
                     </a>
                 </div>
 
-                <div className="cv-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '80px', borderTop: '1px solid var(--border-color)', paddingTop: '60px' }}>
+                <div className="cv-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? '40px' : '80px', borderTop: '1px solid var(--border-color)', paddingTop: '60px' }}>
 
                     {/* LEFT COLUMN: Profile & Skills */}
                     <div>
                         <div style={{ marginBottom: '60px' }}>
                             <h3 style={{ fontSize: '24px', marginBottom: '20px' }}>PROFILE</h3>
                             <p style={{ lineHeight: 1.6, color: 'var(--text-muted)' }}>
-                                Senior Product Designer combining aesthetic precision with technical robustness. Obsessed with Design Systems and AI integration.
+                                {profileSummary || "Senior Product Designer combining aesthetic precision with technical robustness."}
                             </p>
                         </div>
 
@@ -105,7 +114,7 @@ export default function CV() {
 
                         {/* HOBBIES */}
                         {hobbies.length > 0 && (
-                            <div>
+                            <div style={{ marginTop: '80px' }}>
                                 <h3 style={{ fontSize: '24px', marginBottom: '20px' }}>HOBBIES</h3>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                     {hobbies.map(hobby => (
@@ -131,10 +140,10 @@ export default function CV() {
                             <div style={{ marginBottom: '60px' }}>
                                 <h3 style={{ fontSize: '24px', marginBottom: '40px' }}>EXPERIENCE</h3>
                                 {experience.map(job => (
-                                    <div key={job.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '50px', position: 'relative' }}>
+                                    <div key={job.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '100px 1fr', gap: isMobile ? '15px' : '40px', marginBottom: '50px', position: 'relative' }}>
                                         <div className="timeline-dot"></div>
                                         <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{job.date_range}</span>
-                                        <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
+                                        <div className="cv-timeline-content" style={{ paddingLeft: isMobile ? '0' : '20px' }}>
                                             <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{job.title} @ {job.subtitle}</h4>
                                             {job.description && (
                                                 <div style={{ marginTop: '15px' }}>
@@ -167,10 +176,10 @@ export default function CV() {
                             <div style={{ marginBottom: '60px' }}>
                                 <h3 style={{ fontSize: '24px', marginBottom: '40px' }}>EDUCATION</h3>
                                 {education.map(edu => (
-                                    <div key={edu.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '40px', position: 'relative' }}>
+                                    <div key={edu.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '100px 1fr', gap: isMobile ? '15px' : '40px', marginBottom: '40px', position: 'relative' }}>
                                         <div className="timeline-dot"></div>
                                         <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{edu.date_range}</span>
-                                        <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
+                                        <div className="cv-timeline-content" style={{ paddingLeft: isMobile ? '0' : '20px' }}>
                                             <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{edu.title}</h4>
                                             <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>{edu.subtitle}</p>
                                         </div>
@@ -184,10 +193,10 @@ export default function CV() {
                             <div style={{ marginBottom: '60px' }}>
                                 <h3 style={{ fontSize: '24px', marginBottom: '40px' }}>CERTIFICATIONS</h3>
                                 {certifications.map(cert => (
-                                    <div key={cert.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '40px', marginBottom: '40px', position: 'relative' }}>
+                                    <div key={cert.id} className="timeline-item" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '100px 1fr', gap: isMobile ? '15px' : '40px', marginBottom: '40px', position: 'relative' }}>
                                         <div className="timeline-dot"></div>
                                         <span className={`${isMobile ? 'cv-timeline-date' : 'cv-timeline-date-desktop'}`} style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{cert.date_range}</span>
-                                        <div className="cv-timeline-content" style={{ paddingLeft: '20px' }}>
+                                        <div className="cv-timeline-content" style={{ paddingLeft: isMobile ? '0' : '20px' }}>
                                             <h4 className={`${isMobile ? 'cv-timeline-title' : 'cv-timeline-title-desktop'}`} style={{ marginBottom: '5px', fontFamily: 'var(--font-body)', fontWeight: 700 }}>{cert.title}</h4>
                                             <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>{cert.subtitle}</p>
                                         </div>

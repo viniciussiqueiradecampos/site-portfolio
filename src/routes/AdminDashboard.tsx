@@ -4,43 +4,61 @@ import {
     contentAPI,
     projectsAPI,
     cvAPI,
-    apiConfigAPI,
+    analyticsAPI,
     type Project,
-    type CVSection,
-    type APIConfiguration
+    type CVSection
 } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import {
-    LogOut, Save, Plus, Trash2, Settings, X, Menu,
+    LogOut, Trash2, Settings,
     LayoutDashboard, FolderKanban,
-    FileText, Palette, ChevronRight, Award, GraduationCap, Briefcase, MousePointer2
+    FileText,
+    BarChart3, User, Globe,
+    Download,
+    Target, Activity, Plus, X, Image as ImageIcon, Video,
+    Briefcase, GraduationCap, Award, Star, Heart
 } from 'lucide-react';
 import { storageAPI } from '../lib/storage';
+import ProjectModal from '../components/ProjectModal';
+
+const modalInputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '10px' };
+const labelStyle = { display: 'block', fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: '500' };
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'cv' | 'settings'>('content');
-    const [cvSubTab, setCvSubTab] = useState<'experience' | 'education' | 'skills' | 'certification' | 'hobbies'>('experience');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [activeTab, setActiveTab] = useState<'analytics' | 'content' | 'projects' | 'cv' | 'settings'>('analytics');
+    const [cvSubTab, setCvSubTab] = useState<'profile' | 'experience' | 'education' | 'skills' | 'certification' | 'hobbies'>('profile');
+
+    // Analytics State
+    const [stats, setStats] = useState({
+        pageViews: 0,
+        cvDownloads: 0,
+        projectClicks: 0,
+        pages: [] as { name: string, count: number }[],
+        sources: [] as { name: string, count: number }[]
+    });
 
     // Content State
     const [heroTitle, setHeroTitle] = useState('');
     const [heroDesc, setHeroDesc] = useState('');
     const [storyText, setStoryText] = useState('');
-    const [cvUrl, setCvUrl] = useState('');
+    const [pitchDesc, setPitchDesc] = useState('');
+    const [pitchBtnText, setPitchBtnText] = useState('');
+    const [pitchBtnLink, setPitchBtnLink] = useState('');
 
     // Projects State
     const [projects, setProjects] = useState<Project[]>([]);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [availableTags, setAvailableTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [allUsedTags, setAllUsedTags] = useState<string[]>([]);
 
     // CV State
+    const [cvProfile, setCvProfile] = useState({ name: '', bio: '' });
     const [cvSections, setCvSections] = useState<CVSection[]>([]);
     const [editingCV, setEditingCV] = useState<CVSection | null>(null);
 
     // Settings State
-    const [apiConfigs, setApiConfigs] = useState<APIConfiguration[]>([]);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
         logoText2: 'CAMPOS',
@@ -51,71 +69,97 @@ export default function AdminDashboard() {
         linkedin: '',
         instagram: '',
         footerEmail: '',
-        showToolbar: true
+        phone: '',
+        footerText: '',
+        navHome: true,
+        navCV: true,
+        navPortfolio: true,
+        navContact: true,
+        navGetInTouch: true
     });
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener('resize', handleResize);
-        loadContent();
-        loadProjects();
-        loadCV();
-        loadSettings();
-        return () => window.removeEventListener('resize', handleResize);
+        loadAllData();
     }, []);
 
-    useEffect(() => {
-        const tags = new Set<string>();
-        projects.forEach(p => p.tags.forEach(t => tags.add(t)));
-        setAvailableTags(Array.from(tags).sort());
-    }, [projects]);
+    const loadAllData = async () => {
+        setSaving(true);
+        await Promise.all([
+            loadContent(),
+            loadProjects(),
+            loadCV(),
+            loadSettings(),
+            loadStats()
+        ]);
+        setSaving(false);
+    };
+
+    const loadStats = async () => {
+        const data = await analyticsAPI.getStats();
+        if (data) setStats(data);
+    };
 
     const loadContent = async () => {
         const title = await contentAPI.getByKey('hero.title');
         const desc = await contentAPI.getByKey('hero.description');
         const story = await contentAPI.getByKey('storytelling.main');
-        const cvLink = await contentAPI.getByKey('cv.pdf_url');
+        const pDesc = await contentAPI.getByKey('storytelling.description');
+        const pBtnT = await contentAPI.getByKey('storytelling.button_text');
+        const pBtnL = await contentAPI.getByKey('storytelling.button_link');
+
         if (title) setHeroTitle(title.value);
         if (desc) setHeroDesc(desc.value);
         if (story) setStoryText(story.value);
-        if (cvLink) setCvUrl(cvLink.value);
+        if (pDesc) setPitchDesc(pDesc.value);
+        if (pBtnT) setPitchBtnText(pBtnT.value);
+        if (pBtnL) setPitchBtnLink(pBtnL.value);
     };
 
     const loadProjects = async () => {
-        const data = await projectsAPI.getAll();
-        setProjects(data);
+        const { data, error } = await supabase.from('projects').select('*').order('order_index', { ascending: true });
+        if (!error && data) {
+            setProjects(data);
+
+            // Extract all unique tags used across projects
+            const tags = new Set<string>();
+            data.forEach(p => p.tags?.forEach((t: string) => tags.add(t.toUpperCase())));
+            setAllUsedTags(Array.from(tags).sort());
+        }
     };
 
     const loadCV = async () => {
-        const data = await cvAPI.getAll();
-        setCvSections(data);
+        const { data, error } = await supabase.from('cv_sections').select('*').order('order_index', { ascending: true });
+        if (!error && data) setCvSections(data);
+
+        const name = await contentAPI.getByKey('cv.name');
+        const bio = await contentAPI.getByKey('cv.bio');
+        setCvProfile({
+            name: name?.value || '',
+            bio: bio?.value || ''
+        });
     };
 
     const loadSettings = async () => {
-        const configsData = await apiConfigAPI.getAll();
-        setApiConfigs(configsData);
-
-        const l1 = await contentAPI.getByKey('general.logo_text1');
-        const l2 = await contentAPI.getByKey('general.logo_text2');
-        const ac = await contentAPI.getByKey('general.accent_color');
-        const bg = await contentAPI.getByKey('general.bg_color');
-        const lac = await contentAPI.getByKey('general.light_accent_color');
-        const lbg = await contentAPI.getByKey('general.light_bg_color');
-
         setBranding({
-            logoText1: l1?.value || 'VINICIUS',
-            logoText2: l2?.value || 'CAMPOS',
-            accentColor: ac?.value || '#F2A73D',
-            bgColor: bg?.value || '#050505',
-            lightAccentColor: lac?.value || '#C87A1A',
-            lightBgColor: lbg?.value || '#FFFFFF',
+            logoText1: (await contentAPI.getByKey('general.logo_text1'))?.value || 'VINICIUS',
+            logoText2: (await contentAPI.getByKey('general.logo_text2'))?.value || 'CAMPOS',
+            accentColor: (await contentAPI.getByKey('general.accent_color'))?.value || '#F2A73D',
+            bgColor: (await contentAPI.getByKey('general.bg_color'))?.value || '#050505',
+            lightAccentColor: (await contentAPI.getByKey('general.light_accent_color'))?.value || '#C87A1A',
+            lightBgColor: (await contentAPI.getByKey('general.light_bg_color'))?.value || '#FFFFFF',
             linkedin: (await contentAPI.getByKey('social.linkedin'))?.value || '',
             instagram: (await contentAPI.getByKey('social.instagram'))?.value || '',
             footerEmail: (await contentAPI.getByKey('social.footer_email'))?.value || '',
-            showToolbar: (await contentAPI.getByKey('general.show_toolbar'))?.value === 'true'
+            phone: (await contentAPI.getByKey('social.phone'))?.value || '',
+            footerText: (await contentAPI.getByKey('general.footer_text'))?.value || '',
+            navHome: (await contentAPI.getByKey('nav.home'))?.value !== 'false',
+            navCV: (await contentAPI.getByKey('nav.cv'))?.value !== 'false',
+            navPortfolio: (await contentAPI.getByKey('nav.portfolio'))?.value !== 'false',
+            navContact: (await contentAPI.getByKey('nav.contact'))?.value !== 'false',
+            navGetInTouch: (await contentAPI.getByKey('nav.get_in_touch'))?.value !== 'false'
         });
     };
 
@@ -131,10 +175,12 @@ export default function AdminDashboard() {
                 contentAPI.update('hero.title', heroTitle, 'hero'),
                 contentAPI.update('hero.description', heroDesc, 'hero'),
                 contentAPI.update('storytelling.main', storyText, 'storytelling'),
-                contentAPI.update('cv.pdf_url', cvUrl, 'cv')
+                contentAPI.update('storytelling.description', pitchDesc, 'storytelling'),
+                contentAPI.update('storytelling.button_text', pitchBtnText, 'storytelling'),
+                contentAPI.update('storytelling.button_link', pitchBtnLink, 'storytelling')
             ]);
-            setMessage('✅ Conteúdo salvo!');
-        } catch (err) { setMessage('❌ Erro ao salvar.'); }
+            setMessage('✅ Home updated!');
+        } catch (err) { setMessage('❌ Error.'); }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
@@ -142,446 +188,525 @@ export default function AdminDashboard() {
         if (!editingProject) return;
         setSaving(true);
         try {
-            const { id, created_at, updated_at, ...projectData } = editingProject as any;
-            if (id && id !== '') await projectsAPI.update(id, projectData);
-            else await projectsAPI.create(projectData);
-            await loadProjects();
-            setEditingProject(null);
-            setMessage('✅ Projeto salvo!');
-        } catch (err) { setMessage('❌ Erro.'); }
+            // EXTREMELY MINIMAL PAYLOAD TO PREVENT SCHEMA ERRORS
+            const dataToSave: any = {
+                title: editingProject.title || '',
+                description: editingProject.description || '',
+                image_url: editingProject.image_url || '',
+                tags: editingProject.tags || [],
+                gallery_images: [
+                    ...(editingProject.gallery_images || []),
+                    ...(editingProject.gallery_videos || [])
+                ],
+                order_index: editingProject.order_index || 0
+            };
+
+            const id = editingProject.id;
+            let result;
+
+            if (id && id !== '' && id !== 'new') {
+                result = await supabase.from('projects').update(dataToSave).eq('id', id);
+            } else {
+                result = await supabase.from('projects').insert([dataToSave]).select();
+            }
+
+            if (result.error) {
+                console.error('Supabase Error:', result.error);
+                alert(`Supabase Error: ${result.error.message}\n${result.error.details}\nColumn likely missing: check browser console for payload.`);
+                setMessage('❌ Failed.');
+            } else {
+                await loadProjects();
+                setEditingProject(null);
+                setMessage('✅ Saved!');
+            }
+        } catch (err: any) {
+            console.error('Save Error:', err);
+            alert('CRITICAL ERROR: ' + err.message);
+            setMessage('❌ Error.');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
+        }
+    };
+
+    const saveCVProfile = async () => {
+        setSaving(true);
+        try {
+            await Promise.all([
+                contentAPI.update('cv.name', cvProfile.name, 'cv'),
+                contentAPI.update('cv.bio', cvProfile.bio, 'cv')
+            ]);
+            setMessage('✅ Profile updated!');
+        } catch (err) { setMessage('❌ Error.'); }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
-    const deleteProject = async (id: string) => {
-        if (confirm('Excluir?')) { await projectsAPI.delete(id); await loadProjects(); }
-    };
-
-    const saveCV = async () => {
+    const saveCVSection = async () => {
         if (!editingCV) return;
         setSaving(true);
         try {
-            const { id, created_at, updated_at, ...cvData } = editingCV as any;
-            if (id && id !== '') await cvAPI.update(id, cvData);
-            else await cvAPI.create(cvData);
-            await loadCV();
-            setEditingCV(null);
-            setMessage('✅ Seção salva!');
-        } catch (err) { setMessage('❌ Erro.'); }
+            const { id, created_at, updated_at, ...sectionData } = editingCV as any;
+            let result;
+            if (id && id !== '' && id !== 'new') {
+                result = await supabase.from('cv_sections').update(sectionData).eq('id', id);
+            } else {
+                result = await supabase.from('cv_sections').insert([sectionData]).select();
+            }
+
+            if (result.error) {
+                console.error('CV Save Error:', result.error);
+                alert('DB Error: ' + result.error.message);
+            } else {
+                loadCV();
+                setEditingCV(null);
+                setMessage('✅ CV Saved!');
+            }
+        } catch (err) { setMessage('❌ Error.'); }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
-    const deleteCV = async (id: string) => {
-        if (confirm('Excluir?')) { await cvAPI.delete(id); await loadCV(); }
+    const addTag = (tag?: string) => {
+        const value = tag || tagInput.trim();
+        if (value && editingProject) {
+            const newTags = [...(editingProject.tags || [])];
+            if (!newTags.includes(value.toUpperCase())) {
+                newTags.push(value.toUpperCase());
+                setEditingProject({ ...editingProject, tags: newTags });
+            }
+            if (!tag) setTagInput('');
+        }
+    };
+
+    const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0] && editingProject) {
+            const url = await storageAPI.uploadImage(e.target.files[0], 'projects');
+            if (url) {
+                setEditingProject({ ...editingProject, image_url: url });
+            }
+        }
+    };
+
+    const addGalleryItem = async (type: 'image' | 'video', file: File) => {
+        const url = await storageAPI.uploadImage(file, 'projects');
+        if (url && editingProject) {
+            if (type === 'image') {
+                const gallery = [...(editingProject.gallery_images || []), url];
+                setEditingProject({ ...editingProject, gallery_images: gallery });
+            } else {
+                const gallery = [...(editingProject.gallery_videos || []), url];
+                setEditingProject({ ...editingProject, gallery_videos: gallery });
+            }
+        }
     };
 
     const saveSettings = async () => {
         setSaving(true);
         try {
-            for (const config of apiConfigs) {
-                await apiConfigAPI.update(config.id, { api_key: config.api_key, is_active: config.is_active });
-            }
-            await contentAPI.update('general.logo_text1', branding.logoText1, 'general');
-            await contentAPI.update('general.logo_text2', branding.logoText2, 'general');
-            await contentAPI.update('general.accent_color', branding.accentColor, 'general');
-            await contentAPI.update('general.bg_color', branding.bgColor, 'general');
-            await contentAPI.update('general.light_accent_color', branding.lightAccentColor, 'general');
-            await contentAPI.update('general.light_bg_color', branding.lightBgColor, 'general');
-            await contentAPI.update('social.linkedin', branding.linkedin, 'social');
-            await contentAPI.update('social.instagram', branding.instagram, 'social');
-            await contentAPI.update('social.footer_email', branding.footerEmail, 'social');
-            await contentAPI.update('general.show_toolbar', branding.showToolbar.toString(), 'general');
-            setMessage('✅ Configurações salvas!');
-        } catch (err) { setMessage('❌ Erro.'); }
+            await Promise.all([
+                contentAPI.update('general.logo_text1', branding.logoText1, 'general'),
+                contentAPI.update('general.logo_text2', branding.logoText2, 'general'),
+                contentAPI.update('general.accent_color', branding.accentColor, 'general'),
+                contentAPI.update('general.bg_color', branding.bgColor, 'general'),
+                contentAPI.update('general.light_accent_color', branding.lightAccentColor, 'general'),
+                contentAPI.update('general.light_bg_color', branding.lightBgColor, 'general'),
+                contentAPI.update('social.linkedin', branding.linkedin, 'social'),
+                contentAPI.update('social.instagram', branding.instagram, 'social'),
+                contentAPI.update('social.footer_email', branding.footerEmail, 'social'),
+                contentAPI.update('social.phone', branding.phone, 'social'),
+                contentAPI.update('general.footer_text', branding.footerText, 'general'),
+                contentAPI.update('nav.home', String(branding.navHome), 'nav'),
+                contentAPI.update('nav.cv', String(branding.navCV), 'nav'),
+                contentAPI.update('nav.portfolio', String(branding.navPortfolio), 'nav'),
+                contentAPI.update('nav.contact', String(branding.navContact), 'nav'),
+                contentAPI.update('nav.get_in_touch', String(branding.navGetInTouch), 'nav')
+            ]);
+            setMessage('✅ Settings saved!');
+        } catch (err) { setMessage('❌ Error.'); }
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
-    const toggleTag = (tag: string) => {
-        if (!editingProject) return;
-        const currentTags = editingProject.tags || [];
-        const newTags = currentTags.includes(tag) ? currentTags.filter(t => t !== tag) : [...currentTags, tag];
-        setEditingProject({ ...editingProject, tags: newTags });
-    };
-
-    const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setSaving(true);
-        const url = await storageAPI.uploadImage(file, 'cv');
-        if (url) {
-            setCvUrl(url);
-            setMessage('✅ PDF do CV carregado!');
-        } else {
-            setMessage('❌ Erro no upload.');
-        }
-        setSaving(false);
-        setTimeout(() => setMessage(''), 3000);
-    };
-
-    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !editingProject) return;
-        setSaving(true);
-        const url = await storageAPI.uploadImage(file, 'covers');
-        if (url) setEditingProject({ ...editingProject, image_url: url });
-        setSaving(false);
-    };
-
-    const filteredCV = cvSections.filter(s => s.section_type === cvSubTab).sort((a, b) => a.order_index - b.order_index);
+    const filteredCV = cvSections.filter(s => s.section_type === cvSubTab);
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0a', color: '#fff', position: 'relative' }}>
-            {/* Sidebar Overlay for Mobile */}
-            {isSidebarOpen && isMobile && (
-                <div
-                    onClick={() => setIsSidebarOpen(false)}
-                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000 }}
-                />
-            )}
-
+        <div className="admin-dashboard" style={{ display: 'flex', minHeight: '100vh', background: '#050505', color: '#fff' }}>
             {/* Sidebar */}
-            <div style={{
-                width: isMobile ? '280px' : '260px',
-                background: '#111',
-                borderRight: '1px solid #222',
-                display: 'flex',
-                flexDirection: 'column',
-                padding: '20px',
-                position: isMobile ? 'fixed' : 'sticky',
-                top: 0,
-                height: '100vh',
-                zIndex: 1001,
-                transition: 'transform 0.3s ease',
-                transform: isMobile && !isSidebarOpen ? 'translateX(-100%)' : 'translateX(0)'
-            }}>
-                <div style={{ marginBottom: '40px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', letterSpacing: '2px', color: 'var(--accent-color)', margin: 0 }}>
-                        DASHBOARD
-                    </h1>
-                    {isMobile && <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X /></button>}
+            <div style={{ width: '260px', background: '#0a0a0a', borderRight: '1px solid #1a1a1a', display: 'flex', flexDirection: 'column', padding: '24px 12px', position: 'sticky', top: 0, height: '100vh', zIndex: 100 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 12px', marginBottom: '40px' }}>
+                    <div style={{ width: '36px', height: '36px', background: 'var(--accent-color)', borderRadius: '10px', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <Target size={20} />
+                    </div>
+                    <span style={{ fontWeight: '700', fontSize: '16px' }}>{branding.logoText1} {branding.logoText2}</span>
                 </div>
 
-                <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {[
-                        { id: 'content', label: 'Conteúdo', icon: LayoutDashboard },
-                        { id: 'projects', label: 'Projetos', icon: FolderKanban },
-                        { id: 'cv', label: 'Currículo', icon: FileText },
-                        { id: 'settings', label: 'Configurações', icon: Settings },
+                        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+                        { id: 'content', label: 'Home Page', icon: LayoutDashboard },
+                        { id: 'projects', label: 'Portfolio', icon: FolderKanban },
+                        { id: 'cv', label: 'Curriculum', icon: FileText },
+                        { id: 'settings', label: 'Settings', icon: Settings },
                     ].map(item => (
-                        <button
-                            key={item.id}
-                            onClick={() => { setActiveTab(item.id as any); if (isMobile) setIsSidebarOpen(false); }}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                                background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent',
-                                border: 'none', borderRadius: '10px', color: activeTab === item.id ? 'var(--accent-color)' : '#888',
-                                cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left', fontWeight: activeTab === item.id ? '600' : '400'
-                            }}
-                        >
+                        <button key={item.id} onClick={() => setActiveTab(item.id as any)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: activeTab === item.id ? 'rgba(255,255,255,0.05)' : 'transparent', border: 'none', borderRadius: '10px', color: activeTab === item.id ? '#fff' : '#666', cursor: 'pointer', textAlign: 'left' }}>
                             <item.icon size={20} />
-                            <span style={{ flex: 1, fontSize: '14px' }}>{item.label}</span>
-                            {activeTab === item.id && <ChevronRight size={16} />}
+                            <span style={{ fontSize: '14px', fontWeight: activeTab === item.id ? '600' : '400' }}>{item.label}</span>
                         </button>
                     ))}
-                </nav>
-
-                <button onClick={handleLogout} style={{
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                    background: 'rgba(239, 68, 68, 0.1)', border: 'none', borderRadius: '10px',
-                    color: '#ef4444', cursor: 'pointer', marginTop: 'auto'
-                }}>
-                    <LogOut size={20} /> <span style={{ fontSize: '14px' }}>Sair</span>
-                </button>
+                </div>
+                <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><LogOut size={20} /> Sign Out</button>
             </div>
 
-            {/* Main Content Area */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                {/* Top MobileBar */}
-                {isMobile && (
-                    <div style={{ padding: '15px 20px', background: '#111', borderBottom: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><Menu size={24} /></button>
-                        <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', color: 'var(--accent-color)' }}>{activeTab.toUpperCase()}</span>
-                        <div style={{ width: '24px' }} /> {/* Spacer */}
-                    </div>
-                )}
+            {/* Content Area */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <header style={{ height: '72px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', padding: '0 32px', position: 'sticky', top: 0, zIndex: 50 }}>
+                    <h2 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: '#444', letterSpacing: '1px' }}>{activeTab} Workspace</h2>
+                </header>
 
-                <div style={{ flex: 1, padding: isMobile ? '25px' : '40px', overflowY: 'auto' }}>
-                    {message && (
-                        <div style={{
-                            position: 'fixed', top: '20px', right: '20px', padding: '16px 24px',
-                            background: message.includes('✅') ? '#065f46' : '#991b1b',
-                            color: '#fff', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 10000
-                        }}> {message} </div>
-                    )}
+                <main style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+                    {message && <div style={{ position: 'fixed', bottom: '24px', right: '24px', padding: '16px 24px', background: '#fff', color: '#000', borderRadius: '12px', zIndex: 10000, fontWeight: '700' }}>{message}</div>}
 
-                    {/* CONTENT TAB */}
-                    {activeTab === 'content' && (
-                        <div style={{ maxWidth: '800px', width: '100%' }}>
-                            <h2 style={{ fontSize: isMobile ? '24px' : '32px', marginBottom: '30px', fontFamily: 'var(--font-display)' }}>CONTEÚDO DO SITE</h2>
-                            <div style={{ display: 'grid', gap: '20px' }}>
-                                <div><label style={{ display: 'block', marginBottom: '8px', color: '#888', fontSize: '14px' }}>Título do Hero</label>
-                                    <input value={heroTitle} onChange={e => setHeroTitle(e.target.value)} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                <div><label style={{ display: 'block', marginBottom: '8px', color: '#888', fontSize: '14px' }}>Descrição do Hero</label>
-                                    <textarea value={heroDesc} onChange={e => setHeroDesc(e.target.value)} rows={4} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff', resize: 'vertical' }} /></div>
-                                <div><label style={{ display: 'block', marginBottom: '8px', color: '#888', fontSize: '14px' }}>Texto da História</label>
-                                    <textarea value={storyText} onChange={e => setStoryText(e.target.value)} rows={3} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '8px', color: '#888', fontSize: '14px' }}>Arquivo do CV (PDF)</label>
-                                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                        <div style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: cvUrl ? 'var(--accent-color)' : '#666', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            {cvUrl ? '✓ PDF Carregado' : 'Nenhum arquivo selecionado'}
-                                        </div>
-                                        <input type="file" accept=".pdf" onChange={handleCVUpload} id="cv-file-upload" style={{ display: 'none' }} />
-                                        <label htmlFor="cv-file-upload" style={{ padding: '12px 20px', background: '#333', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
-                                            UPLOAD
-                                        </label>
-                                    </div>
-                                </div>
-                                <button onClick={saveContent} disabled={saving} style={{ padding: '15px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                                    <Save size={18} /> {saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
-                                </button>
+                    {activeTab === 'analytics' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <Globe size={20} color="var(--accent-color)" />
+                                <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.pageViews}</div>
+                                <div style={{ color: '#666', fontSize: '12px' }}>Total Page Views</div>
+                            </div>
+                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <Download size={20} color="var(--accent-color)" />
+                                <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.cvDownloads}</div>
+                                <div style={{ color: '#666', fontSize: '12px' }}>CV Downloads</div>
+                            </div>
+                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <Activity size={20} color="var(--accent-color)" />
+                                <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.projectClicks}</div>
+                                <div style={{ color: '#666', fontSize: '12px' }}>Project Interactions</div>
                             </div>
                         </div>
                     )}
 
-                    {/* PROJECTS TAB */}
-                    {activeTab === 'projects' && (
-                        <div style={{ maxWidth: '1000px', width: '100%' }}>
-                            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: '30px', gap: '15px' }}>
-                                <h2 style={{ fontSize: isMobile ? '24px' : '32px', margin: 0, fontFamily: 'var(--font-display)' }}>MEUS PROJETOS</h2>
-                                <button onClick={() => setEditingProject({ id: '', title: '', description: '', image_url: '', tags: [], year: '2024', order_index: projects.length, visible: true, gallery_images: [] } as any)}
-                                    style={{ padding: '10px 20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                                    <Plus size={16} /> NOVO PROJETO
-                                </button>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                                {projects.map(p => (
-                                    <div key={p.id} style={{ background: '#111', border: '1px solid #222', borderRadius: '16px', overflow: 'hidden' }}>
-                                        <div style={{ height: '160px', background: `url(${p.image_url}) center/cover no-repeat` }} />
-                                        <div style={{ padding: '15px' }}>
-                                            <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>{p.title}</h3>
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '15px' }}>
-                                                {p.tags.map(t => <span key={t} style={{ fontSize: '9px', padding: '3px 6px', background: '#222', borderRadius: '4px' }}>{t}</span>)}
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <button onClick={() => setEditingProject(p)} style={{ flex: 1, padding: '7px', background: 'transparent', border: '1px solid #333', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '12px' }}>Editar</button>
-                                                <button onClick={() => deleteProject(p.id)} style={{ padding: '7px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CV TAB */}
                     {activeTab === 'cv' && (
-                        <div style={{ maxWidth: '900px', width: '100%' }}>
-                            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: '30px', gap: '15px' }}>
-                                <h2 style={{ fontSize: isMobile ? '24px' : '32px', margin: 0, fontFamily: 'var(--font-display)' }}>CURRÍCULO</h2>
-                                <button onClick={() => setEditingCV({ id: '', section_type: cvSubTab, title: '', subtitle: '', description: '', date_range: '', order_index: cvSections.length, visible: true } as any)}
-                                    style={{ padding: '10px 20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-                                    <Plus size={16} /> NOVA SEÇÃO
-                                </button>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', overflowX: 'auto', paddingBottom: '5px' }} className="hide-scrollbar">
+                        <div>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '40px', background: '#0a0a0a', padding: '10px', borderRadius: '16px', border: '1px solid #1a1a1a', overflowX: 'auto' }} className="hide-scrollbar">
                                 {[
-                                    { id: 'experience', label: 'Experiência', icon: Briefcase },
-                                    { id: 'education', label: 'Educação', icon: GraduationCap },
-                                    { id: 'skills', label: 'Habilidades', icon: MousePointer2 },
-                                    { id: 'certification', label: 'Certificados', icon: Award },
-                                    { id: 'hobbies', label: 'Hobbies', icon: MousePointer2 },
-                                ].map(sub => (
+                                    { id: 'profile', label: 'Summary', icon: User },
+                                    { id: 'experience', label: 'Experience', icon: Briefcase },
+                                    { id: 'education', label: 'Education', icon: GraduationCap },
+                                    { id: 'skills', label: 'Skills', icon: Star },
+                                    { id: 'certification', label: 'Certifications', icon: Award },
+                                    { id: 'hobbies', label: 'Hobbies', icon: Heart },
+                                ].map(tab => (
                                     <button
-                                        key={sub.id}
-                                        onClick={() => setCvSubTab(sub.id as any)}
+                                        key={tab.id}
+                                        onClick={() => setCvSubTab(tab.id as any)}
                                         style={{
-                                            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
-                                            background: cvSubTab === sub.id ? '#fff' : 'rgba(255,255,255,0.05)',
-                                            color: cvSubTab === sub.id ? '#000' : '#888', border: 'none', borderRadius: '25px',
-                                            cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', transition: '0.2s'
+                                            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px',
+                                            background: cvSubTab === tab.id ? 'var(--accent-color)' : 'transparent',
+                                            color: cvSubTab === tab.id ? '#000' : '#666', border: 'none', borderRadius: '10px',
+                                            fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap'
                                         }}
                                     >
-                                        <sub.icon size={14} /> {sub.label}
+                                        <tab.icon size={16} /> {tab.label}
                                     </button>
                                 ))}
                             </div>
 
-                            <div style={{ display: 'grid', gap: '12px' }}>
-                                {filteredCV.map(s => (
-                                    <div key={s.id} style={{ padding: '15px 20px', background: '#111', border: '1px solid #222', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div>
-                                            <span style={{ fontWeight: '600', fontSize: '14px' }}>{s.title}</span>
-                                            {s.subtitle && <span style={{ color: '#666', fontSize: '12px', marginLeft: '10px' }}>| {s.subtitle}</span>}
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={() => setEditingCV(s)} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #333', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '11px' }}>Edit</button>
-                                            <button onClick={() => deleteCV(s.id)} style={{ padding: '6px', background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                            {cvSubTab === 'profile' ? (
+                                <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                                    <h3 style={{ marginBottom: '24px' }}>Public Identity</h3>
+                                    <input placeholder="Name" value={cvProfile.name} onChange={e => setCvProfile({ ...cvProfile, name: e.target.value })} style={modalInputStyle} />
+                                    <textarea placeholder="Bio Summary" value={cvProfile.bio} onChange={e => setCvProfile({ ...cvProfile, bio: e.target.value })} rows={8} style={modalInputStyle} />
+                                    <button onClick={saveCVProfile} style={{ padding: '16px 32px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: 'bold', width: '100%' }}>UPDATE PROFILE</button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                        <h3 style={{ textTransform: 'capitalize' }}>{cvSubTab} List</h3>
+                                        <button onClick={() => setEditingCV({ id: 'new', section_type: cvSubTab, title: '', subtitle: '', date_range: '', description: '', order_index: cvSections.length, visible: true } as any)} style={{ background: '#fff', color: '#000', padding: '10px 20px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ ADD {cvSubTab.toUpperCase()}</button>
+                                    </div>
+                                    <div style={{ display: 'grid', gap: '15px' }}>
+                                        {filteredCV.map(s => (
+                                            <div key={s.id} style={{ background: '#111', padding: '24px', borderRadius: '16px', border: '1px solid #222', display: 'flex', justifyContent: 'space-between' }}>
+                                                <div>
+                                                    <h4 style={{ margin: '0 0 5px 0' }}>{s.title}</h4>
+                                                    <p style={{ margin: 0, fontSize: '13px', color: '#888' }}>{s.subtitle} • {s.date_range}</p>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <button onClick={() => setEditingCV(s)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><Settings size={18} /></button>
+                                                    <button onClick={() => { if (confirm('Delete?')) cvAPI.delete(s.id).then(loadCV) }} style={{ background: 'transparent', border: 'none', color: '#ff4444' }}><Trash2 size={18} /></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {filteredCV.length === 0 && <div style={{ textAlign: 'center', padding: '40px', color: '#444' }}>No items yet.</div>}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'projects' && (
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
+                                <h3>Portfolio Projects</h3>
+                                <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], year: '2026', order_index: projects.length, is_published: false, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                                {projects.map(p => (
+                                    <div key={p.id} style={{ background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a', overflow: 'hidden' }}>
+                                        <div style={{ height: '180px', background: `url(${p.image_url}) center/cover` }} />
+                                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>{p.title}</span>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><Settings size={18} /></button>
+                                                <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444' }}><Trash2 size={18} /></button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
-                                {filteredCV.length === 0 && <div style={{ textAlign: 'center', padding: '40px', color: '#444', border: '1px dashed #222', borderRadius: '12px' }}>Nenhum item nesta categoria.</div>}
                             </div>
                         </div>
                     )}
 
-                    {/* SETTINGS TAB */}
-                    {activeTab === 'settings' && (
-                        <div style={{ maxWidth: '800px', width: '100%' }}>
-                            <h2 style={{ fontSize: isMobile ? '24px' : '32px', marginBottom: '30px', fontFamily: 'var(--font-display)' }}>CONFIGURAÇÕES</h2>
-                            <div style={{ display: 'grid', gap: '25px' }}>
-                                <div style={{ background: '#111', padding: isMobile ? '20px' : '30px', borderRadius: '16px', border: '1px solid #222' }}>
-                                    <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-color)' }}><Palette size={18} /> Identidade Visual</h3>
-                                    <div style={{ display: 'grid', gap: '15px' }}>
-                                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '10px' }}>Logo Linha 1</label>
-                                                <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '10px' }}>Logo Linha 2</label>
-                                                <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                        </div>
+                    {activeTab === 'content' && (
+                        <div style={{ display: 'grid', gap: '32px' }}>
+                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
+                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)' }}>Hero Experience</h3>
+                                <div style={{ display: 'grid', gap: '24px' }}>
+                                    <input placeholder="Marquee Title" value={heroTitle} onChange={e => setHeroTitle(e.target.value)} style={modalInputStyle} />
+                                    <textarea placeholder="Small Description" value={heroDesc} onChange={e => setHeroDesc(e.target.value)} rows={2} style={modalInputStyle} />
+                                </div>
+                            </div>
+                            <button onClick={saveContent} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '800' }}>PUBLISH CHANGES</button>
+                        </div>
+                    )}
 
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#1a1a1a', borderRadius: '12px', marginTop: '10px' }}>
+                    {activeTab === 'settings' && (
+                        <div style={{ display: 'grid', gap: '32px' }}>
+                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Visual Identity</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                                    <div>
+                                        <label style={labelStyle}>Logo First Word</label>
+                                        <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={modalInputStyle} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Logo Second Word</label>
+                                        <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={modalInputStyle} />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
+                                    <div>
+                                        <label style={labelStyle}>Dark Theme: Background</label>
+                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px' }} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Dark Theme: Accent</label>
+                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px' }} />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
+                                    <div>
+                                        <label style={labelStyle}>Light Theme: Background</label>
+                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ ...modalInputStyle, height: '50px', background: '#fff' }} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Light Theme: Accent</label>
+                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ ...modalInputStyle, height: '50px' }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Social & Contact</h3>
+                                <div style={{ display: 'grid', gap: '24px' }}>
+                                    <input placeholder="LinkedIn URL" value={branding.linkedin} onChange={e => setBranding({ ...branding, linkedin: e.target.value })} style={modalInputStyle} />
+                                    <input placeholder="Instagram URL" value={branding.instagram} onChange={e => setBranding({ ...branding, instagram: e.target.value })} style={modalInputStyle} />
+                                    <input placeholder="Public Email" value={branding.footerEmail} onChange={e => setBranding({ ...branding, footerEmail: e.target.value })} style={modalInputStyle} />
+                                    <input placeholder="Phone Number" value={branding.phone} onChange={e => setBranding({ ...branding, phone: e.target.value })} style={modalInputStyle} />
+                                    <textarea placeholder="Footer Copyright Text" value={branding.footerText} onChange={e => setBranding({ ...branding, footerText: e.target.value })} rows={2} style={modalInputStyle} />
+                                </div>
+                            </div>
+
+                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Navigation Toggles</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
+                                    {[
+                                        { id: 'navHome', label: 'Home Page' },
+                                        { id: 'navCV', label: 'CV / History' },
+                                        { id: 'navPortfolio', label: 'Portfolio Tab' },
+                                        { id: 'navContact', label: 'Contact Section' },
+                                        { id: 'navGetInTouch', label: 'Get In Touch' },
+                                    ].map(toggle => (
+                                        <label key={toggle.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                                             <input
                                                 type="checkbox"
-                                                id="show-toolbar"
-                                                checked={branding.showToolbar}
-                                                onChange={e => setBranding({ ...branding, showToolbar: e.target.checked })}
-                                                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                                checked={(branding as any)[toggle.id]}
+                                                onChange={e => setBranding({ ...branding, [toggle.id]: e.target.checked })}
+                                                style={{ width: '20px', height: '20px' }}
                                             />
-                                            <label htmlFor="show-toolbar" style={{ fontSize: '14px', cursor: 'pointer' }}>Mostrar Toolbar de Edição (estilo Figma)</label>
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Destaque (DARK)</label>
-                                                <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
-                                                    <input value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
-                                                </div></div>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Fundo (DARK)</label>
-                                                <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
-                                                    <input value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
-                                                </div></div>
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px', borderTop: '1px solid #222', paddingTop: '15px' }}>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Destaque (LIGHT)</label>
-                                                <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
-                                                    <input value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
-                                                </div></div>
-                                            <div><label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Fundo (LIGHT)</label>
-                                                <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ width: '44px', height: '44px', padding: '4px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }} />
-                                                    <input value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ flex: 1, padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
-                                                </div></div>
-                                        </div>
-                                    </div>
+                                            <span style={{ fontSize: '14px' }}>{toggle.label}</span>
+                                        </label>
+                                    ))}
                                 </div>
-
-                                <div style={{ background: '#111', padding: isMobile ? '20px' : '30px', borderRadius: '16px', border: '1px solid #222' }}>
-                                    <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-color)' }}><MousePointer2 size={18} /> Links & Contato</h3>
-                                    <div style={{ display: 'grid', gap: '15px' }}>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>LinkedIn URL</label>
-                                            <input value={branding.linkedin} onChange={e => setBranding({ ...branding, linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
-                                        </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Instagram URL</label>
-                                            <input value={branding.instagram} onChange={e => setBranding({ ...branding, instagram: e.target.value })} placeholder="https://instagram.com/..." style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
-                                        </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: '#888' }}>Email do Rodapé</label>
-                                            <input value={branding.footerEmail} onChange={e => setBranding({ ...branding, footerEmail: e.target.value })} placeholder="exemplo@email.com" style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <button onClick={saveSettings} disabled={saving} style={{ padding: '15px', background: '#fff', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}> {saving ? 'SALVANDO...' : 'SALVAR CONFIGURAÇÕES'} </button>
                             </div>
+
+                            <button onClick={saveSettings} style={{ padding: '24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', fontSize: '16px' }}>SAVE GLOBAL CONFIGURATION</button>
                         </div>
                     )}
-                </div>
+                </main>
             </div>
 
             {/* PROJECT MODAL */}
             {editingProject && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '10px' : '40px' }} onClick={() => setEditingProject(null)}>
-                    <div className="hide-scrollbar" style={{ background: '#111', width: '100%', maxWidth: '800px', maxHeight: '95vh', overflowY: 'auto', borderRadius: '24px', padding: isMobile ? '20px' : '40px', border: '1px solid #222' }} onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-                            <h3 style={{ fontSize: '20px', margin: 0, fontFamily: 'var(--font-display)' }}>{editingProject.id ? 'EDITAR PROJETO' : 'NOVO PROJETO'}</h3>
-                            <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}><X size={24} /></button>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                            <h3 style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-0.5px' }}>EDITAR PROJETO</h3>
+                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
+                                <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#666' }}><X size={24} /></button>
+                            </div>
                         </div>
-                        <div style={{ display: 'grid', gap: '15px' }}>
-                            <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Título</label>
-                                <input value={editingProject.title} onChange={e => setEditingProject({ ...editingProject, title: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Ano</label>
-                                    <input value={editingProject.year || ''} onChange={e => setEditingProject({ ...editingProject, year: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Ordem</label>
-                                    <input type="number" value={editingProject.order_index} onChange={e => setEditingProject({ ...editingProject, order_index: parseInt(e.target.value) })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                            </div>
+
+                        <div style={{ display: 'grid', gap: '24px' }}>
                             <div>
-                                <label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Tags</label>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px', padding: '10px', background: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
+                                <label style={labelStyle}>Título</label>
+                                <input value={editingProject.title} onChange={e => setEditingProject({ ...editingProject, title: e.target.value })} style={modalInputStyle} />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label style={labelStyle}>Ordem</label>
+                                    <input type="number" value={editingProject.order_index} onChange={e => setEditingProject({ ...editingProject, order_index: parseInt(e.target.value) })} style={modalInputStyle} />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={labelStyle}>Tags</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: '#111', padding: '12px', borderRadius: '8px', border: '1px solid #222' }}>
                                     {editingProject.tags?.map(t => (
-                                        <span key={t} onClick={() => toggleTag(t)} style={{ padding: '3px 8px', background: 'var(--accent-color)', color: '#000', borderRadius: '4px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}> {t} <X size={9} /> </span>
+                                        <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: (editingProject.tags || []).filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} />
+                                        </span>
                                     ))}
-                                    <input placeholder="Add tag..." onKeyDown={e => { if (e.key === 'Enter') { const val = (e.target as HTMLInputElement).value.trim(); if (val && !editingProject.tags.includes(val)) toggleTag(val); (e.target as HTMLInputElement).value = ''; } }} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', padding: '4px', flex: 1, fontSize: '13px' }} />
+                                    <input
+                                        placeholder="Add tag..."
+                                        value={tagInput}
+                                        onChange={e => setTagInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && addTag()}
+                                        style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '14px', outline: 'none', flex: 1, minWidth: '100px' }}
+                                    />
                                 </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                                    {availableTags.filter(t => !editingProject.tags.includes(t)).slice(0, 10).map(t => (
-                                        <button key={t} onClick={() => toggleTag(t)} style={{ padding: '2px 8px', background: 'transparent', border: '1px solid #333', borderRadius: '4px', color: '#888', fontSize: '10px', cursor: 'pointer' }}>+ {t}</button>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {(allUsedTags.length > 0 ? allUsedTags : ['ELEMENTOR', 'FIGMA', 'AGROTECH', 'DESIGN SYSTEM', 'WIREFRAMES']).map(suggestion => (
+                                        <button
+                                            key={suggestion}
+                                            onClick={() => addTag(suggestion)}
+                                            style={{ background: '#1a1a1a', border: '1px solid #222', color: '#888', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                                        >
+                                            + {suggestion}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
-                            <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Capa</label>
-                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                    <div style={{ width: '80px', height: '50px', background: `url(${editingProject.image_url}) center/cover no-repeat`, borderRadius: '8px', border: '1px solid #333' }} />
-                                    <input type="file" onChange={handleCoverUpload} id="project-cover" style={{ display: 'none' }} />
-                                    <label htmlFor="project-cover" style={{ padding: '8px 14px', background: '#333', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>Trocar</label>
-                                </div></div>
-                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
-                                <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Link do Projeto (Live URL)</label>
-                                    <input value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Texto do Botão</label>
-                                    <input value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} placeholder="VIEW LIVE PROJECT" style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
+
+                            <div>
+                                <label style={labelStyle}>Capa do Projeto</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222' }}>
+                                        {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333' }}><ImageIcon size={24} /></div>}
+                                    </div>
+                                    <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', border: '1px solid #333' }}>
+                                        Upload Capa
+                                        <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} />
+                                    </label>
+                                </div>
                             </div>
-                            <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Descrição</label>
-                                <textarea value={editingProject.description || ''} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} rows={3} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '13px' }} /></div>
-                            <button onClick={saveProject} style={{ padding: '14px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}> SALVAR PROJETO </button>
+
+                            <div style={{ background: '#0d0d0d', padding: '24px', borderRadius: '16px', border: '1px solid #1a1a1a' }}>
+                                <label style={{ ...labelStyle, fontSize: '15px', color: '#fff' }}>Galeria Adicional (Fotos & Vídeos)</label>
+                                <p style={{ fontSize: '12px', color: '#555', marginBottom: '20px' }}>Itens que aparecerão no carrossel do projeto.</p>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                                    {editingProject.gallery_images?.map((url, idx) => (
+                                        <div key={`img-${idx}`} style={{ position: 'relative', aspectRatio: '1/1', background: '#111', borderRadius: '10px', overflow: 'hidden', border: '1px solid #222' }}>
+                                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <button onClick={() => setEditingProject({ ...editingProject, gallery_images: (editingProject.gallery_images || []).filter((_, i) => i !== idx) })} style={{ position: 'absolute', top: '5px', right: '5px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
+                                        </div>
+                                    ))}
+                                    {editingProject.gallery_videos?.map((url, idx) => (
+                                        <div key={`v-${idx}`} style={{ position: 'relative', aspectRatio: '1/1', background: '#111', borderRadius: '10px', overflow: 'hidden', border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Video color="var(--accent-color)" size={32} />
+                                            <button onClick={() => setEditingProject({ ...editingProject, gallery_videos: (editingProject.gallery_videos || []).filter((_, i) => i !== idx) })} style={{ position: 'absolute', top: '5px', right: '5px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
+                                        </div>
+                                    ))}
+
+                                    <label className="clickable" style={{ aspectRatio: '1/1', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '2px dashed #222', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <Plus size={20} color="#444" />
+                                        <span style={{ fontSize: '10px', color: '#444', fontWeight: 'bold' }}>ADD FOTO</span>
+                                        <input type="file" onChange={(e) => e.target.files && addGalleryItem('image', e.target.files[0])} style={{ display: 'none' }} />
+                                    </label>
+
+                                    <label className="clickable" style={{ aspectRatio: '1/1', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '2px dashed #222', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <Video size={20} color="#444" />
+                                        <span style={{ fontSize: '10px', color: '#444', fontWeight: 'bold' }}>ADD VÍDEO</span>
+                                        <input type="file" onChange={(e) => e.target.files && addGalleryItem('video', e.target.files[0])} style={{ display: 'none' }} />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={labelStyle}>Descrição</label>
+                                <textarea
+                                    value={editingProject.description || ''}
+                                    onChange={e => setEditingProject({ ...editingProject, description: e.target.value })}
+                                    rows={6}
+                                    style={{ ...modalInputStyle, resize: 'vertical' }}
+                                />
+                            </div>
+
+                            <button
+                                onClick={saveProject}
+                                disabled={saving}
+                                style={{
+                                    width: '100%',
+                                    padding: '20px',
+                                    background: 'var(--accent-color)',
+                                    color: '#000',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontWeight: '900',
+                                    fontSize: '16px',
+                                    marginTop: '20px',
+                                    cursor: 'pointer',
+                                    transition: '0.3s'
+                                }}
+                            >
+                                {saving ? 'SALVANDO...' : 'SALVAR PROJETO'}
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* CV MODAL */}
+            {/* PREVIEW MODALS */}
+            {isPreviewOpen && editingProject && (
+                <ProjectModal project={editingProject} isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
+            )}
+
             {editingCV && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '10px' : '40px' }} onClick={() => setEditingCV(null)}>
-                    <div style={{ background: '#111', width: '100%', maxWidth: '600px', borderRadius: '24px', padding: isMobile ? '25px' : '40px', border: '1px solid #222' }} onClick={e => e.stopPropagation()}>
-                        <h3 style={{ fontSize: '20px', marginBottom: '25px' }}>{editingCV.id ? 'EDITAR SEÇÃO' : 'NOVA SEÇÃO'}</h3>
-                        <div style={{ display: 'grid', gap: '15px' }}>
-                            <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Tipo</label>
-                                <select value={editingCV.section_type} onChange={e => setEditingCV({ ...editingCV, section_type: e.target.value as any })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }}>
-                                    <option value="experience">Experiência</option><option value="education">Educação</option><option value="skills">Skill</option><option value="certification">Certificado</option>
-                                </select></div>
-                            <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Título</label>
-                                <input value={editingCV.title} onChange={e => setEditingCV({ ...editingCV, title: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                            {editingCV.section_type !== 'skills' && (
-                                <><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                    <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Subtítulo</label>
-                                        <input value={editingCV.subtitle || ''} onChange={e => setEditingCV({ ...editingCV, subtitle: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                    <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Período</label>
-                                        <input value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                </div>
-                                    <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Descrição</label>
-                                        <textarea value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={3} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '13px' }} /></div>
-                                </>
-                            )}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div><label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '13px' }}>Ordem</label>
-                                    <input type="number" value={editingCV.order_index} onChange={e => setEditingCV({ ...editingCV, order_index: parseInt(e.target.value) })} style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} /></div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '20px' }}><input type="checkbox" checked={editingCV.visible} onChange={e => setEditingCV({ ...editingCV, visible: e.target.checked })} /> <label style={{ fontSize: '13px' }}>Visível</label></div>
-                            </div>
-                            <button onClick={saveCV} style={{ padding: '14px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}> SALVAR SEÇÃO </button>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                            <h3 style={{ textTransform: 'capitalize' }}>Edit {editingCV.section_type}</h3>
+                            <button onClick={() => setEditingCV(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={20} /></button>
                         </div>
+                        <input placeholder="Title" value={editingCV.title} onChange={e => setEditingCV({ ...editingCV, title: e.target.value })} style={modalInputStyle} />
+                        <input placeholder="Subtitle / Org" value={editingCV.subtitle || ''} onChange={e => setEditingCV({ ...editingCV, subtitle: e.target.value })} style={modalInputStyle} />
+                        <input placeholder="Dates" value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={modalInputStyle} />
+                        <textarea placeholder="Details" value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={4} style={modalInputStyle} />
+                        <button onClick={saveCVSection} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: 'bold', width: '100%' }}>SAVE {editingCV.section_type.toUpperCase()}</button>
                     </div>
                 </div>
             )}

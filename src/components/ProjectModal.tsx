@@ -1,16 +1,17 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ProjectData } from '../lib/supabase';
+import type { Project } from '../lib/supabase';
+import ReactMarkdown from 'react-markdown';
 
 interface ProjectModalProps {
-    project: ProjectData | null;
+    project: Project | null;
     isOpen: boolean;
     onClose: () => void;
 }
 
 export default function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
     useEffect(() => {
@@ -19,254 +20,120 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Prevent body scroll when modal is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
-            setCurrentImageIndex(0); // Reset to first image
+            setCurrentMediaIndex(0);
         } else {
             document.body.style.overflow = 'unset';
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
+        return () => { document.body.style.overflow = 'unset'; };
     }, [isOpen]);
 
     if (!project) return null;
 
-    // Combine main image with gallery images
-    const mainImg = project.image_url || project.img || '';
-    const galleryItems = project.gallery_images || project.gallery || [];
-    const allImages = [mainImg, ...galleryItems].filter(Boolean);
-    const hasMultipleImages = allImages.length > 1;
+    // Combine all media and detect videos
+    const allMedia = [
+        { type: 'image', url: project.image_url },
+        ...(project.gallery_images || []).map(url => {
+            const isVideo = url.match(/\.(mp4|webm|ogg|mov|avi)($|\?)/i);
+            return { type: isVideo ? 'video' : 'image', url };
+        }),
+        ...(project.gallery_videos || []).map(url => ({ type: 'video', url }))
+    ].filter(m => m.url);
 
-    const nextImage = () => {
-        setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+    const hasMultipleMedia = allMedia.length > 1;
+
+    const nextMedia = () => {
+        setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
     };
 
-    const prevImage = () => {
-        setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+    const prevMedia = () => {
+        setCurrentMediaIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
     };
 
     return (
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
                         className="clickable"
-                        style={{
-                            position: 'fixed', inset: 0,
-                            background: 'rgba(0,0,0,0.85)',
-                            backdropFilter: 'blur(10px)',
-                            zIndex: 9998
-                        }}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(10px)', zIndex: 20000 }}
                     />
 
-                    {/* Modal Content */}
                     <motion.div
-                        initial={{ opacity: 0, y: 100, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 100, scale: 0.95 }}
-                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                         style={{
                             position: 'fixed',
-                            top: isMobile ? '2%' : '5%',
-                            left: isMobile ? '2%' : '5%',
-                            right: isMobile ? '2%' : '5%',
-                            bottom: isMobile ? '2%' : '5%',
+                            inset: isMobile ? '0' : '5%',
                             background: 'var(--surface-color)',
-                            borderRadius: '24px',
+                            borderRadius: isMobile ? '0' : '32px',
                             border: '1px solid var(--border-color)',
-                            zIndex: 9999,
+                            zIndex: 20001,
                             overflow: 'hidden',
                             display: 'flex',
                             flexDirection: isMobile ? 'column' : 'row'
                         }}
                     >
-                        {/* Header Actions */}
-                        <div style={{ padding: '20px', display: 'flex', justifyContent: 'flex-end', position: 'absolute', top: 0, right: 0, zIndex: 100, pointerEvents: 'none' }}>
-                            <button
-                                onClick={onClose}
-                                className="clickable"
-                                style={{
-                                    background: 'rgba(0,0,0,0.5)', border: 'none',
-                                    borderRadius: '50%', width: '40px', height: '40px',
-                                    color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto'
-                                }}
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                        {/* CLOSE BUTTON */}
+                        <button onClick={onClose} style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 100, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '44px', height: '44px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={20} /></button>
 
-                        {/* Left/Top: Image Area with Carousel */}
-                        <div style={{
-                            flex: isMobile ? 'none' : 1.5,
-                            height: isMobile ? '40%' : '100%',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            borderRight: isMobile ? 'none' : '1px solid var(--border-color)',
-                            borderBottom: isMobile ? '1px solid var(--border-color)' : 'none'
-                        }}>
-                            <img
-                                src={allImages[currentImageIndex]}
-                                alt={project.title}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
+                        {/* MEDIA LEFT */}
+                        <div style={{ flex: isMobile ? 'none' : 1.6, height: isMobile ? '40%' : '100%', position: 'relative', background: '#000' }}>
+                            {allMedia[currentMediaIndex].type === 'image' ? (
+                                <img src={allMedia[currentMediaIndex].url} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <video src={allMedia[currentMediaIndex].url} controls autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            )}
 
-                            {/* Carousel Navigation */}
-                            {hasMultipleImages && (
+                            {hasMultipleMedia && (
                                 <>
-                                    <button
-                                        onClick={prevImage}
-                                        className="clickable"
-                                        style={{
-                                            position: 'absolute',
-                                            left: '10px',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            background: 'rgba(0,0,0,0.5)',
-                                            border: 'none',
-                                            borderRadius: '50%',
-                                            width: '40px',
-                                            height: '40px',
-                                            color: 'white',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            backdropFilter: 'blur(5px)'
-                                        }}
-                                    >
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                    <button
-                                        onClick={nextImage}
-                                        className="clickable"
-                                        style={{
-                                            position: 'absolute',
-                                            right: '10px',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            background: 'rgba(0,0,0,0.5)',
-                                            border: 'none',
-                                            borderRadius: '50%',
-                                            width: '40px',
-                                            height: '40px',
-                                            color: 'white',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            backdropFilter: 'blur(5px)'
-                                        }}
-                                    >
-                                        <ChevronRight size={20} />
-                                    </button>
-
-                                    {/* Image Counter */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: '20px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        background: 'rgba(0,0,0,0.7)',
-                                        color: 'white',
-                                        padding: '4px 12px',
-                                        borderRadius: '20px',
-                                        fontSize: '12px',
-                                        backdropFilter: 'blur(5px)'
-                                    }}>
-                                        {currentImageIndex + 1} / {allImages.length}
+                                    <button onClick={prevMedia} style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '48px', height: '48px', color: '#fff', cursor: 'pointer' }}><ChevronLeft size={24} /></button>
+                                    <button onClick={nextMedia} style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '48px', height: '48px', color: '#fff', cursor: 'pointer' }}><ChevronRight size={24} /></button>
+                                    <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', padding: '6px 16px', borderRadius: '100px', fontSize: '11px', color: '#fff' }}>
+                                        {currentMediaIndex + 1} / {allMedia.length}
                                     </div>
                                 </>
                             )}
                         </div>
 
-                        {/* Right/Bottom: Content Area */}
-                        <div
-                            className="modal-content-area"
-                            style={{
-                                flex: 1,
-                                padding: isMobile ? '30px' : '60px 40px',
-                                overflowY: 'auto',
-                                scrollbarWidth: 'none', // Hide scrollbar for Firefox
-                                msOverflowStyle: 'none',   // Hide scrollbar for IE/Edge
-                                position: 'relative'
-                            }}
-                        >
-                            {/* Hidden Scrollbar for Chrome/Safari */}
-                            <style>{`
-                                .modal-content-area::-webkit-scrollbar {
-                                    display: none;
-                                }
-                            `}</style>
+                        {/* CONTENT RIGHT */}
+                        <div style={{ flex: 1, padding: isMobile ? '32px' : '80px 60px', overflowY: 'auto' }} className="hide-scrollbar">
+                            <h2 style={{ fontSize: isMobile ? '32px' : '48px', fontWeight: '800', fontFamily: 'var(--font-display)', marginBottom: '24px', lineHeight: 1.1 }}>{project.title}</h2>
 
-                            <div style={{ marginBottom: '30px' }}>
-                                <h2 style={{ fontSize: isMobile ? '32px' : '48px', marginBottom: '10px', fontFamily: 'var(--font-display)' }}>{project.title}</h2>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '30px' }}>
-                                    {project.tags?.map(tag => (
-                                        <span key={tag} style={{ border: '1px solid var(--border-color)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', textTransform: 'uppercase' }}>
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
-                                <h4 style={{ color: 'var(--accent-color)', marginBottom: '10px', fontSize: '12px', fontFamily: 'var(--font-display)' }}>DESCRIPTION</h4>
-                                <p style={{ fontSize: isMobile ? '16px' : '18px', lineHeight: '1.6', color: 'var(--text-muted)' }}>
-                                    {project.description || "Project details coming soon..."}
-                                </p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '40px' }}>
+                                {project.tags?.map(tag => (
+                                    <span key={tag} style={{ padding: '6px 16px', border: '1px solid var(--border-color)', borderRadius: '100px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>{tag}</span>
+                                ))}
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '40px' }}>
+                            <div className="project-markdown-desc" style={{ fontSize: '18px', lineHeight: 1.8, color: 'var(--text-muted)', marginBottom: '60px' }}>
+                                <ReactMarkdown>{project.description || ''}</ReactMarkdown>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '60px', padding: '32px 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '5px' }}>YEAR</div>
-                                    <div style={{ fontSize: '18px' }}>{project.year || '2024'}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--accent-color)', fontWeight: '800', marginBottom: '8px' }}>YEAR</div>
+                                    <div style={{ fontSize: '20px', fontWeight: '500' }}>{project.year || '2026'}</div>
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '5px' }}>ROLE</div>
-                                    <div style={{ fontSize: '18px' }}>{project.type || 'Product Design'}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--accent-color)', fontWeight: '800', marginBottom: '8px' }}>INDUSTRY</div>
+                                    <div style={{ fontSize: '20px', fontWeight: '500' }}>{project.tags?.[0] || 'Design'}</div>
                                 </div>
                             </div>
 
                             {project.live_url && (
-                                <a
-                                    href={project.live_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="clickable"
-                                    style={{
-                                        display: 'flex',
-                                        width: '100%', padding: '16px',
-                                        background: 'var(--accent-color)', color: 'black',
-                                        border: 'none', borderRadius: '8px',
-                                        fontSize: '16px', fontWeight: 'bold',
-                                        justifyContent: 'center', alignItems: 'center', gap: '10px',
-                                        textDecoration: 'none'
-                                    }}
-                                >
+                                <a href={project.live_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'var(--accent-color)', color: '#000', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                                     {project.button_text || 'VIEW LIVE PROJECT'} <ExternalLink size={20} />
                                 </a>
                             )}
-
-                            {/* Scroll Indicator */}
-                            <motion.div
-                                animate={{ y: [0, 5, 0] }}
-                                transition={{ repeat: Infinity, duration: 1.5 }}
-                                style={{
-                                    position: 'absolute',
-                                    bottom: '20px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    opacity: 0.5,
-                                    pointerEvents: 'none'
-                                }}
-                            >
-                                <ChevronDown size={24} />
-                            </motion.div>
                         </div>
                     </motion.div>
                 </>

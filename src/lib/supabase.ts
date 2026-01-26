@@ -41,17 +41,35 @@ export interface Project {
     id: string;
     title: string;
     description?: string;
+    rich_description?: string;
     year?: string;
     image_url: string;
+    image_alt?: string;
     gallery_images?: string[];
+    gallery_videos?: string[]; // New: support for videos
     tags: string[];
     live_url?: string;
+    slug?: string;
+    meta_title?: string;
+    meta_description?: string;
     button_text?: string;
     button_icon?: string;
+    password_protection?: string;
     order_index: number;
     visible: boolean;
+    is_published: boolean;
     created_at: string;
     updated_at: string;
+}
+
+export interface AnalyticsLog {
+    id: string;
+    event_type: 'page_view' | 'project_click' | 'cv_download';
+    page_path?: string;
+    project_id?: string;
+    referrer?: string;
+    user_agent?: string;
+    created_at: string;
 }
 
 export interface ProjectData {
@@ -195,6 +213,19 @@ export const projectsAPI = {
         return data || [];
     },
 
+    async update(id: string, updates: Partial<Project>): Promise<boolean> {
+        const { error } = await supabase
+            .from('projects')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ Supabase Update Error:', error.message, error.details, error.hint);
+            return false;
+        }
+        return true;
+    },
+
     async create(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project | null> {
         const { data, error } = await supabase
             .from('projects')
@@ -203,23 +234,10 @@ export const projectsAPI = {
             .single();
 
         if (error) {
-            console.error('Error creating project:', error);
+            console.error('❌ Supabase Create Error:', error.message, error.details, error.hint);
             return null;
         }
         return data;
-    },
-
-    async update(id: string, updates: Partial<Project>): Promise<boolean> {
-        const { error } = await supabase
-            .from('projects')
-            .update(updates)
-            .eq('id', id);
-
-        if (error) {
-            console.error('Error updating project:', error);
-            return false;
-        }
-        return true;
     },
 
     async delete(id: string): Promise<boolean> {
@@ -609,6 +627,48 @@ export const dailyTasksAPI = {
             return false;
         }
         return true;
+    }
+};
+
+export const analyticsAPI = {
+    async logEvent(event: Omit<AnalyticsLog, 'id' | 'created_at'>): Promise<boolean> {
+        const { error } = await supabase.from('analytics_logs').insert([event]);
+        if (error) {
+            console.error('Error logging event:', error);
+            return false;
+        }
+        return true;
+    },
+
+    async getStats(): Promise<any> {
+        const { data: logs } = await supabase.from('analytics_logs').select('*');
+        if (!logs) return { pageViews: 0, cvDownloads: 0, projectClicks: 0, sources: [], pages: [] };
+
+        const views = logs.filter(l => l.event_type === 'page_view');
+        const downloads = logs.filter(l => l.event_type === 'cv_download');
+        const clicks = logs.filter(l => l.event_type === 'project_click');
+
+        // Page breakdown
+        const pageCounts: Record<string, number> = {};
+        views.forEach(v => {
+            const p = v.page_path || '/';
+            pageCounts[p] = (pageCounts[p] || 0) + 1;
+        });
+
+        // Source breakdown
+        const sourceCounts: Record<string, number> = {};
+        logs.forEach(l => {
+            const s = l.referrer ? new URL(l.referrer).hostname : 'Direct / Unknown';
+            sourceCounts[s] = (sourceCounts[s] || 0) + 1;
+        });
+
+        return {
+            pageViews: views.length,
+            cvDownloads: downloads.length,
+            projectClicks: clicks.length,
+            pages: Object.entries(pageCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+            sources: Object.entries(sourceCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+        };
     }
 };
 

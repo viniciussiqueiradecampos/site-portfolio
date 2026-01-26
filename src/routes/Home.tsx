@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-// import Lenis from '@studio-freight/lenis'; 
-import { useScroll, useTransform, motion } from 'framer-motion';
+import { useScroll, useTransform, motion, AnimatePresence } from 'framer-motion';
+import { Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import CreativeToolbar from '../components/CreativeToolbar';
 import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
-import { contentAPI, projectsAPI, type Project, type ProjectData } from '../lib/supabase';
+import { contentAPI, projectsAPI, analyticsAPI, type Project } from '../lib/supabase';
 
 // Helper component to fix Rule of Hooks (useTransform inside loop)
 const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
@@ -21,19 +20,26 @@ export default function Home() {
     const [heroTitle, setHeroTitle] = useState('figma • UI DESIGN • AI • WEB DESIGN');
     const [heroDesc, setHeroDesc] = useState('Loading description...');
     const [storyText, setStoryText] = useState('Experience designing products for ambitious companies');
+    const [pitchData, setPitchData] = useState({
+        description: '',
+        btnText: "LET'S WORK TOGETHER",
+        btnLink: "#contact"
+    });
     const [projects, setProjects] = useState<Project[]>([]);
     const [socials, setSocials] = useState({
         linkedin: '#',
         instagram: '#',
-        footerEmail: 'vinisiqueiradecampos@gmail.com'
+        footerEmail: 'vinisiqueiradecampos@gmail.com',
+        phone: '+351 920 196 634'
     });
-    const [showToolbar, setShowToolbar] = useState(true);
+    const [footerText, setFooterText] = useState('VINICIUS CAMPOS &copy; 2026 • PORTUGAL');
 
     // Refs for Sticky Sections
     const heroRef = useRef(null);
     const storyRef = useRef(null);
 
     useEffect(() => {
+        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/' });
         loadData();
         // Handle hash scroll
         if (window.location.hash === '#contact') {
@@ -57,22 +63,34 @@ export default function Home() {
         const tStory = await contentAPI.getByKey('storytelling.main');
         if (tStory) setStoryText(tStory.value);
 
+        const tPitchDesc = await contentAPI.getByKey('storytelling.description');
+        const tPitchBtnText = await contentAPI.getByKey('storytelling.button_text');
+        const tPitchBtnLink = await contentAPI.getByKey('storytelling.button_link');
+
+        setPitchData({
+            description: tPitchDesc?.value || '',
+            btnText: tPitchBtnText?.value || "LET'S WORK TOGETHER",
+            btnLink: tPitchBtnLink?.value || "#contact"
+        });
+
         // Load Projects - Limited to 4 for Home
         const projs = await projectsAPI.getAll();
         setProjects(projs.slice(0, 4));
 
-        // Load Socials
+        // Load Socials & Footer
         const ln = await contentAPI.getByKey('social.linkedin');
         const ig = await contentAPI.getByKey('social.instagram');
         const em = await contentAPI.getByKey('social.footer_email');
+        const ph = await contentAPI.getByKey('social.phone');
+        const ft = await contentAPI.getByKey('general.footer_text');
+
         setSocials({
             linkedin: ln?.value || '#',
             instagram: ig?.value || '#',
-            footerEmail: em?.value || 'vinisiqueiradecampos@gmail.com'
+            footerEmail: em?.value || 'vinisiqueiradecampos@gmail.com',
+            phone: ph?.value || '+351 920 196 634'
         });
-
-        const showTb = await contentAPI.getByKey('general.show_toolbar');
-        setShowToolbar(showTb?.value === 'true');
+        if (ft) setFooterText(ft.value);
     };
 
     // Hero Section Scroll Progress
@@ -99,47 +117,16 @@ export default function Home() {
     };
 
     // Modal State
-    const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const openModal = (project: any) => {
-        // Adapt DB project to Modal ProjectData if needed
-        const modalProject = {
-            title: project.title,
-            image_url: project.image_url,
-            img: project.image_url,
-            tags: project.tags || [],
-            gallery_images: project.gallery_images || [],
-            gallery: project.gallery_images || [],
-            description: project.description,
-            type: project.tags?.[0] || 'Project',
-            year: project.year || (project.created_at ? new Date(project.created_at).getFullYear().toString() : '2024'),
-            live_url: project.live_url,
-            button_text: project.button_text
-        } as any as ProjectData;
-        setSelectedProject(modalProject);
+    const openModal = (project: Project) => {
+        setSelectedProject(project);
         setIsModalOpen(true);
     };
 
-
-    // Lenis Disabled for stability check
-    /*
-    useEffect(() => {
-        const lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            orientation: 'vertical',
-            smoothWheel: true,
-        });
-        function raf(time: number) { lenis.raf(time); requestAnimationFrame(raf); }
-        requestAnimationFrame(raf);
-        return () => lenis.destroy();
-    }, []);
-    */
-
-    // --- HERO ANIMATIONS ---
+    // --- RESPONSIVE ---
     const [isMobile, setIsMobile] = useState(false);
-
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
@@ -147,21 +134,12 @@ export default function Home() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Title Slides: 100% visible from start. Scrolls horizontally.
-    // Ensure it stops exactly when the text ends. 
-    // We use a container width of 90vw (5% padding each side).
-    // Title Slides: Smoother horizontal scroll covering the full width of the text
     const heroTextX = useTransform(heroProgress, [0, 0.7], ['0px', '-100%']);
-
-    // Description: Starts at 0.45
     const descriptionText = heroDesc.split(" ");
-
-    // --- STORYTELLING ANIMATIONS ---
     const storyWords = storyText.split(" ");
 
     return (
         <div ref={containerRef} style={{ position: 'relative' }}>
-            {(!isMobile && showToolbar) && <CreativeToolbar />}
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
@@ -169,7 +147,7 @@ export default function Home() {
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                    justifyContent: 'center', alignItems: 'flex-start', // Changed to flex-start for easier scroll calculation
+                    justifyContent: 'center', alignItems: 'flex-start',
                     paddingRight: '5%', paddingLeft: '5%'
                 }}>
 
@@ -219,16 +197,7 @@ export default function Home() {
                                 const step = 0.45 / descriptionText.length;
                                 const start = 0.5 + (i * step);
                                 const end = start + step;
-
-                                return (
-                                    <ScrollyWord
-                                        key={`hero-${i}`}
-                                        word={word}
-                                        progress={heroProgress}
-                                        start={start}
-                                        end={end}
-                                    />
-                                );
+                                return <ScrollyWord key={`hero-${i}`} word={word} progress={heroProgress} start={start} end={end} />;
                             })}
                         </p>
                     </div>
@@ -236,23 +205,27 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Gap removed */}
-
-            {/* SECTION 2: STORYTELLING - Sticky Scrollytelling (Same Effect) */}
-            <section ref={storyRef} className="story-section" style={{ height: '300vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
+            {/* SECTION 2: STORYTELLING */}
+            <section ref={storyRef} className="story-section" style={{ height: '350vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
                 <div className="sticky-wrapper" style={{
-                    position: 'sticky', top: 0, height: '100vh',
+                    position: 'sticky', top: 'var(--header-height)', height: 'calc(100vh - var(--header-height))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: isMobile ? '0 20px' : '0'
                 }}>
                     <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '15px' }}>
+                        <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            justifyContent: 'center',
+                            gap: '15px',
+                            transition: 'all 0.5s ease',
+                            opacity: storyProgress > 0.8 ? 0.3 : 1, // Soften the big text when content below appears
+                            transform: `translateY(${storyProgress > 0.8 ? '-20px' : '0'})`
+                        }}>
                             {storyWords.map((word, i) => {
-                                // Map whole duration (0.1 -> 0.9)
-                                const step = 0.8 / storyWords.length;
+                                const step = 0.6 / storyWords.length;
                                 const start = 0.1 + (i * step);
                                 const end = start + step;
-
                                 return (
                                     <ScrollyWord
                                         key={`story-${i}`}
@@ -270,34 +243,88 @@ export default function Home() {
                                 );
                             })}
                         </div>
+
+                        {/* FADE IN PITCH CONTENT - DELAYED UNTIL SCROLLY WORDS FINISH */}
+                        <AnimatePresence>
+                            {storyProgress > 0.8 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 30 }}
+                                    transition={{ duration: 0.8, ease: "easeOut" }}
+                                    style={{
+                                        marginTop: '40px',
+                                        paddingBottom: '0'
+                                    }}
+                                >
+                                    <p style={{ fontSize: '20px', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 40px', lineHeight: 1.6 }}>
+                                        {pitchData.description}
+                                    </p>
+                                    <a href={pitchData.btnLink} className="clickable" style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '15px',
+                                        padding: '18px 40px',
+                                        border: '1px solid var(--accent-color)',
+                                        borderRadius: '100px',
+                                        color: 'var(--accent-color)',
+                                        textDecoration: 'none',
+                                        fontFamily: 'var(--font-display)',
+                                        fontSize: '14px',
+                                        letterSpacing: '2px'
+                                    }}>
+                                        {pitchData.btnText} →
+                                    </a>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </section>
 
             {/* SECTION 3: PORTFOLIO */}
-            <section id="portfolio" className="portfolio-section" style={{ padding: '100px 0', background: 'var(--bg-color)', position: 'relative', zIndex: 10 }}>
+            <section id="portfolio" className="portfolio-section" style={{ padding: '60px 0 120px', background: 'var(--bg-color)', position: 'relative', zIndex: 10 }}>
                 <div className="container" style={{ maxWidth: '100%', padding: '0 5%', position: 'relative' }}>
-                    <div className="portfolio-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
-                        <RevealText><h2 style={{ fontSize: '80px', margin: 0 }}>PORTFOLIO</h2></RevealText>
+                    <div className="portfolio-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '80px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)', width: '100%' }}>
+                        <RevealText><h2 style={{ fontSize: 'clamp(40px, 8vw, 80px)', margin: 0 }}>PORTFOLIO</h2></RevealText>
                         <Link to="/projects" className="clickable" style={{ fontSize: '20px', textDecoration: 'none', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span className="view-all-text">VIEW ALL</span> <span style={{ fontSize: '24px' }}>→</span>
                         </Link>
                     </div>
 
-
-                    <div className="horizontal-scroll-container" ref={scrollContainerRef} onScroll={handleCarouselScroll}>
+                    <div className="horizontal-scroll-container" ref={scrollContainerRef} onScroll={handleCarouselScroll} style={{ paddingLeft: '0' }}>
                         {projects.map((item, i) => (
-                            <div key={i} className="home-project-card clickable" onClick={() => openModal(item)}>
-                                <div style={{
+                            <div
+                                key={i}
+                                className="home-project-card clickable"
+                                onClick={() => openModal(item)}
+                                style={{
+                                    marginLeft: i === 0 ? '0px' : '0px' // Initial state, will adjust if needed
+                                }}
+                            >
+                                <div className="project-image-wrapper" style={{
                                     width: '100%', height: '400px', overflow: 'hidden',
                                     borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
-                                    padding: '15px', background: 'rgba(255,255,255,0.03)'
+                                    padding: '15px', background: 'rgba(255,255,255,0.03)',
+                                    position: 'relative'
                                 }}>
-                                    <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 'var(--radius-sm)' }}>
-                                        <img src={item.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
+                                        <img src={item.image_url} alt={item.image_alt || item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+                                        {/* HOVER OVERLAY WITH EYE ICON */}
+                                        <div className="card-hover-overlay" style={{
+                                            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
+                                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                            gap: '12px', opacity: 0, transition: '0.3s ease'
+                                        }}>
+                                            <div style={{ padding: '20px', background: '#fff', borderRadius: '50%', color: '#000' }}>
+                                                <Eye size={32} />
+                                            </div>
+                                            <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
+                                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap', marginTop: '20px' }}>
                                     <div style={{ flex: 1, minWidth: '200px' }}>
                                         <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: '0 0 10px 0' }}>{item.title}</h3></RevealText>
                                         <div className="project-tags-container" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -313,43 +340,29 @@ export default function Home() {
                                             ))}
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                                        <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-color)', opacity: 0.5 }}>{item.year || (item.created_at ? new Date(item.created_at).getFullYear() : '2026')}</div>
+                                    <div style={{ textAlign: 'right' }}>
                                         <RevealText>
-                                            <div className="learn-more-text" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 'bold' }}>
-                                                Learn More <span>→</span>
+                                            <div style={{
+                                                padding: '12px 32px',
+                                                background: '#fff',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '100px',
+                                                fontSize: '11px',
+                                                fontWeight: '900',
+                                                color: '#000',
+                                                letterSpacing: '1px',
+                                                textTransform: 'uppercase',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+                                            }} className="learn-more-btn-pill">
+                                                LEARN MORE →
                                             </div>
                                         </RevealText>
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-
-                    {/* Carousel Dots (especially for Mobile) */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
-                        {projects.map((_, i) => (
-                            <div
-                                key={i}
-                                className="clickable"
-                                onClick={() => {
-                                    if (scrollContainerRef.current) {
-                                        const scrollAmount = (window.innerWidth * (isMobile ? 0.85 : 0.55)) + (isMobile ? 15 : 50);
-                                        scrollContainerRef.current.scrollTo({
-                                            left: i * scrollAmount,
-                                            behavior: 'smooth'
-                                        });
-                                    }
-                                }}
-                                style={{
-                                    width: '10px', height: '10px',
-                                    borderRadius: '50%',
-                                    background: 'var(--text-color)',
-                                    opacity: activeProjectIndex === i ? 1 : 0.3,
-                                    transition: 'all 0.3s',
-                                    transform: activeProjectIndex === i ? 'scale(1.2)' : 'scale(1)'
-                                }}
-                            />
                         ))}
                     </div>
                 </div>
@@ -388,14 +401,12 @@ export default function Home() {
                         <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '20px' }}>
                             <RevealText><a href={socials.linkedin} target="_blank" rel="noopener noreferrer" className="clickable footer-sub-link">LINKEDIN ↗</a></RevealText>
                             <RevealText><a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="clickable footer-sub-link">INSTAGRAM ↗</a></RevealText>
-                            <RevealText><a href="#" className="clickable footer-sub-link">+351 920 196 634</a></RevealText>
+                            <RevealText><a href={`tel:${socials.phone}`} className="clickable footer-sub-link">{socials.phone}</a></RevealText>
                         </div>
                     </div>
                 </div>
 
-                <div className="footer-credits" style={{ marginTop: '150px', opacity: 0.3, fontSize: '12px', letterSpacing: '2px', textAlign: 'center' }}>
-                    VINICIUS CAMPOS &copy; 2026 • PORTUGAL
-                </div>
+                <div className="footer-credits" style={{ marginTop: '150px', opacity: 0.3, fontSize: '12px', letterSpacing: '2px', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: footerText }} />
             </section>
         </div>
     );

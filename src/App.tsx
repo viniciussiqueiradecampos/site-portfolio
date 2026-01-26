@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import './i18n';
 import './App.css'; // Global Styles
 import './index.css';
@@ -13,62 +13,63 @@ import AdminDashboard from './routes/AdminDashboard';
 import TestSupabase from './routes/TestSupabase';
 import ScrollToTop from './ScrollToTop';
 
-// Custom Cursor Component (Local)
+// Custom Cursor Component
 const CustomCursor = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const isSettingsPage = location.pathname.startsWith('/admin');
 
   useEffect(() => {
     const cursor = cursorRef.current;
-    if (!cursor) return;
+    if (!cursor || isSettingsPage) return;
 
     const moveCursor = (e: MouseEvent) => {
-      cursor.style.transform = `translate(${e.clientX - 6}px, ${e.clientY - 6}px)`;
+      cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
     };
 
-    const hoverStart = () => cursor.classList.add('hovering');
-    const hoverEnd = () => cursor.classList.remove('hovering');
-
-    window.addEventListener('mousemove', moveCursor);
-
-    // Delegation for performance
     const handleMouseOver = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest('.clickable')) {
-        hoverStart();
+        cursor.classList.add('hovering');
       } else {
-        hoverEnd();
+        cursor.classList.remove('hovering');
       }
     };
+
+    window.addEventListener('mousemove', moveCursor);
     window.addEventListener('mouseover', handleMouseOver);
 
     return () => {
       window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mouseover', handleMouseOver);
     };
-  }, []);
+  }, [isSettingsPage]);
 
-  return <div ref={cursorRef} className="custom-cursor" />;
+  if (isSettingsPage) return null;
+
+  return <div ref={cursorRef} className="custom-cursor" style={{ position: 'fixed', left: 0, top: 0, pointerEvents: 'none', zIndex: 99999, marginLeft: '-6px', marginTop: '-6px' }} />;
 };
 
-function App() {
+function AppContent() {
   return (
-    <Router>
+    <>
       <ScrollToTop />
       <CustomCursor />
       <Routes>
-        {/* Test Route */}
         <Route path="/test-supabase" element={<TestSupabase />} />
-
-        {/* Admin Routes (No Layout) */}
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-
-        {/* Public Routes (With Layout) */}
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/cv" element={<Layout><CV /></Layout>} />
         <Route path="/projects" element={<Layout><Projects /></Layout>} />
       </Routes>
-    </Router>
+    </>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
