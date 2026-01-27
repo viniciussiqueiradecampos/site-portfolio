@@ -18,10 +18,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         navHome: true,
         navCV: true,
         navPortfolio: true,
-        navContact: true,
         navGetInTouch: true,
         navBlog: false,
-        logoImageUrl: ''
+        navNewsletter: false,
+        navAbout: false,
+        logoImageUrl: '',
+        navOrder: [] as string[]
     });
 
     useEffect(() => {
@@ -38,9 +40,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         const nh = await contentAPI.getByKey('nav.home');
         const nc = await contentAPI.getByKey('nav.cv');
         const np = await contentAPI.getByKey('nav.portfolio');
-        const nco = await contentAPI.getByKey('nav.contact');
         const ng = await contentAPI.getByKey('nav.get_in_touch');
         const nb = await contentAPI.getByKey('nav.blog');
+        const na = await contentAPI.getByKey('nav.about');
+        const no = await contentAPI.getByKey('nav.order');
 
         setBranding({
             logoText1: l1?.value || 'VINICIUS',
@@ -52,10 +55,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             navHome: nh?.value !== 'false',
             navCV: nc?.value !== 'false',
             navPortfolio: np?.value !== 'false',
-            navContact: nco?.value !== 'false',
             navGetInTouch: ng?.value !== 'false',
             navBlog: nb?.value === 'true',
-            logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || ''
+            navNewsletter: (await contentAPI.getByKey('nav.newsletter'))?.value === 'true',
+            navAbout: na?.value === 'true',
+            logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || '',
+            navOrder: (no?.value || 'navHome,navCV,navPortfolio,navAbout,navBlog,navGetInTouch').split(',')
         });
     };
 
@@ -80,6 +85,75 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     };
 
     const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
+    const renderDesktopNav = () => {
+        return (
+            <ul style={{ display: 'flex', gap: '40px', listStyle: 'none', margin: 0, padding: 0 }}>
+                {branding.navHome && (
+                    <li>
+                        <NavLink
+                            to="/"
+                            onClick={(e) => { if (window.location.pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}
+                            className={({ isActive }) => `clickable menu-link ${isActive && window.location.pathname === '/' ? 'active' : ''}`}
+                        >
+                            HOME
+                        </NavLink>
+                    </li>
+                )}
+                <li className="nav-dropdown" style={{ zIndex: 1001 }}>
+                    <span className="clickable menu-link">ME</span>
+                    <ul className="dropdown-menu" style={{ zIndex: 1000 }}>
+                        {branding.navAbout && <li><NavLink to="/about">ABOUT</NavLink></li>}
+                        {branding.navCV && <li><NavLink to="/cv">CV</NavLink></li>}
+                        {branding.navPortfolio && <li><NavLink to="/projects">PORTFOLIO</NavLink></li>}
+                    </ul>
+                </li>
+                {branding.navGetInTouch && (
+                    <li>
+                        <a href="/#contact" className="clickable menu-link" onClick={(e) => { if (window.location.pathname === '/') { e.preventDefault(); const s = document.getElementById('contact'); if (s) s.scrollIntoView({ behavior: 'smooth' }); } }}>
+                            GET IN TOUCH
+                        </a>
+                    </li>
+                )}
+                {branding.navBlog && (
+                    <li>
+                        <NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>
+                            BLOG
+                        </NavLink>
+                    </li>
+                )}
+            </ul>
+        );
+    };
+
+    const renderMobileNav = () => {
+        const style = { fontSize: '32px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' as any, fontWeight: 900 };
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', alignItems: 'flex-end' }}>
+                {branding.navHome && (
+                    <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={style}>HOME</NavLink>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
+                    <span style={{ ...style, fontSize: '24px', opacity: 0.5 }}>ME</span>
+                    <div className="mobile-submenu" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
+                        {branding.navAbout && <NavLink onClick={toggleMenu} to="/about" className="mobile-submenu-link">ABOUT</NavLink>}
+                        {branding.navCV && <NavLink onClick={toggleMenu} to="/cv" className="mobile-submenu-link">CV</NavLink>}
+                        {branding.navPortfolio && <NavLink onClick={toggleMenu} to="/projects" className="mobile-submenu-link">PORTFOLIO</NavLink>}
+                    </div>
+                </div>
+                {branding.navGetInTouch && (
+                    <a href="/#contact" onClick={(e) => { e.preventDefault(); toggleMenu(); setTimeout(() => { const s = document.getElementById('contact'); if (s) s.scrollIntoView({ behavior: 'smooth' }); }, 300); }} className="mobile-link" style={style}>
+                        GET IN TOUCH
+                    </a>
+                )}
+                {branding.navBlog && (
+                    <NavLink onClick={toggleMenu} to="/blog" className="mobile-link" style={style}>
+                        BLOG
+                    </NavLink>
+                )}
+            </div>
+        );
+    };
 
     return (
         <>
@@ -109,46 +183,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <nav className="desktop-nav" style={{ pointerEvents: 'auto' }}>
-                    <ul style={{ display: 'flex', gap: '40px', listStyle: 'none', margin: 0, padding: 0 }}>
-                        {branding.navHome && (
-                            <li>
-                                <NavLink
-                                    to="/"
-                                    onClick={(e) => {
-                                        if (window.location.pathname === '/') {
-                                            e.preventDefault();
-                                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                                        }
-                                    }}
-                                    className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}
-                                >
-                                    HOME
-                                </NavLink>
-                            </li>
-                        )}
-                        {branding.navCV && <li><NavLink to="/cv" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>CV</NavLink></li>}
-                        {branding.navPortfolio && <li><NavLink to="/projects" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>PORTFOLIO</NavLink></li>}
-                        {branding.navBlog && <li><NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>BLOG</NavLink></li>}
-                        {branding.navGetInTouch && (
-                            <li>
-                                <a
-                                    href="/#contact"
-                                    className="clickable menu-link"
-                                    onClick={(e) => {
-                                        if (window.location.pathname === '/') {
-                                            e.preventDefault();
-                                            const contactSection = document.getElementById('contact');
-                                            if (contactSection) {
-                                                contactSection.scrollIntoView({ behavior: 'smooth' });
-                                            }
-                                        }
-                                    }}
-                                >
-                                    GET IN TOUCH
-                                </a>
-                            </li>
-                        )}
-                    </ul>
+                    {renderDesktopNav()}
                 </nav>
 
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center', pointerEvents: 'auto' }}>
@@ -215,30 +250,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 <X size={40} />
                             </button>
                         </div>
-                        <nav style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '30px', width: '100%', textAlign: 'right' }}>
-                            {branding.navHome && <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>HOME</NavLink>}
-                            {branding.navCV && <NavLink onClick={toggleMenu} to="/cv" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>CV</NavLink>}
-                            {branding.navPortfolio && <NavLink onClick={toggleMenu} to="/projects" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>PORTFOLIO</NavLink>}
-                            {branding.navBlog && <NavLink onClick={toggleMenu} to="/blog" className="mobile-link" style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right' }}>BLOG</NavLink>}
-                            {branding.navGetInTouch && (
-                                <a
-                                    href="/#contact"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        toggleMenu();
-                                        setTimeout(() => {
-                                            const contactSection = document.querySelector('.footer-section');
-                                            if (contactSection) {
-                                                contactSection.scrollIntoView({ behavior: 'smooth' });
-                                            }
-                                        }, 300);
-                                    }}
-                                    className="mobile-link get-in-touch-mobile"
-                                    style={{ fontSize: '24px', fontFamily: 'var(--font-display)', textDecoration: 'none', color: 'var(--text-color)', letterSpacing: '0', textAlign: 'right', whiteSpace: 'nowrap' }}
-                                >
-                                    GET IN TOUCH
-                                </a>
-                            )}
+                        <nav style={{ width: '100%' }}>
+                            {renderMobileNav()}
                         </nav>
                     </motion.div>
                 )}

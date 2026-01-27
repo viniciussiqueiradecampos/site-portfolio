@@ -167,7 +167,7 @@ export default function Blog() {
                             <div style={{ position: 'relative' }}>
                                 <input
                                     type="text"
-                                    placeholder="Search stories..."
+                                    placeholder="Search Posts..."
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     style={{
@@ -203,7 +203,7 @@ export default function Blog() {
                                         transition: '0.2s'
                                     }}
                                 >
-                                    All Stories
+                                    All Posts
                                 </button>
                                 {categories.map(cat => (
                                     <button

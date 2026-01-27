@@ -555,7 +555,7 @@ export default function Home() {
                     >
                         {[...Array(10)].map((_, i) => (
                             <span key={i} style={{ fontSize: '120px', fontWeight: 900, fontFamily: 'var(--font-display)', color: 'transparent', WebkitTextStroke: '2px var(--text-muted)' }}>
-                                KEEP IN TOUCH •
+                                GET IN TOUCH •
                             </span>
                         ))}
                     </motion.div>

@@ -9,6 +9,7 @@ export const storageAPI = {
      */
     async uploadImage(file: File, folder: string = ''): Promise<string | null> {
         try {
+            console.log(`📤 Uploading image to folder: ${folder}`, file.name);
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
             const filePath = folder ? `${folder}/${fileName}` : fileName;
@@ -21,7 +22,12 @@ export const storageAPI = {
                 });
 
             if (error) {
-                console.error('Error uploading image:', error);
+                console.error('❌ Error uploading image:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    statusCode: (error as any).statusCode,
+                    error: (error as any).error
+                });
                 return null;
             }
 
@@ -30,9 +36,10 @@ export const storageAPI = {
                 .from('project-images')
                 .getPublicUrl(data.path);
 
+            console.log('✅ Image uploaded successfully:', publicUrl);
             return publicUrl;
         } catch (error) {
-            console.error('Error in uploadImage:', error);
+            console.error('❌ Error in uploadImage:', error);
             return null;
         }
     },

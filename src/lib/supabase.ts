@@ -806,3 +806,153 @@ export const blogAPI = {
         return true;
     }
 };
+
+
+// ========================================
+// ABOUT PAGE TYPES & APIs
+// ========================================
+
+export interface AboutStep {
+    id: string;
+    step_number: string;
+    title: string;
+    description: string;
+    icon_name: string;
+    created_at: string;
+}
+
+export interface AboutHobby {
+    id: string;
+    text: string;
+    position_x: string;
+    position_y: string;
+    color: string;
+    icon_name: string; // Added for icon selection
+    created_at: string;
+}
+
+export interface AboutTestimonial {
+    id: string;
+    author_name: string;
+    author_role: string;
+    quote: string;
+    author_image: string;
+    created_at: string;
+}
+
+export interface AboutMemory {
+    id: string;
+    image_url: string;
+    position_x: string;
+    position_y?: string;
+    width: string;
+    aspect_ratio: string;
+    speed: number;
+    created_at: string;
+}
+
+export const aboutAPI = {
+    // STEPS
+    async getSteps(): Promise<AboutStep[]> {
+        const { data, error } = await supabase.from('about_steps').select('*').order('step_number', { ascending: true });
+        if (error) { console.error(error); return []; }
+        return data || [];
+    },
+    async saveStep(step: Partial<AboutStep>): Promise<AboutStep | null> {
+        if (step.id && step.id !== '') {
+            // Update existing
+            const { id, created_at, ...updateData } = step as any;
+            const { data, error } = await supabase.from('about_steps').update(updateData).eq('id', id).select().single();
+            if (error) { console.error('Error updating step:', error); return null; }
+            return data;
+        } else {
+            // Insert new
+            const { id, created_at, ...insertData } = step as any;
+            const { data, error } = await supabase.from('about_steps').insert([insertData]).select().single();
+            if (error) { console.error('Error creating step:', error); return null; }
+            return data;
+        }
+    },
+    async deleteStep(id: string): Promise<boolean> {
+        const { error } = await supabase.from('about_steps').delete().eq('id', id);
+        return !error;
+    },
+
+    // HOBBIES
+    async getHobbies(): Promise<AboutHobby[]> {
+        const { data, error } = await supabase.from('about_hobbies').select('*');
+        if (error) { console.error(error); return []; }
+        return data || [];
+    },
+    async saveHobby(hobby: Partial<AboutHobby>): Promise<AboutHobby | null> {
+        if (hobby.id && hobby.id !== '') {
+            // Update existing
+            const { id, created_at, ...updateData } = hobby as any;
+            const { data, error } = await supabase.from('about_hobbies').update(updateData).eq('id', id).select().single();
+            if (error) { console.error('Error updating hobby:', error); return null; }
+            return data;
+        } else {
+            // Insert new
+            const { id, created_at, ...insertData } = hobby as any;
+            const { data, error } = await supabase.from('about_hobbies').insert([insertData]).select().single();
+            if (error) { console.error('Error creating hobby:', error); return null; }
+            return data;
+        }
+    },
+    async deleteHobby(id: string): Promise<boolean> {
+        const { error } = await supabase.from('about_hobbies').delete().eq('id', id);
+        return !error;
+    },
+
+    // TESTIMONIALS
+    async getTestimonials(): Promise<AboutTestimonial[]> {
+        const { data, error } = await supabase.from('about_testimonials').select('*');
+        if (error) { console.error(error); return []; }
+        return data || [];
+    },
+    async saveTestimonial(test: Partial<AboutTestimonial>): Promise<AboutTestimonial | null> {
+        if (test.id && test.id !== '') {
+            // Update existing
+            const { id, created_at, ...updateData } = test as any;
+            const { data, error } = await supabase.from('about_testimonials').update(updateData).eq('id', id).select().single();
+            if (error) { console.error('Error updating testimonial:', error); return null; }
+            return data;
+        } else {
+            // Insert new
+            const { id, created_at, ...insertData } = test as any;
+            const { data, error } = await supabase.from('about_testimonials').insert([insertData]).select().single();
+            if (error) { console.error('Error creating testimonial:', error); return null; }
+            return data;
+        }
+    },
+    async deleteTestimonial(id: string): Promise<boolean> {
+        const { error } = await supabase.from('about_testimonials').delete().eq('id', id);
+        return !error;
+    },
+
+    // MEMORIES
+    async getMemories(): Promise<AboutMemory[]> {
+        const { data, error } = await supabase.from('about_memories').select('*');
+        if (error) { console.error(error); return []; }
+        return data || [];
+    },
+    async saveMemory(mem: Partial<AboutMemory>): Promise<AboutMemory | null> {
+        if (mem.id && mem.id !== '') {
+            // Update existing
+            const { id, created_at, ...updateData } = mem as any;
+            const { data, error } = await supabase.from('about_memories').update(updateData).eq('id', id).select().single();
+            if (error) { console.error('Error updating memory:', error); return null; }
+            return data;
+        } else {
+            // Insert new
+            const { id, created_at, ...insertData } = mem as any;
+            const { data, error } = await supabase.from('about_memories').insert([insertData]).select().single();
+            if (error) { console.error('Error creating memory:', error); return null; }
+            return data;
+        }
+    },
+    async deleteMemory(id: string): Promise<boolean> {
+        const { error } = await supabase.from('about_memories').delete().eq('id', id);
+        return !error;
+    }
+};

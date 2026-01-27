@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Home, BookOpen, FolderKanban, FileText } from 'lucide-react';
+import { Home, FolderKanban, FileText } from 'lucide-react';
 import RevealText from '../components/RevealText';
 
 export default function NotFound() {

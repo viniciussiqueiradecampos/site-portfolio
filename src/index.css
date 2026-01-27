@@ -50,8 +50,8 @@
   --bg-color: #FFFFFF;
   --surface-color: #F5F5F5;
   --text-color: #0A0A0A;
-  --accent-color: #C87A1A;
-  /* Darker orange for AAA contrast on white */
+  --accent-color: #704214;
+  /* Much darker for AAA contrast on white background (approx 7.5:1 ratio) */
   --text-muted: #4A4A4A;
   --border-color: rgba(0, 0, 0, 0.15);
   --border-hover: rgba(0, 0, 0, 0.4);
@@ -90,16 +90,94 @@ nav ul li a {
   font-family: var(--font-display) !important;
   text-transform: uppercase;
   letter-spacing: 0.3em;
-  /* Increased spacing for better legibility */
   font-weight: 900;
   font-size: 13px;
-  /* Slightly smaller to accommodate more spacing */
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+/* Navigation Dropdown */
+.desktop-nav ul li {
+  position: relative;
+}
+
+.nav-dropdown {
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 20px);
+  /* Detached from menu */
+  left: -20px;
+  background: var(--bg-color);
+  min-width: 220px;
+  list-style: none;
+  padding: 20px 0;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1001;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+}
+
+.desktop-nav ul li:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-menu li {
+  padding: 0;
+  display: block;
+  width: 100%;
+}
+
+.dropdown-menu li a {
+  display: block;
+  padding: 14px 28px;
+  text-decoration: none;
+  color: var(--text-color);
+  font-size: 10px !important;
+  letter-spacing: 0.15em !important;
+  transition: all 0.3s;
+  white-space: nowrap;
+  font-family: var(--font-display) !important;
+  text-transform: uppercase;
+}
+
+.dropdown-menu li a:hover {
+  background: var(--accent-color);
+  color: #000;
+  padding-left: 35px;
 }
 
 .mobile-link {
   font-family: var(--font-display) !important;
   letter-spacing: 0.4em;
   /* Even more spacing for mobile impact */
+}
+
+.mobile-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 10px;
+  padding-right: 20px;
+  border-right: 1px solid var(--border-color);
+}
+
+.mobile-submenu-link {
+  font-size: 18px !important;
+  color: var(--text-muted) !important;
+  text-decoration: none;
+  font-family: var(--font-display);
+  text-align: right;
+  text-transform: uppercase;
 }
 
 @media (pointer: fine) {

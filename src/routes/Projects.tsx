@@ -89,8 +89,8 @@ export default function Projects() {
 
             <div className="container">
                 <div style={{ marginBottom: '60px', borderBottom: '1px solid var(--border-color)', paddingBottom: '40px' }}>
-                    <h1 className="selected-works-title" style={{ fontSize: 'clamp(60px, 8vw, 120px)', marginBottom: '20px', lineHeight: 0.9 }}>
-                        SELECTED<br />WORKS <span style={{ fontSize: '20px', verticalAlign: 'middle', letterSpacing: '0.1em' }}>(2023—2025)</span>
+                    <h1 className="selected-works-title" style={{ fontSize: isMobile ? '60px' : 'clamp(60px, 8vw, 120px)', marginBottom: '20px', lineHeight: 0.9 }}>
+                        SELECTED<br />WORKS
                     </h1>
                 </div>
 

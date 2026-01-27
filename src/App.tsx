@@ -7,6 +7,7 @@ import './index.css';
 import Layout from './components/Layout';
 import Home from './routes/Home';
 import CV from './routes/CV';
+import About from './routes/About';
 import Projects from './routes/Projects';
 import AdminLogin from './routes/AdminLogin';
 import AdminDashboard from './routes/AdminDashboard';
@@ -92,6 +93,7 @@ function AppContent() {
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/cv" element={<Layout><CV /></Layout>} />
         <Route path="/projects" element={<Layout><Projects /></Layout>} />
+        <Route path="/about" element={<Layout><About /></Layout>} />
         <Route path="/blog" element={<Layout><Blog /></Layout>} />
         <Route path="/blog/:slug" element={<Layout><Article /></Layout>} />
         <Route path="*" element={<Layout><NotFound /></Layout>} />
