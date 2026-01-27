@@ -100,7 +100,17 @@ export default function Article() {
                     style={{ fontSize: '19px', lineHeight: 1.8, color: 'var(--text-color)' }}
                     dangerouslySetInnerHTML={{ __html: post.content }}
                 />
-                <style>{`
+
+                <footer style={{ marginTop: '100px', paddingTop: '60px', borderTop: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                        {post.tags?.map(tag => (
+                            <span key={tag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 'bold' }}>#{tag}</span>
+                        ))}
+                    </div>
+                </footer>
+            </div>
+
+            <style>{`
                     .article-content h2 { font-size: 36px; margin-top: 60px; margin-bottom: 25px; font-weight: 800; color: #fff; }
                     .article-content h3 { font-size: 28px; margin-top: 50px; margin-bottom: 20px; font-weight: 700; color: #fff; }
                     .article-content p { margin-bottom: 30px; color: rgba(255,255,255,0.8); }
