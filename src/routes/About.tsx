@@ -39,6 +39,13 @@ const SELECTABLE_ICONS: Record<string, any> = {
     'Pen': Pen, 'Pencil': Pencil, 'Columns': Columns, 'Grid': Grid, 'List': List
 };
 
+// Helper component for Scrollytelling text effect
+const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
+    const opacity = useTransform(progress, [start, end], [0.1, 1]); // Starts semi-transparent, becomes fully opaque
+    const y = useTransform(progress, [start, end], [5, 0]); // Slight slide-up effect
+    return <motion.span style={{ ...style, opacity, y, marginRight: '6px', display: 'inline-block' }}>{word}</motion.span>;
+};
+
 const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
     const x = useTransform(progress, [start, end], ["120%", "-120%"]);
     const opacity = useTransform(progress, [start, start + 0.1, end - 0.1, end], [0, 1, 1, 0]);
@@ -345,7 +352,7 @@ export default function About() {
                         <div style={{
                             fontSize: '19.5px',
                             lineHeight: 1.43,
-                            fontWeight: 500,
+                            fontWeight: 400,
                             color: 'var(--text-color)',
                             textAlign: 'left',
                             wordBreak: 'break-word',
@@ -353,7 +360,22 @@ export default function About() {
                             maxWidth: '100%',
                             paddingRight: '20px' // Margem extra para não tocar o final
                         }}>
-                            {bioText.join(' ')}
+                            {isMobile ? bioText.join(' ') : bioText.map((word, i) => {
+                                // Dynamic calculation for each word's animation start/end based on scroll progress
+                                // We want the text to finish revealing before the section engaging ends
+                                const step = 0.8 / bioText.length;
+                                const start = 0.05 + (i * step);
+                                const end = start + step;
+                                return (
+                                    <ScrollyWord
+                                        key={`bio-${i}`}
+                                        word={word}
+                                        progress={bioProgress}
+                                        start={start}
+                                        end={end}
+                                    />
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -388,8 +410,15 @@ export default function About() {
 
             {/* 4. HOBBIES & INTERESTS - BENTO DESIGN */}
             <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginTop: '200px', marginBottom: '150px' }}>
-                <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Personal</span>
-                <h3 style={{ fontSize: 'clamp(30px, 4vw, 50px)', fontWeight: 950, marginBottom: '60px', textTransform: 'uppercase', letterSpacing: '-2px' }}>Hobbies &<br />Interests</h3>
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "0px 0px 200px 0px" }}
+                    transition={{ duration: 0.6 }}
+                >
+                    <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Personal</span>
+                    <h3 style={{ fontSize: 'clamp(30px, 4vw, 50px)', fontWeight: 950, marginBottom: '60px', textTransform: 'uppercase', letterSpacing: '-2px' }}>Hobbies &<br />Interests</h3>
+                </motion.div>
 
                 <div style={{
                     display: 'grid',
@@ -443,10 +472,16 @@ export default function About() {
 
             {/* 5. TESTIMONIALS - FIGMA STACKED GRID */}
             <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginBottom: '150px', position: 'relative' }}>
-                <div style={{ marginBottom: '60px' }}>
+                <motion.div
+                    style={{ marginBottom: '60px' }}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "0px 0px 200px 0px" }}
+                    transition={{ duration: 0.6 }}
+                >
                     <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>Collaboration</span>
                     <h3 style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-2px', margin: '10px 0' }}>Client<br />Feedback</h3>
-                </div>
+                </motion.div>
 
                 <div style={{ position: 'relative', minHeight: '400px' }}>
                     {testimonials.length > 2 && (
