@@ -49,6 +49,7 @@ export interface Project {
     gallery_videos?: string[]; // New: support for videos
     tags: string[];
     live_url?: string;
+    download_url?: string; // New: support for project download
     slug?: string;
     meta_title?: string;
     meta_description?: string;
@@ -83,6 +84,7 @@ export interface ProjectData {
     gallery?: string[];
     description?: string;
     live_url?: string;
+    download_url?: string;
     button_text?: string;
     button_icon?: string;
 }

@@ -80,9 +80,9 @@ export default function Home() {
             btnLink: tPitchBtnLink?.value || "#contact"
         });
 
-        // Load Projects - Limited to 4 for Home
+        // Load Projects - Limited to 5 for Home
         const projs = await projectsAPI.getAll();
-        setProjects(projs);
+        setProjects(projs.slice(0, 5));
 
         // Load Socials & Footer
         const ln = await contentAPI.getByKey('social.linkedin');

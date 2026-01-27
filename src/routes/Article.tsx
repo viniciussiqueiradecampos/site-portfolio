@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogAPI, analyticsAPI, type BlogPost } from '../lib/supabase';
-import ReactMarkdown from 'react-markdown';
+
 import { ArrowLeft, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -95,41 +95,22 @@ export default function Article() {
                     </div>
                 )}
 
-                <div className="article-content" style={{ fontSize: '19px', lineHeight: 1.8, color: 'var(--text-color)' }}>
-                    <ReactMarkdown
-                        components={{
-                            h2: ({ node, ...props }) => <h2 style={{ fontSize: '36px', marginTop: '60px', marginBottom: '25px', fontWeight: 800, color: '#fff' }} {...props} />,
-                            h3: ({ node, ...props }) => <h3 style={{ fontSize: '28px', marginTop: '50px', marginBottom: '20px', fontWeight: 700, color: '#fff' }} {...props} />,
-                            p: ({ node, ...props }) => <p style={{ marginBottom: '30px', color: 'rgba(255,255,255,0.8)' }} {...props} />,
-                            img: ({ node, ...props }) => <img style={{ maxWidth: '100%', borderRadius: '24px', margin: '60px 0', border: '1px solid var(--border-color)' }} {...props} />,
-                            code: ({ node, inline, ...props }: any) => (
-                                inline
-                                    ? <code style={{ background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.9em', color: 'var(--accent-color)' }} {...props} />
-                                    : <pre style={{ background: '#0a0a0a', padding: '30px', borderRadius: '16px', overflowX: 'auto', border: '1px solid var(--border-color)', margin: '40px 0' }}><code {...props} /></pre>
-                            ),
-                            blockquote: ({ node, ...props }) => (
-                                <blockquote style={{ borderLeft: '4px solid var(--accent-color)', padding: '10px 0 10px 30px', fontStyle: 'italic', fontSize: '24px', color: 'var(--text-muted)', margin: '50px 0', background: 'rgba(255,255,255,0.02)', borderRadius: '0 16px 16px 0' }} {...props} />
-                            )
-                        }}
-                    >
-                        {post.content}
-                    </ReactMarkdown>
-                </div>
-
-                <footer style={{ marginTop: '100px', paddingTop: '60px', borderTop: '1px solid var(--border-color)' }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                        {post.tags?.map(tag => (
-                            <span key={tag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 'bold' }}>#{tag}</span>
-                        ))}
-                    </div>
-                </footer>
-            </div>
-
-            <style>{`
-                .article-content strong { color: var(--accent-color); }
-                .article-content a { color: var(--accent-color); text-decoration: underline; }
-                @keyframes spin { to { transform: rotate(360deg); } }
-            `}</style>
+                <div
+                    className="article-content"
+                    style={{ fontSize: '19px', lineHeight: 1.8, color: 'var(--text-color)' }}
+                    dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+                <style>{`
+                    .article-content h2 { font-size: 36px; margin-top: 60px; margin-bottom: 25px; font-weight: 800; color: #fff; }
+                    .article-content h3 { font-size: 28px; margin-top: 50px; margin-bottom: 20px; font-weight: 700; color: #fff; }
+                    .article-content p { margin-bottom: 30px; color: rgba(255,255,255,0.8); }
+                    .article-content img { max-width: 100%; border-radius: 24px; margin: 60px 0; border: 1px solid var(--border-color); }
+                    .article-content pre { background: #0a0a0a; padding: 30px; border-radius: 16px; overflow-x: auto; border: 1px solid var(--border-color); margin: 40px 0; }
+                    .article-content blockquote { border-left: 4px solid var(--accent-color); padding: 10px 0 10px 30px; font-style: italic; font-size: 24px; color: var(--text-muted); margin: 50px 0; background: rgba(255,255,255,0.02); border-radius: 0 16px 16px 0; }
+                    .article-content strong { color: var(--accent-color); }
+                    .article-content a { color: var(--accent-color); text-decoration: underline; }
+                    @keyframes spin { to { transform: rotate(360deg); } }
+                `}</style>
         </motion.div>
     );
 }

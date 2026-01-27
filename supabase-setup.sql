@@ -168,6 +168,7 @@ ALTER TABLE content ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'general';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS image_url TEXT;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS gallery_images TEXT[] DEFAULT '{}';
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS download_url TEXT;
 ALTER TABLE projects ALTER COLUMN image_url DROP NOT NULL; -- Make it optional during transition
 
 -- Permissive Policies (FOR DEV)

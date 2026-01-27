@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { storageAPI } from '../lib/storage';
 import ProjectModal from '../components/ProjectModal';
+import RichTextEditor from '../components/RichTextEditor';
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line, CartesianGrid
@@ -309,6 +310,7 @@ export default function AdminDashboard() {
                     ...(editingProject.gallery_videos || [])
                 ],
                 live_url: editingProject.live_url || '',
+                download_url: editingProject.download_url || '',
                 button_text: editingProject.button_text || '',
                 order_index: editingProject.order_index || 0,
                 visible: editingProject.visible !== false
@@ -916,17 +918,12 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                             <div>
-                                <label style={labelStyle}>Content (Markdown Toolbar)</label>
-                                <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', background: '#1a1a1a', padding: '8px', borderRadius: '8px' }}>
-                                    <button onClick={() => insertMarkdown('bold')} style={{ background: '#333', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>B</button>
-                                    <button onClick={() => insertMarkdown('italic')} style={{ background: '#333', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>I</button>
-                                    <button onClick={() => insertMarkdown('link')} style={{ background: '#333', border: 'none', color: '#fff', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Link</button>
-                                    <label className="clickable" style={{ background: 'var(--accent-color)', color: '#000', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
-                                        + PHOTO
-                                        <input type="file" style={{ display: 'none' }} onChange={e => { if (e.target.files?.[0]) handleBlogImageUpload(e.target.files[0]) }} />
-                                    </label>
-                                </div>
-                                <textarea id="post-content-area" rows={12} value={editingPost.content} onChange={e => setEditingPost({ ...editingPost, content: e.target.value })} style={modalInputStyle} />
+                                <label style={labelStyle}>Content (Rich Text)</label>
+                                <RichTextEditor
+                                    value={editingPost.content}
+                                    onChange={(val) => setEditingPost({ ...editingPost, content: val })}
+                                    style={{ height: '400px' }}
+                                />
                             </div>
                             <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'PUBLISH POST'}</button>
                         </div>
@@ -1036,46 +1033,95 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <textarea value={editingProject.description || ''} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} rows={6} style={modalInputStyle} />
+                        </div>
 
+                        <div style={{ margin: '20px 0' }}>
+                            <label style={labelStyle}>Description (Rich Text)</label>
+                            <RichTextEditor
+                                value={editingProject.description || ''}
+                                onChange={(val) => setEditingProject({ ...editingProject, description: val })}
+                            />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <input placeholder="Live Link (URL)" value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={modalInputStyle} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#A0A0A0' }}>
+                                    <input type="checkbox" checked={editingProject.visible !== false} onChange={e => setEditingProject({ ...editingProject, visible: e.target.checked })} />
+                                    VISIBLE
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '20px', borderTop: '1px solid #222', paddingTop: '20px' }}>
+                            <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: '#A0A0A0' }}>DOWNLOAD ASSETS (OPTIONAL)</h4>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <input placeholder="Live Link (URL)" value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={modalInputStyle} />
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
-                                    </div>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#A0A0A0' }}>
-                                        <input type="checkbox" checked={editingProject.visible !== false} onChange={e => setEditingProject({ ...editingProject, visible: e.target.checked })} />
-                                        VISIBLE
+                                <div>
+                                    <label style={labelStyle}>Direct Download Link</label>
+                                    <input
+                                        placeholder="https://example.com/file.zip"
+                                        value={editingProject.download_url || ''}
+                                        onChange={e => setEditingProject({ ...editingProject, download_url: e.target.value })}
+                                        style={modalInputStyle}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Or Upload File</label>
+                                    <label className="clickable" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '42px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>
+                                        <Download size={16} style={{ marginRight: '8px' }} />
+                                        {editingProject.download_url && editingProject.download_url.includes('supabase') ? 'REPLACE FILE' : 'UPLOAD FILE'}
+                                        <input
+                                            type="file"
+                                            onChange={async (e) => {
+                                                if (e.target.files?.[0]) {
+                                                    const url = await storageAPI.uploadImage(e.target.files[0], 'downloads');
+                                                    if (url) setEditingProject({ ...editingProject, download_url: url });
+                                                }
+                                            }}
+                                            style={{ display: 'none' }}
+                                        />
                                     </label>
+                                    {editingProject.download_url && editingProject.download_url.includes('supabase') && (
+                                        <div style={{ fontSize: '11px', color: 'var(--accent-color)', marginTop: '5px', textAlign: 'center' }}>
+                                            File uploaded successfully
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
                         </div>
+                        <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
                     </div>
                 </div>
-            )}
+            )
+            }
 
-            {editingCV && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                            <h3 style={{ textTransform: 'capitalize' }}>Edit {editingCV.section_type}</h3>
-                            <button onClick={() => setEditingCV(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={20} /></button>
+            {
+                editingCV && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                <h3 style={{ textTransform: 'capitalize' }}>Edit {editingCV.section_type}</h3>
+                                <button onClick={() => setEditingCV(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={20} /></button>
+                            </div>
+                            <input placeholder="Title" value={editingCV.title} onChange={e => setEditingCV({ ...editingCV, title: e.target.value })} style={modalInputStyle} />
+                            <input placeholder="Subtitle / Org" value={editingCV.subtitle || ''} onChange={e => setEditingCV({ ...editingCV, subtitle: e.target.value })} style={modalInputStyle} />
+                            <input placeholder="Dates" value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={modalInputStyle} />
+                            <textarea placeholder="Details" value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={4} style={modalInputStyle} />
+                            <button onClick={saveCVSection} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: 'bold', width: '100%' }}>SAVE {editingCV.section_type.toUpperCase()}</button>
                         </div>
-                        <input placeholder="Title" value={editingCV.title} onChange={e => setEditingCV({ ...editingCV, title: e.target.value })} style={modalInputStyle} />
-                        <input placeholder="Subtitle / Org" value={editingCV.subtitle || ''} onChange={e => setEditingCV({ ...editingCV, subtitle: e.target.value })} style={modalInputStyle} />
-                        <input placeholder="Dates" value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={modalInputStyle} />
-                        <textarea placeholder="Details" value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={4} style={modalInputStyle} />
-                        <button onClick={saveCVSection} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: 'bold', width: '100%' }}>SAVE {editingCV.section_type.toUpperCase()}</button>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* PREVIEW MODAL */}
-            {isPreviewOpen && editingProject && (
-                <ProjectModal project={editingProject} isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
-            )}
-        </div>
+            {
+                isPreviewOpen && editingProject && (
+                    <ProjectModal project={editingProject} isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
+                )
+            }
+        </div >
     );
 }

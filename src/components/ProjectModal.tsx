@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Project } from '../lib/supabase';
-import ReactMarkdown from 'react-markdown';
+
 
 interface ProjectModalProps {
     project: Project | null;
@@ -138,13 +138,22 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                 ))}
                             </div>
 
-                            <div className="project-markdown-desc" style={{ fontSize: '18px', lineHeight: 1.8, color: 'var(--text-muted)', marginBottom: '60px' }}>
-                                <ReactMarkdown>{project.description || ''}</ReactMarkdown>
-                            </div>
+                            <div
+                                className="project-markdown-desc"
+                                style={{ fontSize: '18px', lineHeight: 1.8, color: 'var(--text-muted)', marginBottom: '60px' }}
+                                dangerouslySetInnerHTML={{ __html: project.description || '' }}
+                            />
+
 
                             {project.live_url && (
                                 <a href={project.live_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'var(--accent-color)', color: '#000', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                                     {project.button_text || 'VIEW LIVE PROJECT'} <ExternalLink size={20} />
+                                </a>
+                            )}
+
+                            {project.download_url && (
+                                <a href={project.download_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'transparent', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none', marginTop: '16px' }}>
+                                    DOWNLOAD PROJECT <Download size={20} />
                                 </a>
                             )}
                         </div>

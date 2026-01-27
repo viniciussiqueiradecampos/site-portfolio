@@ -124,7 +124,7 @@ export default function Blog() {
                                     </h3>
 
                                     <p style={{ fontSize: '15px', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '25px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                        {post.content.replace(/[#*`]/g, '')}
+                                        {post.content.replace(/<[^>]*>?/gm, '')}
                                     </p>
 
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
