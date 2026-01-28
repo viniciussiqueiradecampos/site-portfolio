@@ -632,3 +632,5 @@ nav ul li a {
 .bio-scroll-container::-webkit-scrollbar-thumb:hover {
   background: var(--surface-hover);
 }
+
+/* Cache Buster v2.3 */

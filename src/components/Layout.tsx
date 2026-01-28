@@ -32,6 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     });
 
     useEffect(() => {
+        console.log("Layout Loaded v2.3 - Cache Buster");
         loadBranding();
     }, []);
 
