@@ -6,7 +6,12 @@ import { contentAPI } from '../lib/supabase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 
-    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+    const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+        }
+        return 'dark';
+    });
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
@@ -81,6 +86,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const toggleTheme = () => {
         const newTheme = theme === 'dark' ? 'light' : 'dark';
         setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
         document.documentElement.setAttribute('data-theme', newTheme);
     };
 
@@ -100,9 +106,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         </NavLink>
                     </li>
                 )}
-                <li className="nav-dropdown" style={{ zIndex: 1001 }}>
+                <li className="nav-dropdown">
                     <span className="clickable menu-link">ME</span>
-                    <ul className="dropdown-menu" style={{ zIndex: 1000 }}>
+                    <ul className="dropdown-menu">
                         {branding.navAbout && <li><NavLink to="/about">ABOUT</NavLink></li>}
                         {branding.navCV && <li><NavLink to="/cv">CV</NavLink></li>}
                         {branding.navPortfolio && <li><NavLink to="/projects">PORTFOLIO</NavLink></li>}
@@ -166,14 +172,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     zIndex: 1000,
                     padding: '0 5%',
-                    background: 'var(--header-bg)',
-                    backdropFilter: 'blur(10px)',
-                    borderBottom: '1px solid var(--border-color)',
                     pointerEvents: 'auto',
                     width: '100%'
                 }}
             >
-                <div className="logo clickable" style={{ pointerEvents: 'auto', minWidth: '120px' }}>
+                {/* Header Background Layer - sits between Dropdown and Content */}
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'var(--header-bg)',
+                    backdropFilter: 'blur(10px)',
+                    borderBottom: '1px solid var(--border-color)',
+                    zIndex: 5
+                }} />
+
+                <div className="logo clickable" style={{ pointerEvents: 'auto', minWidth: '120px', position: 'relative', zIndex: 10 }}>
                     <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                             <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText1}</span>
@@ -186,7 +199,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {renderDesktopNav()}
                 </nav>
 
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', pointerEvents: 'auto' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', pointerEvents: 'auto', position: 'relative', zIndex: 10 }}>
                     <button
                         onClick={toggleTheme}
                         className="clickable"

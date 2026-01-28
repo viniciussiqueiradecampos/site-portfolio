@@ -99,7 +99,7 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                                         alt={project.title}
                                         loading="lazy"
                                         decoding="async"
-                                        style={{ width: '100%', height: 'auto', minHeight: '100%', display: 'block', objectFit: 'cover' }}
+                                        style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }}
                                     />
                                 ) : (
                                     <video src={allMedia[currentMediaIndex].url} controls autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'contain' }} />

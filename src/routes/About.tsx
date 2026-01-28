@@ -49,7 +49,6 @@ const ScrollyWord = ({ word, progress, start, end, style }: { word: string, prog
 
 const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
     const x = useTransform(progress, [start, end], ["120%", "-120%"]);
-    const opacity = useTransform(progress, [start, start + 0.1, end - 0.1, end], [0, 1, 1, 0]);
     const rotate = i % 2 === 0 ? -3 : 3;
 
     return (
@@ -58,8 +57,7 @@ const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemor
                 position: 'absolute',
                 left: x,
                 top: `${15 + (i % 3) * 25}%`,
-                zIndex: 100,
-                opacity,
+                zIndex: 100, // Always on top
                 flexShrink: 0,
                 width: isMobile ? '280px' : (m.width || '450px'),
                 aspectRatio: m.aspect_ratio || '1/1',
@@ -69,7 +67,7 @@ const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemor
                 overflow: 'hidden',
                 rotate,
                 boxShadow: '0 50px 100px rgba(0,0,0,0.5)',
-                pointerEvents: 'none'
+                pointerEvents: 'auto'
             }}
         >
             <img src={m.image_url} alt="Memory" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -161,7 +159,7 @@ export default function About() {
                 if (pReveal) setRevealImage(pReveal.value);
                 if (pTitle) setNameTitle(pTitle.value);
                 if (pSub) setSubtitle(pSub.value);
-                if (pBio) setBioText(pBio.value.split(" "));
+                if (pBio) setBioText(pBio.value.split(/(\s+)/));
                 if (pSpotify) setSpotifyUrl(pSpotify.value);
                 if (pVisible) setPageVisible(pVisible.value === 'true');
 
@@ -202,7 +200,7 @@ export default function About() {
             ScrollTrigger.create({
                 trigger: memoriesPin,
                 start: "top top",
-                end: () => `+=${Math.max(2500, memories.length * 600)}`,
+                end: () => `+=${Math.max(4000, memories.length * 1500)}`,
                 pin: true,
                 scrub: 1,
                 anticipatePin: 1,
@@ -365,12 +363,15 @@ export default function About() {
                             scrollbarWidth: 'thin',
                             scrollbarColor: 'var(--accent-color) transparent'
                         }}>
-                            {isMobile ? bioText.join(' ') : bioText.map((word, i) => {
-                                // Dynamic calculation for each word's animation start/end based on scroll progress
-                                // We want the text to finish revealing before the section engaging ends
-                                const step = 0.8 / bioText.length;
-                                const start = 0.05 + (i * step);
+                            {isMobile ? bioText.join('') : bioText.map((word, i) => {
+                                // Dynamic calculation for each word's animation start/end
+                                // Speed up text: finish by 0.5 progress
+                                const step = 0.5 / bioText.length;
+                                const start = i * step;
                                 const end = start + step;
+
+                                if (word.match(/\n/)) return <br key={i} />;
+
                                 return (
                                     <ScrollyWord
                                         key={`bio-${i}`}
@@ -378,19 +379,42 @@ export default function About() {
                                         progress={bioProgress}
                                         start={start}
                                         end={end}
+                                        style={{ marginRight: word.match(/^\s+$/) ? '0' : '4px' }}
                                     />
                                 );
                             })}
                         </div>
+
+                        {/* Scroll Indicator */}
+                        <motion.div
+                            style={{ marginTop: '30px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', opacity: 0.8 }}
+                            animate={{ y: [0, 5, 0], opacity: [0.5, 1, 0.5] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                        >
+                            <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }}>Keep Scrolling</span>
+                            <ArrowDown size={14} />
+                        </motion.div>
                     </div>
                 </div>
 
                 {/* Memories Overlay (Desktop) */}
                 {memories.length > 0 && !isMobile && (
-                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100 }}>
                         {memories.map((m, i) => {
-                            const startM = (i * (1 / memories.length)) * 0.8;
-                            const endM = startM + 0.5;
+                            // Delay memories to start AFTER text (0.55 to 1.0)
+                            // Even distribution until the end of scroll
+                            const availableStart = 0.55;
+                            const availableEnd = 0.95; // Leave a tiny buffer at end
+                            const range = availableEnd - availableStart;
+
+                            // Start positions spread across the range
+                            const startM = availableStart + (i * (range / Math.max(1, memories.length)));
+
+                            // Each memory travels its path in X amount of "progress".
+                            // Since scroll is very long, 0.15 is plenty of pixels.
+                            const duration = 0.15;
+                            const endM = startM + duration;
+
                             return <ScrollyMemory key={m.id || i} m={m} i={i} progress={bioProgress} start={startM} end={endM} isMobile={false} />;
                         })}
                     </div>
@@ -485,7 +509,7 @@ export default function About() {
                     transition={{ duration: 0.6 }}
                 >
                     <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>Collaboration</span>
-                    <h3 style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-2px', margin: '10px 0' }}>Client<br />Feedback</h3>
+                    <h3 style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-2px', margin: '10px 0' }}>Colleagues who<br />work with me</h3>
                 </motion.div>
 
                 <div style={{ position: 'relative', minHeight: '400px' }}>
