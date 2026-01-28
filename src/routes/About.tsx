@@ -292,32 +292,32 @@ export default function About() {
                 <div className="container" style={{
                     maxWidth: '1214px',
                     margin: '0 auto',
-                    padding: isMobile ? '80px 5%' : '0 5%',
+                    padding: isMobile ? '60px 5% 40px' : '0 5%',
                     display: 'flex',
                     flexDirection: isMobile ? 'column' : 'row',
-                    gap: isMobile ? '40px' : '89px',
+                    gap: isMobile ? '30px' : '40px', // Reduced gap significantly
                     alignItems: 'center',
                     justifyContent: 'center',
                     width: '100%',
-                    minHeight: isMobile ? 'auto' : 'calc(100vh - 80px)', // Desconta a altura do menu (aprox 80px)
-                    marginTop: isMobile ? '0' : '80px', // Compensa o header fixo
+                    minHeight: isMobile ? 'auto' : '100vh',
                     position: 'relative',
                     zIndex: 5
                 }}>
                     {/* Portrait Photo (Smaller - max 450px) */}
-                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '450px', flexShrink: 0 }}>
+                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '400px', flexShrink: 0 }}>
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 1 }}
                             style={{
                                 width: '100%',
-                                maxHeight: isMobile ? 'none' : '75vh', // Garante margem vertical
+                                maxHeight: isMobile ? '50vh' : '65vh', // Reduced height
                                 aspectRatio: '545/699',
                                 borderRadius: '8px',
                                 overflow: 'hidden',
                                 boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
-                                border: '1px solid rgba(255,255,255,0.05)'
+                                border: '1px solid rgba(255,255,255,0.05)',
+                                margin: '0 auto'
                             }}
                         >
                             <img src={profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Profile" />
@@ -325,15 +325,15 @@ export default function About() {
                     </div>
 
                     {/* Content Column (Right - 580px) */}
-                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '580px', display: 'flex', flexDirection: 'column', gap: '88px', textAlign: 'left' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '580px', display: 'flex', flexDirection: 'column', gap: isMobile ? '30px' : '40px', textAlign: 'left' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             <h2 style={{
-                                fontSize: '65.81px',
+                                fontSize: 'clamp(40px, 5vw, 60px)', // More responsive font size
                                 fontWeight: 900,
-                                lineHeight: 1.1,
+                                lineHeight: 1,
                                 margin: 0,
                                 color: 'var(--accent-color)',
-                                letterSpacing: '-3.94px',
+                                letterSpacing: '-2px',
                                 textTransform: 'uppercase',
                                 fontFamily: 'var(--font-display)'
                             }}>

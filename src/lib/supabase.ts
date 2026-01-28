@@ -896,18 +896,43 @@ export const aboutAPI = {
         return data || [];
     },
     async saveHobby(hobby: Partial<AboutHobby>): Promise<AboutHobby | null> {
-        if (hobby.id && hobby.id !== '') {
-            // Update existing
-            const { id, created_at, ...updateData } = hobby as any;
-            const { data, error } = await supabase.from('about_hobbies').update(updateData).eq('id', id).select().single();
-            if (error) { console.error('Error updating hobby:', error); return null; }
-            return data;
-        } else {
-            // Insert new
-            const { id, created_at, ...insertData } = hobby as any;
-            const { data, error } = await supabase.from('about_hobbies').insert([insertData]).select().single();
-            if (error) { console.error('Error creating hobby:', error); return null; }
-            return data;
+        try {
+            if (hobby.id && hobby.id !== '') {
+                // Update existing
+                const { id, created_at, ...updateData } = hobby as any;
+                let { data, error } = await supabase.from('about_hobbies').update(updateData).eq('id', id).select().single();
+
+                // Fallback for missing icon_name column
+                if (error && error.message?.includes('column "icon_name"')) {
+                    console.warn('⚠️ executing fallback: saving hobby without icon_name');
+                    const { icon_name, ...safeData } = updateData;
+                    const res = await supabase.from('about_hobbies').update(safeData).eq('id', id).select().single();
+                    data = res.data;
+                    error = res.error;
+                }
+
+                if (error) { console.error('Error updating hobby:', error); return null; }
+                return data;
+            } else {
+                // Insert new
+                const { id, created_at, ...insertData } = hobby as any;
+                let { data, error } = await supabase.from('about_hobbies').insert([insertData]).select().single();
+
+                // Fallback for missing icon_name column
+                if (error && error.message?.includes('column "icon_name"')) {
+                    console.warn('⚠️ executing fallback: saving hobby without icon_name');
+                    const { icon_name, ...safeData } = insertData;
+                    const res = await supabase.from('about_hobbies').insert([safeData]).select().single();
+                    data = res.data;
+                    error = res.error;
+                }
+
+                if (error) { console.error('Error creating hobby:', error); return null; }
+                return data;
+            }
+        } catch (err) {
+            console.error('Unexpected error saving hobby:', err);
+            return null;
         }
     },
     async deleteHobby(id: string): Promise<boolean> {
