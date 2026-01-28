@@ -197,10 +197,8 @@ export default function About() {
         requestAnimationFrame(raf);
 
         const ctx = gsap.context(() => {
-            gsap.from(".step-card", {
-                y: 100, opacity: 0, stagger: 0.2, duration: 1, ease: "power4.out",
-                scrollTrigger: { trigger: ".steps-grid", start: "top 80%" }
-            });
+            // Steps animation removed as the section is currently not in the JSX
+            // preventing console errors
         }, containerRef);
 
         const memoriesPin = memoriesPinRef.current;
