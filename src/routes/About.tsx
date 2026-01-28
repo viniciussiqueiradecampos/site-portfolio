@@ -292,14 +292,14 @@ export default function About() {
             </section>
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
-            <div ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
+            <div ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflowX: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
                 <div className="container" style={{
                     maxWidth: '1214px',
                     margin: '0 auto',
                     padding: isMobile ? '60px 5% 40px' : '0 5%',
                     display: 'flex',
                     flexDirection: isMobile ? 'column' : 'row',
-                    gap: isMobile ? '30px' : '40px', // Reduced gap significantly
+                    gap: isMobile ? '30px' : '40px',
                     alignItems: 'center',
                     justifyContent: 'center',
                     width: '100%',
@@ -308,14 +308,14 @@ export default function About() {
                     zIndex: 5
                 }}>
                     {/* Portrait Photo (Smaller - max 450px) */}
-                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '400px', flexShrink: 0 }}>
+                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '400px', flexShrink: 0, position: 'relative', zIndex: 10 }}>
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 1 }}
                             style={{
                                 width: '100%',
-                                maxHeight: isMobile ? '50vh' : '65vh', // Reduced height
+                                maxHeight: isMobile ? '50vh' : '65vh',
                                 aspectRatio: '545/699',
                                 borderRadius: '8px',
                                 overflow: 'hidden',
@@ -329,10 +329,10 @@ export default function About() {
                     </div>
 
                     {/* Content Column (Right - 580px) */}
-                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '580px', display: 'flex', flexDirection: 'column', gap: isMobile ? '30px' : '40px', textAlign: 'left' }}>
+                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '580px', display: 'flex', flexDirection: 'column', gap: isMobile ? '30px' : '40px', textAlign: 'left', position: 'relative', zIndex: 20 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             <h2 style={{
-                                fontSize: 'clamp(40px, 5vw, 60px)', // More responsive font size
+                                fontSize: 'clamp(40px, 5vw, 60px)',
                                 fontWeight: 900,
                                 lineHeight: 1,
                                 margin: 0,
@@ -365,7 +365,7 @@ export default function About() {
                             maxWidth: '100%',
                             maxHeight: isMobile ? 'none' : '40vh',
                             overflowY: isMobile ? 'visible' : 'auto',
-                            paddingRight: '20px', // Margem extra para scrollbar
+                            paddingRight: '20px',
                             scrollbarWidth: 'thin',
                             scrollbarColor: 'var(--accent-color) transparent'
                         }}>
@@ -393,7 +393,7 @@ export default function About() {
 
                         {/* Scroll Indicator */}
                         <motion.div
-                            style={{ marginTop: '30px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', opacity: 0.8 }}
+                            style={{ marginTop: '30px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', opacity: 0.8, position: 'relative', zIndex: 25 }}
                             animate={{ y: [0, 5, 0], opacity: [0.5, 1, 0.5] }}
                             transition={{ repeat: Infinity, duration: 2 }}
                         >
