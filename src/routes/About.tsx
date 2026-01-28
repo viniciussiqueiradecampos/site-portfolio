@@ -283,15 +283,15 @@ export default function About() {
                 <motion.div
                     animate={{ y: [0, 10, 0] }}
                     transition={{ repeat: Infinity, duration: 2 }}
-                    onClick={() => memoriesPinRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                    style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, cursor: 'pointer' }}
+                    onClick={() => document.getElementById('about-bio-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, cursor: 'pointer', padding: '20px' }}
                 >
                     <ArrowDown size={32} color="var(--accent-color)" />
                 </motion.div>
             </section>
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
-            <div ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflowX: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
+            <div id="about-bio-section" ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflowX: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
                 <div className="container" style={{
                     maxWidth: '1214px',
                     margin: '0 auto',
