@@ -1428,7 +1428,7 @@ export default function AdminDashboard() {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                 <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden' }}>
-                                    {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={24} color="#333" />}
+                                    {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <ImageIcon size={24} color="#333" />}
                                 </div>
                                 <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333' }}>
                                     UPLOAD CAPA
@@ -1471,7 +1471,7 @@ export default function AdminDashboard() {
                                     {/* Gallery Images */}
                                     {editingProject.gallery_images?.map((url, i) => (
                                         <div key={`img-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222' }}>
-                                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                             <button
                                                 onClick={() => {
                                                     const news = [...editingProject.gallery_images!];

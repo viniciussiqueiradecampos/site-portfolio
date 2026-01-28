@@ -611,3 +611,22 @@ nav ul li a {
   border-radius: 50%;
   z-index: 1;
 }
+
+/* Bio Scroll Container Specifics */
+.bio-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bio-scroll-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.bio-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 4px;
+}
+
+.bio-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-hover);
+}

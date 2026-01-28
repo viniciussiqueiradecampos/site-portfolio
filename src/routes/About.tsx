@@ -288,7 +288,7 @@ export default function About() {
             </section>
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
-            <div ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
                 <div className="container" style={{
                     maxWidth: '1214px',
                     margin: '0 auto',
@@ -350,7 +350,7 @@ export default function About() {
                             </p>
                         </div>
 
-                        <div style={{
+                        <div className="bio-scroll-container" style={{
                             fontSize: '19.5px',
                             lineHeight: 1.43,
                             fontWeight: 400,
@@ -359,7 +359,11 @@ export default function About() {
                             wordBreak: 'break-word',
                             overflowWrap: 'break-word',
                             maxWidth: '100%',
-                            paddingRight: '20px' // Margem extra para não tocar o final
+                            maxHeight: isMobile ? 'none' : '40vh',
+                            overflowY: isMobile ? 'visible' : 'auto',
+                            paddingRight: '20px', // Margem extra para scrollbar
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: 'var(--accent-color) transparent'
                         }}>
                             {isMobile ? bioText.join(' ') : bioText.map((word, i) => {
                                 // Dynamic calculation for each word's animation start/end based on scroll progress

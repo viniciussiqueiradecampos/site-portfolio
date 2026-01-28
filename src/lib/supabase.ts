@@ -231,8 +231,7 @@ export const projectsAPI = {
             .from('projects')
             .select('*')
             .eq('visible', true)
-            .order('order_index', { ascending: true })
-            .limit(1000);
+            .order('order_index', { ascending: true });
 
         if (error) {
             console.error('Error fetching projects:', error);

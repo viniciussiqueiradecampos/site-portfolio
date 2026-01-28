@@ -188,7 +188,7 @@ export default function Projects() {
                                     </div>
 
                                     <img src={p.image_url} alt={p.title} loading="lazy" decoding="async" style={{
-                                        width: '100%', height: '100%', objectFit: 'cover',
+                                        width: '100%', height: '100%', objectFit: 'contain',
                                         transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
                                         position: 'relative', zIndex: 1
                                     }} className="card-img" />
