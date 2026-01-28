@@ -285,7 +285,8 @@ export default function About() {
                 <motion.div
                     animate={{ y: [0, 10, 0] }}
                     transition={{ repeat: Infinity, duration: 2 }}
-                    style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 3 }}
+                    onClick={() => memoriesPinRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                    style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, cursor: 'pointer' }}
                 >
                     <ArrowDown size={32} color="var(--accent-color)" />
                 </motion.div>
