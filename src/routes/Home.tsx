@@ -4,7 +4,8 @@ import { Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
-import { contentAPI, projectsAPI, analyticsAPI, type Project } from '../lib/supabase';
+import { contentAPI, projectsAPI, type Project } from '../lib/supabase';
+import { trackPageView, trackProjectClick } from '../lib/analytics';
 
 // Helper component to fix Rule of Hooks (useTransform inside loop)
 const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
@@ -41,11 +42,7 @@ export default function Home() {
     const storyRef = useRef(null);
 
     useEffect(() => {
-        analyticsAPI.logEvent({
-            event_type: 'page_view',
-            page_path: '/',
-            referrer: document.referrer
-        });
+        trackPageView('/');
         loadData();
         // Handle hash scroll
         if (window.location.hash === '#contact') {
@@ -162,6 +159,7 @@ export default function Home() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const openModal = (project: Project) => {
+        trackProjectClick(project.id, project.title);
         setSelectedProject(project);
         setIsModalOpen(true);
     };

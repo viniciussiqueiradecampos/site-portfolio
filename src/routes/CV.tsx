@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { cvAPI, contentAPI, analyticsAPI, type CVSection } from '../lib/supabase';
+import { cvAPI, contentAPI, type CVSection } from '../lib/supabase';
+import { trackPageView, trackCVDownload } from '../lib/analytics';
 
 export default function CV() {
     const [sections, setSections] = useState<CVSection[]>([]);
@@ -10,11 +11,7 @@ export default function CV() {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        analyticsAPI.logEvent({
-            event_type: 'page_view',
-            page_path: '/cv',
-            referrer: document.referrer
-        });
+        trackPageView('/cv');
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -37,7 +34,7 @@ export default function CV() {
     };
 
     const handleDownloadClick = () => {
-        analyticsAPI.logEvent({ event_type: 'cv_download' });
+        trackCVDownload();
     };
 
     const skills = sections.filter(s => s.section_type === 'skills').sort((a, b) => a.order_index - b.order_index);

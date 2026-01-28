@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { blogAPI, contentAPI, analyticsAPI, type BlogPost } from '../lib/supabase';
+import { blogAPI, contentAPI, type BlogPost } from '../lib/supabase';
+import { trackPageView } from '../lib/analytics';
 import { motion } from 'framer-motion';
 import RevealText from '../components/RevealText';
 import { BookOpen, ArrowRight, Search } from 'lucide-react';
@@ -18,7 +19,7 @@ export default function Blog() {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener('resize', handleResize);
         loadPosts();
-        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/blog' });
+        trackPageView('/blog');
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 

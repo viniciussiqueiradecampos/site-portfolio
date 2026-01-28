@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectModal from '../components/ProjectModal';
-import { projectsAPI, analyticsAPI, type Project } from '../lib/supabase';
+import { projectsAPI, type Project } from '../lib/supabase';
+import { trackPageView, trackProjectClick } from '../lib/analytics';
 import { Eye } from 'lucide-react';
 
 export default function Projects() {
@@ -22,11 +23,7 @@ export default function Projects() {
 
     useEffect(() => {
         loadProjects();
-        analyticsAPI.logEvent({
-            event_type: 'page_view',
-            page_path: '/projects',
-            referrer: document.referrer
-        });
+        trackPageView('/projects');
     }, []);
 
     useEffect(() => {
@@ -71,6 +68,7 @@ export default function Projects() {
     };
 
     const openModal = (project: Project) => {
+        trackProjectClick(project.id, project.title);
         setSelectedProject(project);
         setIsModalOpen(true);
     };

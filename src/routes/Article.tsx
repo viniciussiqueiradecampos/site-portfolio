@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { blogAPI, analyticsAPI, type BlogPost } from '../lib/supabase';
+import { blogAPI, type BlogPost } from '../lib/supabase';
+import { trackPageView } from '../lib/analytics';
 
 import { ArrowLeft, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -19,11 +20,7 @@ export default function Article() {
         setPost(data);
         setLoading(false);
         window.scrollTo(0, 0);
-        analyticsAPI.logEvent({
-            event_type: 'page_view',
-            page_path: `/blog/${slug}`,
-            referrer: document.referrer
-        });
+        trackPageView(`/blog/${slug}`);
     };
 
     if (loading) return (

@@ -16,7 +16,8 @@ import {
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
-import { analyticsAPI, aboutAPI, contentAPI, type AboutHobby, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
+import { aboutAPI, contentAPI, type AboutHobby, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
+import { trackPageView } from '../lib/analytics';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -175,7 +176,7 @@ export default function About() {
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener('resize', handleResize);
-        analyticsAPI.logEvent({ event_type: 'page_view', page_path: '/about' });
+        trackPageView('/about');
         window.scrollTo(0, 0);
 
         return () => {
