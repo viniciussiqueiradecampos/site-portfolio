@@ -8,10 +8,9 @@ import {
     Activity, Wifi, Wrench, Brush, Cloud, Book, Mail, Phone, MapPin,
     Users, Check, Layers, Monitor, Tablet, Watch, Headphones, Video,
     ShoppingBag, CreditCard, Wallet, Calendar, Bell, Lock, Unlock, Key,
-    Eye, EyeOff, Filter, Sliders, Navigation, ExternalLink, Share,
+    Eye, EyeOff, Filter, Sliders, Navigation, ExternalLink,
     Play, Pause, Square, Triangle, Smile, Flame, Sun, Moon, Wind,
-    Trophy, Medal, Box, Anchor, Compass, Feather, Pen, Pencil,
-    Columns, Grid, List
+    Trophy, Medal
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -34,10 +33,9 @@ const SELECTABLE_ICONS: Record<string, any> = {
     'ShoppingBag': ShoppingBag, 'CreditCard': CreditCard, 'Wallet': Wallet, 'Calendar': Calendar,
     'Bell': Bell, 'Lock': Lock, 'Unlock': Unlock, 'Key': Key, 'Eye': Eye, 'EyeOff': EyeOff,
     'Filter': Filter, 'Sliders': Sliders, 'Navigation': Navigation, 'ExternalLink': ExternalLink,
-    'Share': Share, 'Play': Play, 'Pause': Pause, 'Square': Square, 'Triangle': Triangle,
+    'Play': Play, 'Pause': Pause, 'Square': Square, 'Triangle': Triangle,
     'Smile': Smile, 'Flame': Flame, 'Sun': Sun, 'Moon': Moon, 'Wind': Wind, 'Trophy': Trophy,
-    'Medal': Medal, 'Box': Box, 'Anchor': Anchor, 'Compass': Compass, 'Feather': Feather,
-    'Pen': Pen, 'Pencil': Pencil, 'Columns': Columns, 'Grid': Grid, 'List': List
+    'Medal': Medal
 };
 
 // Helper component for Scrollytelling text effect
