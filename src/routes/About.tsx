@@ -280,14 +280,25 @@ export default function About() {
                     </motion.div>
                 </div>
 
-                <motion.div
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    onClick={() => document.getElementById('about-bio-section')?.scrollIntoView({ behavior: 'smooth' })}
-                    style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, cursor: 'pointer', padding: '20px' }}
+                <a
+                    href="#about-bio-section"
+                    className="scroll-indicator"
+                    style={{
+                        position: 'absolute',
+                        bottom: '60px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 9999, // Extreme z-index to ensure clickable
+                        cursor: 'pointer',
+                        padding: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textDecoration: 'none'
+                    }}
                 >
                     <ArrowDown size={32} color="var(--accent-color)" />
-                </motion.div>
+                </a>
             </section>
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
