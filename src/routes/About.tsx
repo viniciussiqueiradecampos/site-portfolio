@@ -120,7 +120,7 @@ const TypewriterGreeting = ({ languages }: { languages: string[] }) => {
 
 export default function About() {
     const languages = ["Hello", "Olá", "Hola", "Dia dhuit", "Ciao", "Bonjour", "Konnichiwa", "Namaste", "Salaam", "Guten Tag", "Nǐ hǎo", "Aloha"];
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [isMobile, setIsMobile] = useState(false); // Default to desktop for safer hydration
     const [isLoading, setIsLoading] = useState(true);
 
     const [profilePhoto, setProfilePhoto] = useState("");
@@ -138,6 +138,25 @@ export default function About() {
     const heroRef = useRef<HTMLDivElement>(null);
     const memoriesPinRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Initial check and Listener
+    useEffect(() => {
+        console.log("About Page Loaded - v2.2 (Restored)");
+        const checkMobile = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            console.log("Is Mobile:", mobile, "Width:", window.innerWidth);
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        trackPageView('/about');
+        window.scrollTo(0, 0);
+
+        return () => {
+            window.removeEventListener('resize', checkMobile);
+        };
+    }, []);
 
     useEffect(() => {
         const loadData = async () => {
@@ -169,17 +188,6 @@ export default function About() {
             } catch (e) { console.error(e); } finally { setIsLoading(false); }
         };
         loadData();
-    }, []);
-
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener('resize', handleResize);
-        trackPageView('/about');
-        window.scrollTo(0, 0);
-
-        return () => {
-            window.removeEventListener('resize', handleResize);
-        };
     }, []);
 
     useLayoutEffect(() => {
@@ -625,4 +633,5 @@ export default function About() {
         </div >
     );
 }
-// Force deploy trigger
+
+// Force deploy trigger v2.2
