@@ -231,6 +231,25 @@ export default function About() {
     return (
         <div ref={containerRef} style={{ background: 'var(--bg-color)', minHeight: '100vh', overflowX: 'hidden' }}>
 
+            {/* VERSION TAG FOR CACHE VERIFICATION */}
+            <div style={{
+                position: 'fixed',
+                top: '90px',
+                right: '20px',
+                background: '#ff0000',
+                color: '#fff',
+                padding: '5px 15px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                zIndex: 99999,
+                borderRadius: '20px',
+                fontFamily: 'sans-serif',
+                pointerEvents: 'none',
+                boxShadow: '0 0 20px rgba(255,0,0,0.5)'
+            }}>
+                DEPLOY v4.0 - ACTIVE
+            </div>
+
             {/* 1. HERO SECTION WITH CLEAN REVEAL */}
             <section
                 ref={heroRef}
