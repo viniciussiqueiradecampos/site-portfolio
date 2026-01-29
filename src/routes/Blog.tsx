@@ -85,7 +85,7 @@ export default function Blog() {
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: '20px',
-                                    background: 'rgba(255,255,255,0.02)',
+                                    background: 'var(--surface-color)',
                                     padding: '20px',
                                     borderRadius: '24px',
                                     border: '1px solid var(--border-color)',
@@ -157,7 +157,7 @@ export default function Blog() {
                             <div style={{ textAlign: 'center', padding: '100px 0', gridColumn: '1/-1' }}>
                                 <Search size={48} color="var(--border-color)" style={{ marginBottom: '20px' }} />
                                 <h3 style={{ fontSize: '20px', color: 'var(--text-muted)' }}>No articles found.</h3>
-                                <button onClick={() => { setSelectedCategory(null); setSelectedTag(null); setSearchQuery(''); }} style={{ marginTop: '20px', background: 'transparent', border: '1px solid var(--border-color)', color: '#fff', padding: '10px 20px', borderRadius: '100px', cursor: 'pointer' }}>Clear all filters</button>
+                                <button onClick={() => { setSelectedCategory(null); setSelectedTag(null); setSearchQuery(''); }} style={{ marginTop: '20px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-color)', padding: '10px 20px', borderRadius: '100px', cursor: 'pointer' }}>Clear all filters</button>
                             </div>
                         )}
                     </div>
@@ -174,10 +174,10 @@ export default function Blog() {
                                     style={{
                                         width: '100%',
                                         padding: '15px 20px 15px 50px',
-                                        background: 'rgba(255,255,255,0.03)',
+                                        background: 'var(--surface-color)',
                                         border: '1px solid var(--border-color)',
                                         borderRadius: '12px',
-                                        color: '#fff',
+                                        color: 'var(--text-color)',
                                         fontSize: '14px',
                                         outline: 'none'
                                     }}
@@ -236,7 +236,7 @@ export default function Blog() {
                                     onClick={() => setSelectedTag(null)}
                                     style={{
                                         padding: '6px 12px',
-                                        background: selectedTag === null ? 'var(--accent-color)' : 'rgba(255,255,255,0.03)',
+                                        background: selectedTag === null ? 'var(--accent-color)' : 'var(--surface-color)',
                                         color: selectedTag === null ? '#000' : 'var(--text-muted)',
                                         border: '1px solid var(--border-color)',
                                         borderRadius: '6px',
@@ -253,7 +253,7 @@ export default function Blog() {
                                         onClick={() => setSelectedTag(tag)}
                                         style={{
                                             padding: '6px 12px',
-                                            background: selectedTag === tag ? 'var(--accent-color)' : 'rgba(255,255,255,0.03)',
+                                            background: selectedTag === tag ? 'var(--accent-color)' : 'var(--surface-color)',
                                             color: selectedTag === tag ? '#000' : 'var(--text-muted)',
                                             border: '1px solid var(--border-color)',
                                             borderRadius: '6px',

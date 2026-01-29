@@ -108,12 +108,12 @@ export default function Article() {
             </div>
 
             <style>{`
-                    .article-content h2 { font-size: 36px; margin-top: 60px; margin-bottom: 25px; font-weight: 800; color: #fff; }
-                    .article-content h3 { font-size: 28px; margin-top: 50px; margin-bottom: 20px; font-weight: 700; color: #fff; }
-                    .article-content p { margin-bottom: 30px; color: rgba(255,255,255,0.8); }
+                    .article-content h2 { font-size: 36px; margin-top: 60px; margin-bottom: 25px; font-weight: 800; color: var(--text-color); }
+                    .article-content h3 { font-size: 28px; margin-top: 50px; margin-bottom: 20px; font-weight: 700; color: var(--text-color); }
+                    .article-content p { margin-bottom: 30px; color: var(--text-color); opacity: 0.8; }
                     .article-content img { max-width: 100%; border-radius: 24px; margin: 60px 0; border: 1px solid var(--border-color); }
-                    .article-content pre { background: #0a0a0a; padding: 30px; border-radius: 16px; overflow-x: auto; border: 1px solid var(--border-color); margin: 40px 0; }
-                    .article-content blockquote { border-left: 4px solid var(--accent-color); padding: 10px 0 10px 30px; font-style: italic; font-size: 24px; color: var(--text-muted); margin: 50px 0; background: rgba(255,255,255,0.02); border-radius: 0 16px 16px 0; }
+                    .article-content pre { background: var(--surface-color); padding: 30px; border-radius: 16px; overflow-x: auto; border: 1px solid var(--border-color); margin: 40px 0; }
+                    .article-content blockquote { border-left: 4px solid var(--accent-color); padding: 10px 0 10px 30px; font-style: italic; font-size: 24px; color: var(--text-muted); margin: 50px 0; background: var(--surface-color); border-radius: 0 16px 16px 0; }
                     .article-content strong { color: var(--accent-color); }
                     .article-content a { color: var(--accent-color); text-decoration: underline; }
                     @keyframes spin { to { transform: rotate(360deg); } }

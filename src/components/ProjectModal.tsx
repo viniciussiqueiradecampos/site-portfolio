@@ -140,7 +140,7 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
 
                             <div
                                 className="project-markdown-desc"
-                                style={{ fontSize: '18px', lineHeight: 1.8, color: 'var(--text-muted)', marginBottom: '60px' }}
+                                style={{ fontSize: '18px', lineHeight: 1.8, color: 'var(--text-color)', marginBottom: '60px', opacity: 0.8 }}
                                 dangerouslySetInnerHTML={{ __html: project.description || '' }}
                             />
 
@@ -152,7 +152,7 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
                             )}
 
                             {project.download_url && (
-                                <a href={project.download_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'transparent', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none', marginTop: '16px' }}>
+                                <a href={project.download_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-color)', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none', marginTop: '16px' }}>
                                     DOWNLOAD PROJECT <Download size={20} />
                                 </a>
                             )}

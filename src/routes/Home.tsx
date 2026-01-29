@@ -554,10 +554,10 @@ export default function Home() {
                                     top: '200px',
                                     transform: 'translateY(-50%)',
                                     zIndex: 100,
-                                    background: 'rgba(255,255,255,0.05)',
+                                    background: 'var(--surface-color)',
                                     backdropFilter: 'blur(15px)',
-                                    border: '1px solid rgba(255,255,255,0.2)',
-                                    color: '#fff',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-color)',
                                     width: isMobile ? '44px' : '60px',
                                     height: isMobile ? '44px' : '60px',
                                     borderRadius: '50%',
@@ -566,7 +566,7 @@ export default function Home() {
                                     justifyContent: 'center',
                                     cursor: 'pointer',
                                     transition: 'all 0.3s ease',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
                                 }}
                             >
                                 <ChevronLeft size={isMobile ? 20 : 24} />
@@ -581,10 +581,10 @@ export default function Home() {
                                     top: '200px',
                                     transform: 'translateY(-50%)',
                                     zIndex: 100,
-                                    background: 'rgba(255,255,255,0.05)',
+                                    background: 'var(--surface-color)',
                                     backdropFilter: 'blur(15px)',
-                                    border: '1px solid rgba(255,255,255,0.1)', // Fixed minor opacity diff
-                                    color: '#fff',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-color)',
                                     width: isMobile ? '44px' : '60px',
                                     height: isMobile ? '44px' : '60px',
                                     borderRadius: '50%',
@@ -593,7 +593,7 @@ export default function Home() {
                                     justifyContent: 'center',
                                     cursor: 'pointer',
                                     transition: 'all 0.3s ease',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
                                 }}
                             >
                                 <ChevronRight size={isMobile ? 20 : 24} />
