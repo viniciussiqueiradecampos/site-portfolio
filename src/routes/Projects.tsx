@@ -87,7 +87,7 @@ export default function Projects() {
 
             <div className="container">
                 <div style={{ marginBottom: '60px', borderBottom: '1px solid var(--border-color)', paddingBottom: '40px' }}>
-                    <h1 className="selected-works-title" style={{ fontSize: isMobile ? '40px' : '60px', marginBottom: '20px', lineHeight: 0.9 }}>
+                    <h1 className="selected-works-title" style={{ fontSize: isMobile ? '30px' : '60px', marginBottom: '20px', lineHeight: 0.9 }}>
                         SELECTED<br />WORKS
                     </h1>
                 </div>

@@ -392,16 +392,17 @@ export default function About() {
 
                         <div className="bio-scroll-container" style={{
                             fontSize: '19.5px',
-                            lineHeight: 1.6,
+                            lineHeight: 1.43,
                             fontWeight: 400,
                             color: 'var(--text-color)',
                             textAlign: 'left',
                             wordBreak: 'break-word',
                             overflowWrap: 'break-word',
                             maxWidth: '100%',
-                            height: 'auto',
-                            overflow: 'visible',
-                            whiteSpace: 'pre-wrap' // Preserve line breaks
+                            maxHeight: isMobile ? 'none' : '40vh',
+                            overflowY: isMobile ? 'visible' : 'auto',
+                            paddingRight: '20px',
+                            whiteSpace: 'pre-wrap'
                         }}>
                             {bioText.join('')}
                         </div>
@@ -459,7 +460,7 @@ export default function About() {
                     display: 'grid',
                     gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
                     gap: '20px',
-                    overflow: 'visible' // Ensure no internal scrollbars
+                    overflow: 'hidden' // Restore original overflow behavior
                 }}>
                     {hobbies.map((hobby, i) => {
                         const Icon = SELECTABLE_ICONS[hobby.icon_name as keyof typeof SELECTABLE_ICONS] || MessageCircle;

@@ -323,22 +323,27 @@ nav ul li a {
 }
 
 
-/* Custom Scrollbar Removed for cleaner look per user request */
+/* Custom Scrollbars made transparent per user request to hide them from design */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: transparent;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: none;
 }
 
 .horizontal-scroll-container::-webkit-scrollbar {
