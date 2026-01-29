@@ -399,11 +399,8 @@ export default function About() {
                             wordBreak: 'break-word',
                             overflowWrap: 'break-word',
                             maxWidth: '100%',
-                            maxHeight: isMobile ? 'none' : '40vh',
-                            overflowY: isMobile ? 'visible' : 'auto',
-                            paddingRight: '20px',
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: 'var(--accent-color) transparent'
+                            height: 'auto',
+                            overflow: 'visible'
                         }}>
                             {bioText.join('')}
                         </div>
@@ -461,7 +458,7 @@ export default function About() {
                     display: 'grid',
                     gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
                     gap: '20px',
-                    overflow: 'hidden' // Fix vertical overflow
+                    overflow: 'visible' // Ensure no internal scrollbars
                 }}>
                     {hobbies.map((hobby, i) => {
                         const Icon = SELECTABLE_ICONS[hobby.icon_name as keyof typeof SELECTABLE_ICONS] || MessageCircle;

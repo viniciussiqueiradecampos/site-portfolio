@@ -149,12 +149,12 @@ nav ul li a {
 .dropdown-menu {
   position: absolute;
   top: 100%;
-  /* Now correctly relative to 100% height header */
   left: 0;
   background: var(--bg-color);
   min-width: 220px;
   list-style: none;
-  padding: 10px 0;
+  padding: 0;
+  margin: 0;
   border: 1px solid var(--border-color);
   border-top: none;
   border-radius: 0 0 12px 12px;
@@ -167,7 +167,19 @@ nav ul li a {
   backdrop-filter: blur(20px);
   pointer-events: none;
   height: auto !important;
-  /* Fix: Force auto height instead of inherited 100% */
+  overflow: hidden;
+}
+
+/* Bridge to keep dropdown open during mouse transition */
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: transparent;
+  pointer-events: auto;
 }
 
 .desktop-nav ul li:hover .dropdown-menu {
@@ -658,24 +670,11 @@ nav ul li a {
   z-index: 1;
 }
 
-/* Bio Scroll Container Specifics */
-.bio-scroll-container::-webkit-scrollbar {
-  width: 4px;
+/* Bio Scroll Container Specifics - Cleaned up to avoid internal scrollbars */
+.bio-scroll-container {
+  overflow: visible !important;
 }
 
-.bio-scroll-container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-
-.bio-scroll-container::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
-  border-radius: 4px;
-}
-
-.bio-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: var(--surface-hover);
-}
 
 /* Cache Buster v2.4 */
 
