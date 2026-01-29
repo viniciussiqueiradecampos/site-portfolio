@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion /* , useScroll, useTransform */ } from 'framer-motion';
 import {
     ChevronLeft, ChevronRight, ArrowDown,
     Search, Rocket, Lightbulb, Code, Target, Heart, Star, Coffee,
@@ -39,13 +39,13 @@ const SELECTABLE_ICONS: Record<string, any> = {
 };
 
 // Helper component for Scrollytelling text effect
-const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
+/* const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
     const opacity = useTransform(progress, [start, end], [0.1, 1]); // Starts semi-transparent, becomes fully opaque
     const y = useTransform(progress, [start, end], [5, 0]); // Slight slide-up effect
     return <motion.span style={{ ...style, opacity, y, marginRight: '6px', display: 'inline-block' }}>{word}</motion.span>;
-};
+}; */
 
-const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
+/* const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
     const x = useTransform(progress, [start, end], ["120%", "-120%"]);
     const rotate = i % 2 === 0 ? -3 : 3;
 
@@ -71,7 +71,7 @@ const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemor
             <img src={m.image_url} alt="Memory" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </motion.div>
     );
-};
+}; */
 
 // Typewriter Component for the Hero
 const TypewriterGreeting = ({ languages }: { languages: string[] }) => {
@@ -220,10 +220,10 @@ export default function About() {
         };
     }, [isLoading, isMobile, memories.length]);
 
-    const { scrollYProgress: bioProgress } = useScroll({
+    /* const { scrollYProgress: bioProgress } = useScroll({
         target: memoriesPinRef,
         offset: ["start start", "end end"]
-    });
+    }); */
 
     if (!pageVisible) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Page is hidden</div>;
     if (isLoading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
