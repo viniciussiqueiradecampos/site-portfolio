@@ -265,8 +265,7 @@ export default function Home() {
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'flex-start',
-                    paddingRight: '5%', paddingLeft: '5%',
-                    paddingTop: isMobile ? 'var(--header-height)' : 0 // Better vertical centering between header and bottom
+                    paddingRight: '5%', paddingLeft: '5%'
                 }}>
 
                     {/* Main Title - Horizontal Scroll Animation */}
@@ -324,12 +323,11 @@ export default function Home() {
             </section>
 
             {/* SECTION 2: STORYTELLING */}
-            <section ref={storyRef} className="story-section" style={{ height: isMobile ? '180vh' : '250vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10, overflow: 'hidden' }}>
+            <section ref={storyRef} className="story-section" style={{ height: isMobile ? '180vh' : '250vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 'var(--header-height)', height: 'calc(100vh - var(--header-height))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: isMobile ? '0 20px' : '0',
-                    overflow: 'hidden' // Prevent overflow while words load
+                    padding: isMobile ? '0 20px' : '0'
                 }}>
                     <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center' }}>
                         <div style={{
@@ -355,7 +353,7 @@ export default function Home() {
                                         start={start}
                                         end={end}
                                         style={{
-                                            fontSize: isMobile ? 'clamp(30px, 8vw, 42px)' : 'clamp(40px, 5vw, 90px)',
+                                            fontSize: isMobile ? 'clamp(20px, 6vw, 32px)' : 'clamp(40px, 5vw, 90px)',
                                             fontWeight: 900,
                                             fontFamily: 'var(--font-display)',
                                             lineHeight: 1.1,
@@ -464,8 +462,18 @@ export default function Home() {
                                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                                             gap: '12px', opacity: 0, transition: '0.3s ease'
                                         }}>
-                                            <div style={{ padding: '20px', background: '#fff', borderRadius: '50%', color: '#000' }}>
-                                                <Eye size={32} />
+                                            <div style={{
+                                                width: '64px', height: '64px',
+                                                background: 'rgba(255,255,255,0.1)',
+                                                backdropFilter: 'blur(10px)',
+                                                borderRadius: '50%',
+                                                color: '#fff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                border: '1px solid rgba(255,255,255,0.2)'
+                                            }}>
+                                                <Eye size={24} />
                                             </div>
                                             <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
                                         </div>

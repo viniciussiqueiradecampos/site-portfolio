@@ -302,7 +302,7 @@ export default function About() {
                 </div>
 
                 <a
-                    href="#scroll-target"
+                    href="#about-bio-section"
                     className="scroll-indicator"
                     style={{
                         position: 'absolute',
@@ -324,11 +324,20 @@ export default function About() {
                 </a>
             </section>
 
-            {/* Scroll Target to stop content centered vertically between header and bottom */}
-            <div id="scroll-target" style={{ height: '0', scrollMarginTop: 'calc(var(--header-height) + 10vh)' }} />
+
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
-            <div id="about-bio-section" ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflowX: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
+            <div id="about-bio-section" ref={memoriesPinRef} style={{
+                background: 'var(--bg-color)',
+                minHeight: isMobile ? 'auto' : 'calc(100vh - var(--header-height))',
+                position: 'relative',
+                overflowX: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingTop: isMobile ? '60px' : '0',
+                scrollMarginTop: 'var(--header-height)'
+            }}>
                 <div className="container" style={{
                     maxWidth: '1214px',
                     margin: '0 auto',
@@ -390,7 +399,7 @@ export default function About() {
                             </p>
                         </div>
 
-                        <div className="bio-scroll-container" style={{
+                        <div className="bio-scroll-container hide-scrollbar-except-this" style={{
                             fontSize: '19.5px',
                             lineHeight: 1.43,
                             fontWeight: 400,
@@ -402,7 +411,9 @@ export default function About() {
                             maxHeight: isMobile ? 'none' : '40vh',
                             overflowY: isMobile ? 'visible' : 'auto',
                             paddingRight: '20px',
-                            whiteSpace: 'pre-wrap'
+                            whiteSpace: 'pre-wrap',
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: 'var(--accent-color) transparent'
                         }}>
                             {bioText.join('')}
                         </div>
@@ -520,12 +531,12 @@ export default function About() {
                         <div>
                             <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>Collaboration</span>
                             <h3 style={{
-                                fontSize: isMobile ? '24px' : 'clamp(28px, 4.5vw, 54px)',
+                                fontSize: isMobile ? '24px' : 'clamp(28px, 3.5vw, 48px)',
                                 fontWeight: 900,
                                 textTransform: 'uppercase',
                                 letterSpacing: '-1px',
                                 margin: '10px 0',
-                                maxWidth: isMobile ? '100%' : '500px',
+                                maxWidth: isMobile ? '100%' : '900px',
                                 lineHeight: 1.1
                             }}>
                                 Colleagues who<br />work with me

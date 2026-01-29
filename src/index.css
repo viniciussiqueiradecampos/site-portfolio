@@ -684,25 +684,28 @@ nav ul li a {
 /* Bio Scroll Container Specifics - Visible scrollbar as requested */
 .bio-scroll-container {
   overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.05) !important;
 }
 
 .bio-scroll-container::-webkit-scrollbar {
-  width: 4px !important;
+  width: 6px !important;
+  height: 6px !important;
   display: block !important;
 }
 
 .bio-scroll-container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 10px !important;
 }
 
 .bio-scroll-container::-webkit-scrollbar-thumb {
   background: var(--accent-color) !important;
-  border-radius: 4px;
+  border-radius: 10px !important;
 }
 
 .bio-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color);
+  background: var(--accent-color) !important;
   filter: brightness(1.2);
 }
 

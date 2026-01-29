@@ -87,7 +87,7 @@ export default function Projects() {
 
             <div className="container">
                 <div style={{ marginBottom: '60px', borderBottom: '1px solid var(--border-color)', paddingBottom: '40px' }}>
-                    <h1 className="selected-works-title" style={{ fontSize: isMobile ? '28px' : '60px', marginBottom: '20px', lineHeight: 0.9 }}>
+                    <h1 className="selected-works-title" style={{ fontSize: isMobile ? '20px' : '60px', marginBottom: '20px', lineHeight: 1.1 }}>
                         SELECTED<br />WORKS
                     </h1>
                 </div>
@@ -181,8 +181,18 @@ export default function Projects() {
                                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                                         gap: '12px', opacity: 0, transition: '0.3s ease', zIndex: 5
                                     }} className="card-hover-overlay">
-                                        <div style={{ padding: '20px', background: '#fff', borderRadius: '50%', color: '#000' }}>
-                                            <Eye size={32} />
+                                        <div style={{
+                                            width: '64px', height: '64px',
+                                            background: 'rgba(255,255,255,0.1)',
+                                            backdropFilter: 'blur(10px)',
+                                            borderRadius: '50%',
+                                            color: '#fff',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(255,255,255,0.2)'
+                                        }}>
+                                            <Eye size={24} />
                                         </div>
                                         <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
                                     </div>
