@@ -18,6 +18,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 import { aboutAPI, contentAPI, projectsAPI, type AboutHobby, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
 import { trackPageView } from '../lib/analytics';
+import { useTranslation } from 'react-i18next';
+import { parseTranslatable } from '../lib/i18n-utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -246,6 +248,7 @@ const TypewriterGreeting = ({ languages }: { languages: string[] }) => {
 };
 
 export default function About() {
+    const { t, i18n } = useTranslation();
     const languages = [
         "Hello", "Olá", "Hola", "Dia dhuit", "Ciao", "Bonjour",
         "Konnichiwa", "Namaste", "Salaam", "Guten Tag", "Nǐ hǎo", "Aloha",
@@ -284,14 +287,14 @@ export default function About() {
         window.addEventListener('resize', checkMobile);
         trackPageView('/about');
         window.scrollTo(0, 0);
-
         return () => {
             window.removeEventListener('resize', checkMobile);
         };
-    }, []);
+    }, [i18n.language]);
 
     useEffect(() => {
         const loadData = async () => {
+            const lang = i18n.language;
             try {
                 const [pPhoto, pReveal, pTitle, pSub, pBio, pSpotify, pVisible, hobbiesData, testimonialsData, memoriesData, projectsData] = await Promise.all([
                     contentAPI.getByKey('about.profile_photo'),
@@ -315,19 +318,24 @@ export default function About() {
 
                 if (pPhoto) setProfilePhoto(pPhoto.value);
                 if (pReveal) setRevealImage(pReveal.value);
-                if (pTitle) setNameTitle(pTitle.value);
-                if (pSub) setSubtitle(pSub.value);
-                if (pBio) setBioText([pBio.value]); // Keep it as a single string in an array for compatibility
+                if (pTitle) setNameTitle(parseTranslatable(pTitle.value, lang));
+                if (pSub) setSubtitle(parseTranslatable(pSub.value, lang));
+                if (pBio) setBioText([parseTranslatable(pBio.value, lang)]);
                 if (pSpotify) setSpotifyUrl(pSpotify.value);
                 if (pVisible) setPageVisible(pVisible.value === 'true');
 
-                setHobbies(hobbiesData);
-                setTestimonials(testimonialsData);
+                setHobbies(hobbiesData.map(h => ({ ...h, text: parseTranslatable(h.text, lang) })));
+                setTestimonials(testimonialsData.map(t => ({
+                    ...t,
+                    author_name: parseTranslatable(t.author_name, lang),
+                    author_role: parseTranslatable(t.author_role, lang),
+                    quote: parseTranslatable(t.quote, lang)
+                })));
                 setMemories(memoriesData);
             } catch (e) { console.error(e); } finally { setIsLoading(false); }
         };
         loadData();
-    }, []);
+    }, [i18n.language]);
 
     useLayoutEffect(() => {
         if (isLoading || isMobile) return;
@@ -438,7 +446,7 @@ export default function About() {
                         style={{ marginTop: '30px' }}
                     >
                         <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', letterSpacing: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
-                            Learn a bit more about me!
+                            {t('about.hero_subtitle', 'Learn a bit more about me!')}
                         </p>
                     </motion.div>
                 </div>
@@ -611,8 +619,8 @@ export default function About() {
                     viewport={{ once: true, margin: "0px 0px 200px 0px" }}
                     transition={{ duration: 0.6 }}
                 >
-                    <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Personal</span>
-                    <h3 style={{ fontSize: 'clamp(30px, 4vw, 50px)', fontWeight: 950, marginBottom: '60px', textTransform: 'uppercase', letterSpacing: '-2px' }}>Hobbies &<br />Interests</h3>
+                    <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>{t('about.personal_label', 'Personal')}</span>
+                    <h3 style={{ fontSize: 'clamp(30px, 4vw, 50px)', fontWeight: 950, marginBottom: '60px', textTransform: 'uppercase', letterSpacing: '-2px' }} dangerouslySetInnerHTML={{ __html: t('about.hobbies_title', 'Hobbies &<br />Interests') }}></h3>
                 </motion.div>
 
                 <div style={{
@@ -700,7 +708,9 @@ export default function About() {
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
                         <div>
-                            <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>Collaboration</span>
+                            <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>
+                                {t('about.collaboration_label', 'Collaboration')}
+                            </span>
                             <h3 style={{
                                 fontSize: isMobile ? '24px' : 'clamp(28px, 3.5vw, 48px)',
                                 fontWeight: 900,
@@ -709,9 +719,7 @@ export default function About() {
                                 margin: '10px 0',
                                 maxWidth: isMobile ? '100%' : '900px',
                                 lineHeight: 1.1
-                            }}>
-                                Colleagues who<br />worked with me
-                            </h3>
+                            }} dangerouslySetInnerHTML={{ __html: t('about.colleagues_title', 'Colleagues who<br />worked with me') }}></h3>
                         </div>
                         {testimonials.length > (isMobile ? 1 : 2) && (
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
@@ -828,7 +836,7 @@ export default function About() {
             }
 
             <PhysicsTags tags={uniqueTags} isMobile={isMobile} />
-        </div >
+        </div>
     );
 }
 

@@ -4,8 +4,11 @@ import ProjectModal from '../components/ProjectModal';
 import { projectsAPI, type Project } from '../lib/supabase';
 import { trackPageView, trackProjectClick } from '../lib/analytics';
 import { Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { parseTranslatable } from '../lib/i18n-utils';
 
 export default function Projects() {
+    const { t, i18n } = useTranslation();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [projects, setProjects] = useState<Project[]>([]);
@@ -24,7 +27,7 @@ export default function Projects() {
     useEffect(() => {
         loadProjects();
         trackPageView('/projects');
-    }, []);
+    }, [i18n.language]);
 
     useEffect(() => {
         // Show all visible projects
@@ -47,9 +50,16 @@ export default function Projects() {
     }, [activeTag, projects]);
 
     const loadProjects = async () => {
+        const lang = i18n.language;
         const data = await projectsAPI.getAll();
-        setProjects(data);
-        setFilteredProjects(data);
+        const translatedData = data.map(p => ({
+            ...p,
+            title: parseTranslatable(p.title, lang),
+            description: parseTranslatable(p.description || '', lang),
+            button_text: parseTranslatable(p.button_text || '', lang)
+        }));
+        setProjects(translatedData);
+        setFilteredProjects(translatedData);
 
         // Extract unique tags and format them (from all visible projects)
         const tagsSet = new Set<string>();
@@ -87,9 +97,7 @@ export default function Projects() {
 
             <div className="container">
                 <div style={{ marginBottom: '60px', borderBottom: '1px solid var(--border-color)', paddingBottom: '40px' }}>
-                    <h1 className="selected-works-title" style={{ fontSize: isMobile ? '20px' : '60px', marginBottom: '20px', lineHeight: 1.1 }}>
-                        SELECTED<br />WORKS
-                    </h1>
+                    <h1 className="selected-works-title" style={{ fontSize: isMobile ? '20px' : '60px', marginBottom: '20px', lineHeight: 1.1 }} dangerouslySetInnerHTML={{ __html: t('portfolio.title', 'SELECTED<br />WORKS') }} />
                 </div>
 
                 {/* Tag Filter Bar */}
@@ -108,7 +116,7 @@ export default function Projects() {
                         color: 'var(--text-muted)',
                         marginRight: '15px',
                         letterSpacing: '1px'
-                    }}>FILTER BY:</span>
+                    }}>{t('portfolio.filter_by', 'FILTER BY:')}:</span>
                     <button
                         onClick={() => setActiveTag('ALL')}
                         style={{
@@ -194,7 +202,7 @@ export default function Projects() {
                                         }}>
                                             <Eye size={24} />
                                         </div>
-                                        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
+                                        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>{t('portfolio.view_project', 'VIEW PROJECT')}</span>
                                     </div>
 
                                     <img src={p.image_url} alt={p.title} loading="lazy" decoding="async" style={{
@@ -236,7 +244,7 @@ export default function Projects() {
                                             boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
                                             transition: 'all 0.3s'
                                         }} className="learn-more-btn-pill">
-                                            LEARN MORE →
+                                            {t('portfolio.learn_more', 'LEARN MORE →')}
                                         </div>
                                     </div>
                                 </div>

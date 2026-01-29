@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useScroll, useTransform, motion, AnimatePresence } from 'framer-motion';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
 import { contentAPI, projectsAPI, type Project } from '../lib/supabase';
 import { trackPageView, trackProjectClick } from '../lib/analytics';
+import { parseTranslatable } from '../lib/i18n-utils';
 
 // Helper component to fix Rule of Hooks (useTransform inside loop)
 const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
@@ -14,6 +16,7 @@ const ScrollyWord = ({ word, progress, start, end, style }: { word: string, prog
 };
 
 export default function Home() {
+    const { t, i18n } = useTranslation();
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
@@ -53,33 +56,38 @@ export default function Home() {
                 }
             }, 500);
         }
-    }, []);
+    }, [i18n.language]);
 
 
     const loadData = async () => {
+        const lang = i18n.language;
         // Load Content
         const tTitle = await contentAPI.getByKey('hero.title');
-        if (tTitle) setHeroTitle(tTitle.value);
+        if (tTitle) setHeroTitle(parseTranslatable(tTitle.value, lang));
 
         const tDesc = await contentAPI.getByKey('hero.description');
-        if (tDesc) setHeroDesc(tDesc.value);
+        if (tDesc) setHeroDesc(parseTranslatable(tDesc.value, lang));
 
         const tStory = await contentAPI.getByKey('storytelling.main');
-        if (tStory) setStoryText(tStory.value);
+        if (tStory) setStoryText(parseTranslatable(tStory.value, lang));
 
         const tPitchDesc = await contentAPI.getByKey('storytelling.description');
         const tPitchBtnText = await contentAPI.getByKey('storytelling.button_text');
         const tPitchBtnLink = await contentAPI.getByKey('storytelling.button_link');
 
         setPitchData({
-            description: tPitchDesc?.value || '',
-            btnText: tPitchBtnText?.value || "LET'S WORK TOGETHER",
+            description: parseTranslatable(tPitchDesc?.value || '', lang),
+            btnText: parseTranslatable(tPitchBtnText?.value || "LET'S WORK TOGETHER", lang),
             btnLink: tPitchBtnLink?.value || "#contact"
         });
 
         // Load Projects - Limited to 5 for Home
         const projs = await projectsAPI.getAll();
-        setProjects(projs.slice(0, 5));
+        setProjects(projs.slice(0, 5).map(p => ({
+            ...p,
+            title: parseTranslatable(p.title, lang),
+            description: parseTranslatable(p.description || '', lang)
+        })));
 
         // Load Socials & Footer
         const ln = await contentAPI.getByKey('social.linkedin');
@@ -94,7 +102,7 @@ export default function Home() {
             footerEmail: em?.value || 'vinisiqueiradecampos@gmail.com',
             phone: ph?.value || '+351 920 196 634'
         });
-        if (ft) setFooterText(ft.value);
+        if (ft) setFooterText(parseTranslatable(ft.value, lang));
     };
 
     // Hero Section Scroll Progress
@@ -426,7 +434,7 @@ export default function Home() {
                         width: '100%',
                         gap: isMobile ? '20px' : '0'
                     }}>
-                        <RevealText><h2 style={{ fontSize: isMobile ? 'clamp(40px, 8vw, 50px)' : 'clamp(40px, 8vw, 80px)', margin: 0, textAlign: isMobile ? 'center' : 'left' }}>PORTFOLIO</h2></RevealText>
+                        <RevealText><h2 style={{ fontSize: isMobile ? 'clamp(40px, 8vw, 50px)' : 'clamp(40px, 8vw, 80px)', margin: 0, textAlign: isMobile ? 'center' : 'left' }}>{t('nav.portfolio')}</h2></RevealText>
                         <Link to="/projects" className="clickable" style={{
                             padding: '10px 30px',
                             background: '#fff',
@@ -440,7 +448,7 @@ export default function Home() {
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}>
-                            VIEW ALL
+                            {t('portfolio.view_all', 'VIEW ALL')}
                         </Link>
                     </div>
 
@@ -487,7 +495,7 @@ export default function Home() {
                                                 }}>
                                                     <Eye size={24} />
                                                 </div>
-                                                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
+                                                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>{t('portfolio.view_project', 'VIEW PROJECT')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -534,7 +542,7 @@ export default function Home() {
                                                     gap: '8px',
                                                     boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
                                                 }} className="learn-more-btn-pill">
-                                                    LEARN MORE →
+                                                    {t('portfolio.learn_more', 'LEARN MORE')}
                                                 </div>
                                             </RevealText>
                                         </div>
@@ -633,7 +641,7 @@ export default function Home() {
                     >
                         {[...Array(10)].map((_, i) => (
                             <span key={i} style={{ fontSize: '120px', fontWeight: 900, fontFamily: 'var(--font-display)', color: 'transparent', WebkitTextStroke: '2px var(--text-muted)' }}>
-                                GET IN TOUCH •
+                                {t('nav.contact')} •
                             </span>
                         ))}
                     </motion.div>

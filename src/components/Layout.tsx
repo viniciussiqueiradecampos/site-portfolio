@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { contentAPI } from '../lib/supabase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }
         return 'dark';
     });
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -106,7 +108,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             onClick={(e) => { if (window.location.pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}
                             className={({ isActive }) => `clickable menu-link ${isActive && window.location.pathname === '/' ? 'active' : ''}`}
                         >
-                            HOME
+                            {t('nav.home')}
                         </NavLink>
                     </li>
                 )}
@@ -126,9 +128,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         />
                     </span>
                     <ul className={`dropdown-menu ${isDropdownOpen ? 'dropdown-open' : ''}`}>
-                        {branding.navAbout && <li><NavLink to="/about" onClick={() => setIsDropdownOpen(false)}>ABOUT</NavLink></li>}
-                        {branding.navCV && <li><NavLink to="/cv" onClick={() => setIsDropdownOpen(false)}>CV</NavLink></li>}
-                        {branding.navPortfolio && <li><NavLink to="/projects" onClick={() => setIsDropdownOpen(false)}>PORTFOLIO</NavLink></li>}
+                        {branding.navAbout && <li><NavLink to="/about" onClick={() => setIsDropdownOpen(false)}>{t('nav.about')}</NavLink></li>}
+                        {branding.navCV && <li><NavLink to="/cv" onClick={() => setIsDropdownOpen(false)}>{t('nav.cv')}</NavLink></li>}
+                        {branding.navPortfolio && <li><NavLink to="/projects" onClick={() => setIsDropdownOpen(false)}>{t('nav.portfolio')}</NavLink></li>}
                     </ul>
                 </li>
                 {branding.navGetInTouch && (
@@ -149,14 +151,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                         >
-                            GET IN TOUCH
+                            {t('nav.contact')}
                         </button>
                     </li>
                 )}
                 {branding.navBlog && (
                     <li>
                         <NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>
-                            BLOG
+                            {t('nav.blog')}
                         </NavLink>
                     </li>
                 )}
@@ -169,7 +171,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', alignItems: 'flex-end' }}>
                 {branding.navHome && (
-                    <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={style}>HOME</NavLink>
+                    <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={style}>{t('nav.home')}</NavLink>
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
                     <button
@@ -209,9 +211,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             opacity: isMobileDropdownOpen ? 1 : 0
                         }}
                     >
-                        {branding.navAbout && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/about" className="mobile-submenu-link">ABOUT</NavLink>}
-                        {branding.navCV && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/cv" className="mobile-submenu-link">CV</NavLink>}
-                        {branding.navPortfolio && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/projects" className="mobile-submenu-link">PORTFOLIO</NavLink>}
+                        {branding.navAbout && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/about" className="mobile-submenu-link">{t('nav.about')}</NavLink>}
+                        {branding.navCV && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/cv" className="mobile-submenu-link">{t('nav.cv')}</NavLink>}
+                        {branding.navPortfolio && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/projects" className="mobile-submenu-link">{t('nav.portfolio')}</NavLink>}
                     </div>
                 </div>
                 {branding.navGetInTouch && (
@@ -234,12 +236,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         className="mobile-link"
                         style={{ ...style, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
-                        GET IN TOUCH
+                        {t('nav.contact')}
                     </button>
                 )}
                 {branding.navBlog && (
                     <NavLink onClick={toggleMenu} to="/blog" className="mobile-link" style={style}>
-                        BLOG
+                        {t('nav.blog')}
                     </NavLink>
                 )}
             </div>
@@ -285,6 +287,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </nav>
 
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center', pointerEvents: 'auto', position: 'relative', zIndex: 10 }}>
+
                     <button
                         onClick={toggleTheme}
                         className="clickable"

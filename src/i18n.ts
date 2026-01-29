@@ -6,8 +6,10 @@ const resources = {
         translation: {
             "nav": {
                 "home": "HOME",
+                "about": "ABOUT",
                 "cv": "CV",
                 "portfolio": "PORTFOLIO",
+                "blog": "BLOG",
                 "contact": "GET IN TOUCH"
             },
             "hero": {
@@ -18,33 +20,22 @@ const resources = {
                 "secondary": "With the rapid evolution of technology, the way we tell stories has been completely transformed. It not only amplifies their impact but also makes them more accessible to everyone, opening up new possibilities for immersion and interaction. At Soleil Noir, we take storytelling to the next level by blending creativity and technology. Immersive storytelling is our specialty—crafting experiences where audiences don’t just follow a narrative, they become part of it."
             },
             "portfolio": {
-                "learn_more": "Learn More"
+                "title": "SELECTED WORKS",
+                "filter_by": "FILTER BY:",
+                "learn_more": "LEARN MORE →",
+                "view_all": "VIEW ALL",
+                "view_project": "VIEW PROJECT"
+            },
+            "about": {
+                "hero_subtitle": "Learn a bit more about me!",
+                "personal_label": "Personal",
+                "hobbies_title": "Hobbies &<br />Interests",
+                "collaboration_label": "Collaboration",
+                "colleagues_title": "Colleagues who<br />worked with me"
             },
             "footer": {
+                "touch": "GET IN TOUCH",
                 "rights": "© 2026, Vinicius Campos ⏤ All rights reserved"
-            }
-        }
-    },
-    pt: {
-        translation: {
-            "nav": {
-                "home": "INÍCIO",
-                "cv": "CV",
-                "portfolio": "PORTFÓLIO",
-                "contact": "CONTATO"
-            },
-            "hero": {
-                "description": "Lorem ipsum dolor sit amet consectetur. O design e a tecnologia se unem para criar experiências memoráveis que transcendem o comum."
-            },
-            "storytelling": {
-                "main": "Storytelling sempre foi essencial para moldar nossa compreensão do mundo ao nosso redor.",
-                "secondary": "Com a rápida evolução da tecnologia, a maneira como contamos histórias foi completamente transformada. Não apenas amplifica o impacto, mas também as torna mais acessíveis a todos, abrindo novas possibilidades de imersão e interação. Na Soleil Noir, levamos o storytelling para o próximo nível."
-            },
-            "portfolio": {
-                "learn_more": "Saiba Mais"
-            },
-            "footer": {
-                "rights": "© 2026, Vinicius Campos ⏤ Todos os direitos reservados"
             }
         }
     }

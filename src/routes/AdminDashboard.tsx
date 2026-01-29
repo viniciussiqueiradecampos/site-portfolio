@@ -50,6 +50,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line, CartesianGrid
 } from 'recharts';
+import { formatTranslatable, getTranslationParts } from '../lib/i18n-utils';
 
 const modalInputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '10px', whiteSpace: 'pre-wrap' as any };
 const labelStyle = { display: 'block', fontSize: '13px', color: '#A0A0A0', marginBottom: '8px', fontWeight: '500' };
@@ -147,6 +148,7 @@ export default function AdminDashboard() {
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
+    const [editLang, setEditLang] = useState<'en' | 'pt'>('en');
 
     useEffect(() => {
         loadAllData();
@@ -286,26 +288,45 @@ export default function AdminDashboard() {
         }
     };
 
-    const savePost = async () => {
-        if (!editingPost) return;
+    const handleAutoTranslateField = async (field: string) => {
+        let currentText = '';
+        if (field === 'heroTitle') currentText = heroTitle;
+        else if (field === 'heroDesc') currentText = heroDesc;
+        else if (field === 'storyText') currentText = storyText;
+        else if (field === 'pitchDesc') currentText = pitchDesc;
+        else if (field === 'pitchBtnText') currentText = pitchBtnText;
+        else if (field === 'projectTitle' && editingProject) currentText = editingProject.title;
+        else if (field === 'projectDesc' && editingProject) currentText = editingProject.description || '';
+        else if (field === 'postTitle' && editingPost) currentText = editingPost.title;
+        else if (field === 'postContent' && editingPost) currentText = editingPost.content;
+
+        const parts = getTranslationParts(currentText);
+        if (!parts.en) return;
         setSaving(true);
         try {
-            const { id, created_at, updated_at, slug, ...postData } = editingPost as any;
-            if (id && id !== 'new') {
-                await blogAPI.update(id, postData);
-            } else {
-                await blogAPI.create(postData);
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(parts.en)}&langpair=en|pt`);
+            const data = await res.json();
+            const translated = data.responseData.translatedText;
+            if (translated) {
+                const newVal = formatTranslatable(parts.en, translated);
+                if (field === 'heroTitle') setHeroTitle(newVal);
+                else if (field === 'heroDesc') setHeroDesc(newVal);
+                else if (field === 'storyText') setStoryText(newVal);
+                else if (field === 'pitchDesc') setPitchDesc(newVal);
+                else if (field === 'pitchBtnText') setPitchBtnText(newVal);
+                else if (field === 'projectTitle' && editingProject) setEditingProject({ ...editingProject, title: newVal });
+                else if (field === 'projectDesc' && editingProject) setEditingProject({ ...editingProject, description: newVal });
+                else if (field === 'postTitle' && editingPost) setEditingPost({ ...editingPost, title: newVal });
+                else if (field === 'postContent' && editingPost) setEditingPost({ ...editingPost, content: newVal });
+                setMessage('✅ Translated!');
             }
-            await loadBlog();
-            await loadAllBlogTags();
-            setEditingPost(null);
-            setMessage('✅ Post saved!');
-        } catch (err: any) {
-            console.error('Save error:', err);
-            alert('Error saving post: ' + err.message);
-            setMessage('❌ Error.');
+        } catch (e) {
+            console.error('Translation error:', e);
+            setMessage('❌ Translation failed');
+        } finally {
+            setSaving(false);
+            setTimeout(() => setMessage(''), 3000);
         }
-        finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
     const handleLogout = async () => {
@@ -578,6 +599,28 @@ export default function AdminDashboard() {
             loadAbout();
         }
         setSaving(false); setTimeout(() => setMessage(''), 3000);
+    };
+
+    const savePost = async () => {
+        if (!editingPost) return;
+        setSaving(true);
+        try {
+            let ok = false;
+            if (editingPost.id === 'new') {
+                const { id, created_at, updated_at, ...postData } = editingPost as any;
+                const res = await blogAPI.create(postData);
+                ok = !!res;
+            } else {
+                const { id, created_at, updated_at, ...postData } = editingPost as any;
+                ok = await blogAPI.update(id, postData);
+            }
+            if (ok) {
+                setMessage('✅ Post saved!');
+                loadBlog();
+                setEditingPost(null);
+            } else setMessage('❌ Error.');
+        } catch (err) { setMessage('❌ Error.'); }
+        finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
     const saveAboutMemory = async (mem: Partial<AboutMemory>) => {
@@ -999,19 +1042,34 @@ export default function AdminDashboard() {
                     {activeTab === 'content' && (
                         <div style={{ display: 'grid', gap: '32px' }}>
                             <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
-                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)' }}>Hero Experience</h3>
+                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)', display: 'flex', justifyContent: 'space-between' }}>
+                                    Hero Experience
+                                </h3>
                                 <div style={{ display: 'grid', gap: '24px' }}>
-                                    <input placeholder="Marquee Title" value={heroTitle} onChange={e => setHeroTitle(e.target.value)} style={modalInputStyle} />
-                                    <textarea placeholder="Small Description" value={heroDesc} onChange={e => setHeroDesc(e.target.value)} rows={2} style={modalInputStyle} />
+                                    <input placeholder="Marquee Title" value={getTranslationParts(heroTitle)[editLang]} onChange={e => {
+                                        const p = getTranslationParts(heroTitle); p[editLang] = e.target.value; setHeroTitle(formatTranslatable(p.en, p.pt));
+                                    }} style={modalInputStyle} />
+                                    <textarea placeholder="Small Description" value={getTranslationParts(heroDesc)[editLang]} onChange={e => {
+                                        const p = getTranslationParts(heroDesc); p[editLang] = e.target.value; setHeroDesc(formatTranslatable(p.en, p.pt));
+                                    }} rows={2} style={modalInputStyle} />
                                 </div>
                             </div>
+
                             <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
-                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)' }}>Storytelling</h3>
+                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)', display: 'flex', justifyContent: 'space-between' }}>
+                                    Storytelling
+                                </h3>
                                 <div style={{ display: 'grid', gap: '24px' }}>
-                                    <textarea placeholder="Main Big Text" value={storyText} onChange={e => setStoryText(e.target.value)} rows={4} style={modalInputStyle} />
-                                    <textarea placeholder="Pitch Description" value={pitchDesc} onChange={e => setPitchDesc(e.target.value)} rows={4} style={modalInputStyle} />
+                                    <textarea placeholder="Main Big Text" value={getTranslationParts(storyText)[editLang]} onChange={e => {
+                                        const p = getTranslationParts(storyText); p[editLang] = e.target.value; setStoryText(formatTranslatable(p.en, p.pt));
+                                    }} rows={4} style={modalInputStyle} />
+                                    <textarea placeholder="Pitch Description" value={getTranslationParts(pitchDesc)[editLang]} onChange={e => {
+                                        const p = getTranslationParts(pitchDesc); p[editLang] = e.target.value; setPitchDesc(formatTranslatable(p.en, p.pt));
+                                    }} rows={4} style={modalInputStyle} />
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                        <input placeholder="CTA Button Text" value={pitchBtnText} onChange={e => setPitchBtnText(e.target.value)} style={modalInputStyle} />
+                                        <input placeholder="CTA Button Text" value={getTranslationParts(pitchBtnText)[editLang]} onChange={e => {
+                                            const p = getTranslationParts(pitchBtnText); p[editLang] = e.target.value; setPitchBtnText(formatTranslatable(p.en, p.pt));
+                                        }} style={modalInputStyle} />
                                         <input placeholder="CTA Button Link" value={pitchBtnLink} onChange={e => setPitchBtnLink(e.target.value)} style={modalInputStyle} />
                                     </div>
                                 </div>
@@ -1336,239 +1394,263 @@ export default function AdminDashboard() {
                         </div>
                     )}
                 </main>
-            </div>
+            </div >
 
             {/* BLOG MODAL (Detailed with Toolbar) */}
-            {editingPost && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '800px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                            <h3>{editingPost.id === 'new' ? 'NEW POST' : 'EDIT POST'}</h3>
-                            <button onClick={() => setEditingPost(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={24} /></button>
-                        </div>
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            <div>
-                                <label style={labelStyle}>Image</label>
-                                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                                    <div style={{ width: '120px', aspectRatio: '16/9', background: '#111', borderRadius: '8px', overflow: 'hidden' }}>
-                                        {editingPost.image_url ? <img src={editingPost.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
-                                    </div>
-                                    <label className="clickable" style={{ padding: '8px 16px', background: '#222', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
-                                        UPLOAD
-                                        <input type="file" style={{ display: 'none' }} onChange={async (e) => { if (e.target.files?.[0]) { const url = await storageAPI.uploadImage(e.target.files[0], 'blog'); if (url) setEditingPost({ ...editingPost, image_url: url }); } }} />
-                                    </label>
-                                </div>
-                                {editingPost.image_url && (
-                                    <div style={{ marginTop: '15px' }}>
-                                        <label style={labelStyle}>Image Focus / Position (e.g. center, 50% 20%, right top)</label>
-                                        <input
-                                            placeholder="center"
-                                            value={editingPost.cover_position || ''}
-                                            onChange={e => setEditingPost({ ...editingPost, cover_position: e.target.value })}
-                                            style={modalInputStyle}
-                                        />
-                                    </div>
-                                )}
+            {
+                editingPost && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '800px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                <h3>{editingPost.id === 'new' ? 'NEW POST' : 'EDIT POST'}</h3>
+                                <button onClick={() => setEditingPost(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={24} /></button>
                             </div>
-                            <input placeholder="Title" value={editingPost.title} onChange={e => setEditingPost({ ...editingPost, title: e.target.value })} style={modalInputStyle} />
-                            <div>
-                                <label style={labelStyle}>Tags</label>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', background: '#111', padding: '10px', borderRadius: '8px' }}>
-                                    {editingPost.tags?.map(t => (
-                                        <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '4px 10px', borderRadius: '100px', fontSize: '11px', fontWeight: 'bold' }}>{t} <X size={10} onClick={() => setEditingPost({ ...editingPost, tags: editingPost.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>
-                                    ))}
-                                    <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addBlogTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    {allBlogTags.slice(0, 5).map(tag => <button key={tag} onClick={() => addBlogTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>)}
-                                </div>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <input placeholder="Category" value={editingPost.category} onChange={e => setEditingPost({ ...editingPost, category: e.target.value })} style={modalInputStyle} />
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <input type="checkbox" checked={editingPost.visible} onChange={e => setEditingPost({ ...editingPost, visible: e.target.checked })} />
-                                    Visible
-                                </div>
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Content (Rich Text)</label>
-                                <RichTextEditor
-                                    value={editingPost.content}
-                                    onChange={(val) => setEditingPost({ ...editingPost, content: val })}
-                                    style={{ height: '400px' }}
-                                />
-                            </div>
-                            <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'PUBLISH POST'}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* PROJECT EDIT MODAL (Existing logic) */}
-            {editingProject && !editingPost && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                            <h3 style={{ fontSize: '28px', fontWeight: '900' }}>EDIT PROJECT</h3>
-                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
-                                <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#A0A0A0' }}><X size={24} /></button>
-                            </div>
-                        </div>
-                        <div style={{ display: 'grid', gap: '24px' }}>
-                            <input placeholder="Title" value={editingProject.title} onChange={e => setEditingProject({ ...editingProject, title: e.target.value })} style={modalInputStyle} />
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: '#111', padding: '12px', borderRadius: '8px' }}>
-                                {editingProject.tags?.map(t => <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold' }}>{t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: editingProject.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>)}
-                                <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '15px' }}>
-                                {allProjectTags.filter(t => !editingProject.tags.includes(t)).map(tag => (
-                                    <button key={tag} onClick={() => addTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>
-                                ))}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden' }}>
-                                    {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <ImageIcon size={24} color="#333" />}
-                                </div>
-                                <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333' }}>
-                                    UPLOAD CAPA
-                                    <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} />
-                                </label>
-                            </div>
-
-                            {/* GALLERY SECTION */}
-                            <div style={{ border: '1px solid #222', padding: '24px', borderRadius: '16px', background: '#0a0a0a' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                    <h4 style={{ fontSize: '14px', fontWeight: 'bold' }}>PROJECT GALLERY (IMAGES & VIDEOS)</h4>
-                                    <label className="clickable" style={{ padding: '8px 16px', background: 'var(--accent-color)', color: '#000', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                        + ADD MEDIA
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/*,video/*"
-                                            style={{ display: 'none' }}
-                                            onChange={async (e) => {
-                                                if (e.target.files?.length) {
-                                                    const files = Array.from(e.target.files);
-                                                    const newImages = [...(editingProject.gallery_images || [])];
-                                                    const newVideos = [...(editingProject.gallery_videos || [])];
-
-                                                    for (const file of files) {
-                                                        const url = await storageAPI.uploadImage(file, 'projects');
-                                                        if (url) {
-                                                            if (file.type.startsWith('video')) newVideos.push(url);
-                                                            else newImages.push(url);
-                                                        }
-                                                    }
-                                                    setEditingProject({ ...editingProject, gallery_images: newImages, gallery_videos: newVideos });
-                                                }
-                                            }}
-                                        />
-                                    </label>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                                    {/* Gallery Images */}
-                                    {editingProject.gallery_images?.map((url, i) => (
-                                        <div key={`img-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222' }}>
-                                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                            <button
-                                                onClick={() => {
-                                                    const news = [...editingProject.gallery_images!];
-                                                    news.splice(i, 1);
-                                                    setEditingProject({ ...editingProject, gallery_images: news });
-                                                }}
-                                                style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
-                                            >
-                                                <X size={10} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                    {/* Gallery Videos */}
-                                    {editingProject.gallery_videos?.map((url, i) => (
-                                        <div key={`vid-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222', background: '#000' }}>
-                                            <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                                                <Activity size={16} color="var(--accent-color)" />
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    const news = [...editingProject.gallery_videos!];
-                                                    news.splice(i, 1);
-                                                    setEditingProject({ ...editingProject, gallery_videos: news });
-                                                }}
-                                                style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
-                                            >
-                                                <X size={10} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div style={{ margin: '20px 0' }}>
-                            <label style={labelStyle}>Description (Rich Text)</label>
-                            <RichTextEditor
-                                value={editingProject.description || ''}
-                                onChange={(val) => setEditingProject({ ...editingProject, description: val })}
-                            />
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                            <input placeholder="Live Link (URL)" value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={modalInputStyle} />
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
-                                </div>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#A0A0A0' }}>
-                                    <input type="checkbox" checked={editingProject.visible !== false} onChange={e => setEditingProject({ ...editingProject, visible: e.target.checked })} />
-                                    VISIBLE
-                                </label>
-                            </div>
-                        </div>
-
-                        <div style={{ marginTop: '20px', borderTop: '1px solid #222', paddingTop: '20px' }}>
-                            <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: '#A0A0A0' }}>DOWNLOAD ASSETS (OPTIONAL)</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div style={{ display: 'grid', gap: '20px' }}>
                                 <div>
-                                    <label style={labelStyle}>Direct Download Link</label>
-                                    <input
-                                        placeholder="https://example.com/file.zip"
-                                        value={editingProject.download_url || ''}
-                                        onChange={e => setEditingProject({ ...editingProject, download_url: e.target.value })}
-                                        style={modalInputStyle}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={labelStyle}>Or Upload File</label>
-                                    <label className="clickable" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '42px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>
-                                        <Download size={16} style={{ marginRight: '8px' }} />
-                                        {editingProject.download_url && editingProject.download_url.includes('supabase') ? 'REPLACE FILE' : 'UPLOAD FILE'}
-                                        <input
-                                            type="file"
-                                            onChange={async (e) => {
-                                                if (e.target.files?.[0]) {
-                                                    const url = await storageAPI.uploadImage(e.target.files[0], 'downloads');
-                                                    if (url) setEditingProject({ ...editingProject, download_url: url });
-                                                }
-                                            }}
-                                            style={{ display: 'none' }}
-                                        />
-                                    </label>
-                                    {editingProject.download_url && editingProject.download_url.includes('supabase') && (
-                                        <div style={{ fontSize: '11px', color: 'var(--accent-color)', marginTop: '5px', textAlign: 'center' }}>
-                                            File uploaded successfully
+                                    <label style={labelStyle}>Image</label>
+                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                        <div style={{ width: '120px', aspectRatio: '16/9', background: '#111', borderRadius: '8px', overflow: 'hidden' }}>
+                                            {editingPost.image_url ? <img src={editingPost.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+                                        </div>
+                                        <label className="clickable" style={{ padding: '8px 16px', background: '#222', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                                            UPLOAD
+                                            <input type="file" style={{ display: 'none' }} onChange={async (e) => { if (e.target.files?.[0]) { const url = await storageAPI.uploadImage(e.target.files[0], 'blog'); if (url) setEditingPost({ ...editingPost, image_url: url }); } }} />
+                                        </label>
+                                    </div>
+                                    {editingPost.image_url && (
+                                        <div style={{ marginTop: '15px' }}>
+                                            <label style={labelStyle}>Image Focus / Position (e.g. center, 50% 20%, right top)</label>
+                                            <input
+                                                placeholder="center"
+                                                value={editingPost.cover_position || ''}
+                                                onChange={e => setEditingPost({ ...editingPost, cover_position: e.target.value })}
+                                                style={modalInputStyle}
+                                            />
                                         </div>
                                     )}
                                 </div>
+                                <input placeholder="Title" value={editingPost.title} onChange={e => setEditingPost({ ...editingPost, title: e.target.value })} style={modalInputStyle} />
+                                <div>
+                                    <label style={labelStyle}>Tags</label>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', background: '#111', padding: '10px', borderRadius: '8px' }}>
+                                        {editingPost.tags?.map(t => (
+                                            <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '4px 10px', borderRadius: '100px', fontSize: '11px', fontWeight: 'bold' }}>{t} <X size={10} onClick={() => setEditingPost({ ...editingPost, tags: editingPost.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>
+                                        ))}
+                                        <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addBlogTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        {allBlogTags.slice(0, 5).map(tag => <button key={tag} onClick={() => addBlogTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>)}
+                                    </div>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                    <input placeholder="Category" value={editingPost.category} onChange={e => setEditingPost({ ...editingPost, category: e.target.value })} style={modalInputStyle} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <input type="checkbox" checked={editingPost.visible} onChange={e => setEditingPost({ ...editingPost, visible: e.target.checked })} />
+                                        Visible
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Content (Rich Text)</label>
+                                    <RichTextEditor
+                                        value={editingPost.content}
+                                        onChange={(val) => setEditingPost({ ...editingPost, content: val })}
+                                        style={{ height: '400px' }}
+                                    />
+                                </div>
+                                <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'PUBLISH POST'}</button>
                             </div>
                         </div>
-                        <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
                     </div>
-                </div>
-            )
+                )
+            }
+
+            {/* PROJECT EDIT MODAL (Existing logic) */}
+            {
+                editingProject && !editingPost && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                                <h3 style={{ fontSize: '28px', fontWeight: '900' }}>EDIT PROJECT</h3>
+                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                    <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
+                                    <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#A0A0A0' }}><X size={24} /></button>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                <button onClick={() => setEditLang('en')} style={{ padding: '8px 16px', background: editLang === 'en' ? 'var(--accent-color)' : '#111', color: editLang === 'en' ? '#000' : '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>EN</button>
+                                <button onClick={() => setEditLang('pt')} style={{ padding: '8px 16px', background: editLang === 'pt' ? 'var(--accent-color)' : '#111', color: editLang === 'pt' ? '#000' : '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>PT</button>
+                                {editLang === 'pt' && <button onClick={() => handleAutoTranslateField('projectTitle')} style={{ fontSize: '10px', background: '#222', padding: '5px 10px', borderRadius: '5px', color: '#fff', border: '1px solid #333', cursor: 'pointer' }}>✨ AUTO-PT</button>}
+                            </div>
+                            <div style={{ display: 'grid', gap: '24px' }}>
+                                <input
+                                    placeholder="Title"
+                                    value={getTranslationParts(editingProject.title)[editLang]}
+                                    onChange={e => {
+                                        const p = getTranslationParts(editingProject.title);
+                                        p[editLang] = e.target.value;
+                                        setEditingProject({ ...editingProject, title: formatTranslatable(p.en, p.pt) });
+                                    }}
+                                    style={modalInputStyle}
+                                />
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: '#111', padding: '12px', borderRadius: '8px' }}>
+                                    {editingProject.tags?.map(t => <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold' }}>{t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: editingProject.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>)}
+                                    <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '15px' }}>
+                                    {allProjectTags.filter(t => !editingProject.tags.includes(t)).map(tag => (
+                                        <button key={tag} onClick={() => addTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>
+                                    ))}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden' }}>
+                                        {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <ImageIcon size={24} color="#333" />}
+                                    </div>
+                                    <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333' }}>
+                                        UPLOAD CAPA
+                                        <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} />
+                                    </label>
+                                </div>
+
+                                {/* GALLERY SECTION */}
+                                <div style={{ border: '1px solid #222', padding: '24px', borderRadius: '16px', background: '#0a0a0a' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                        <h4 style={{ fontSize: '14px', fontWeight: 'bold' }}>PROJECT GALLERY (IMAGES & VIDEOS)</h4>
+                                        <label className="clickable" style={{ padding: '8px 16px', background: 'var(--accent-color)', color: '#000', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                                            + ADD MEDIA
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*,video/*"
+                                                style={{ display: 'none' }}
+                                                onChange={async (e) => {
+                                                    if (e.target.files?.length) {
+                                                        const files = Array.from(e.target.files);
+                                                        const newImages = [...(editingProject.gallery_images || [])];
+                                                        const newVideos = [...(editingProject.gallery_videos || [])];
+
+                                                        for (const file of files) {
+                                                            const url = await storageAPI.uploadImage(file, 'projects');
+                                                            if (url) {
+                                                                if (file.type.startsWith('video')) newVideos.push(url);
+                                                                else newImages.push(url);
+                                                            }
+                                                        }
+                                                        setEditingProject({ ...editingProject, gallery_images: newImages, gallery_videos: newVideos });
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                                        {/* Gallery Images */}
+                                        {editingProject.gallery_images?.map((url, i) => (
+                                            <div key={`img-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222' }}>
+                                                <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                                <button
+                                                    onClick={() => {
+                                                        const news = [...editingProject.gallery_images!];
+                                                        news.splice(i, 1);
+                                                        setEditingProject({ ...editingProject, gallery_images: news });
+                                                    }}
+                                                    style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {/* Gallery Videos */}
+                                        {editingProject.gallery_videos?.map((url, i) => (
+                                            <div key={`vid-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222', background: '#000' }}>
+                                                <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                                                    <Activity size={16} color="var(--accent-color)" />
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const news = [...editingProject.gallery_videos!];
+                                                        news.splice(i, 1);
+                                                        setEditingProject({ ...editingProject, gallery_videos: news });
+                                                    }}
+                                                    style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div style={{ margin: '20px 0' }}>
+                                <label style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
+                                    Description ({editLang.toUpperCase()})
+                                    {editLang === 'pt' && <button onClick={() => handleAutoTranslateField('projectDesc')} style={{ fontSize: '10px', background: '#222', padding: '5px 10px', borderRadius: '5px', color: '#fff', border: '1px solid #333', cursor: 'pointer' }}>✨ AUTO-PT</button>}
+                                </label>
+                                <RichTextEditor
+                                    value={getTranslationParts(editingProject.description || '')[editLang]}
+                                    onChange={(val) => {
+                                        const p = getTranslationParts(editingProject.description || '');
+                                        p[editLang] = val;
+                                        setEditingProject({ ...editingProject, description: formatTranslatable(p.en, p.pt) });
+                                    }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <input placeholder="Live Link (URL)" value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={modalInputStyle} />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
+                                    </div>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#A0A0A0' }}>
+                                        <input type="checkbox" checked={editingProject.visible !== false} onChange={e => setEditingProject({ ...editingProject, visible: e.target.checked })} />
+                                        VISIBLE
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style={{ marginTop: '20px', borderTop: '1px solid #222', paddingTop: '20px' }}>
+                                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: '#A0A0A0' }}>DOWNLOAD ASSETS (OPTIONAL)</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                    <div>
+                                        <label style={labelStyle}>Direct Download Link</label>
+                                        <input
+                                            placeholder="https://example.com/file.zip"
+                                            value={editingProject.download_url || ''}
+                                            onChange={e => setEditingProject({ ...editingProject, download_url: e.target.value })}
+                                            style={modalInputStyle}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Or Upload File</label>
+                                        <label className="clickable" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '42px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>
+                                            <Download size={16} style={{ marginRight: '8px' }} />
+                                            {editingProject.download_url && editingProject.download_url.includes('supabase') ? 'REPLACE FILE' : 'UPLOAD FILE'}
+                                            <input
+                                                type="file"
+                                                onChange={async (e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        const url = await storageAPI.uploadImage(e.target.files[0], 'downloads');
+                                                        if (url) setEditingProject({ ...editingProject, download_url: url });
+                                                    }
+                                                }}
+                                                style={{ display: 'none' }}
+                                            />
+                                        </label>
+                                        {editingProject.download_url && editingProject.download_url.includes('supabase') && (
+                                            <div style={{ fontSize: '11px', color: 'var(--accent-color)', marginTop: '5px', textAlign: 'center' }}>
+                                                File uploaded successfully
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
+                        </div>
+                    </div>
+                )
             }
 
             {
@@ -1590,263 +1672,271 @@ export default function AdminDashboard() {
             }
 
             {/* MEMORY MODAL */}
-            {editingMemory && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                            <h3>{editingMemory.id ? 'EDIT MEMORY' : 'NEW MEMORY'}</h3>
-                            <button onClick={() => setEditingMemory(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
-                        </div>
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            <div>
-                                <label style={labelStyle}>Image</label>
-                                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                                    <div style={{ width: '120px', height: '120px', background: '#111', borderRadius: '8px', overflow: 'hidden' }}>
-                                        {editingMemory.image_url ? <img src={editingMemory.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+            {
+                editingMemory && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                <h3>{editingMemory.id ? 'EDIT MEMORY' : 'NEW MEMORY'}</h3>
+                                <button onClick={() => setEditingMemory(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
+                            </div>
+                            <div style={{ display: 'grid', gap: '20px' }}>
+                                <div>
+                                    <label style={labelStyle}>Image</label>
+                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                        <div style={{ width: '120px', height: '120px', background: '#111', borderRadius: '8px', overflow: 'hidden' }}>
+                                            {editingMemory.image_url ? <img src={editingMemory.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+                                        </div>
+                                        <label style={{ padding: '12px 24px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontWeight: '700', fontSize: '12px' }}>
+                                            UPLOAD IMAGE
+                                            <input type="file" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleAboutImageUpload(e.target.files[0], 'memory')} />
+                                        </label>
                                     </div>
-                                    <label style={{ padding: '12px 24px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontWeight: '700', fontSize: '12px' }}>
-                                        UPLOAD IMAGE
-                                        <input type="file" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleAboutImageUpload(e.target.files[0], 'memory')} />
-                                    </label>
                                 </div>
+                                <div>
+                                    <label style={labelStyle}>Horizontal Position (e.g. 20%, 50%, 80%)</label>
+                                    <input placeholder="50%" value={editingMemory.position_x} onChange={e => setEditingMemory({ ...editingMemory, position_x: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Vertical Position (e.g. 10%, 40%, 70%)</label>
+                                    <input placeholder="30%" value={editingMemory.position_y || ''} onChange={e => setEditingMemory({ ...editingMemory, position_y: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Width (e.g. 200px, 300px)</label>
+                                    <input placeholder="250px" value={editingMemory.width} onChange={e => setEditingMemory({ ...editingMemory, width: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Aspect Ratio (e.g. 1/1, 3/4, 16/9)</label>
+                                    <input placeholder="1/1" value={editingMemory.aspect_ratio} onChange={e => setEditingMemory({ ...editingMemory, aspect_ratio: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Parallax Speed (0.5 = slow, 1.0 = normal, 1.5 = fast)</label>
+                                    <input type="number" step="0.1" placeholder="1.0" value={editingMemory.speed} onChange={e => setEditingMemory({ ...editingMemory, speed: parseFloat(e.target.value) })} style={modalInputStyle} />
+                                </div>
+                                <button onClick={() => saveAboutMemory(editingMemory)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE MEMORY'}</button>
                             </div>
-                            <div>
-                                <label style={labelStyle}>Horizontal Position (e.g. 20%, 50%, 80%)</label>
-                                <input placeholder="50%" value={editingMemory.position_x} onChange={e => setEditingMemory({ ...editingMemory, position_x: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Vertical Position (e.g. 10%, 40%, 70%)</label>
-                                <input placeholder="30%" value={editingMemory.position_y || ''} onChange={e => setEditingMemory({ ...editingMemory, position_y: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Width (e.g. 200px, 300px)</label>
-                                <input placeholder="250px" value={editingMemory.width} onChange={e => setEditingMemory({ ...editingMemory, width: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Aspect Ratio (e.g. 1/1, 3/4, 16/9)</label>
-                                <input placeholder="1/1" value={editingMemory.aspect_ratio} onChange={e => setEditingMemory({ ...editingMemory, aspect_ratio: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Parallax Speed (0.5 = slow, 1.0 = normal, 1.5 = fast)</label>
-                                <input type="number" step="0.1" placeholder="1.0" value={editingMemory.speed} onChange={e => setEditingMemory({ ...editingMemory, speed: parseFloat(e.target.value) })} style={modalInputStyle} />
-                            </div>
-                            <button onClick={() => saveAboutMemory(editingMemory)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE MEMORY'}</button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* STEP MODAL */}
-            {editingStep && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                            <h3>{editingStep.id ? 'EDIT STEP' : 'NEW STEP'}</h3>
-                            <button onClick={() => setEditingStep(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
-                        </div>
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            <div>
-                                <label style={labelStyle}>Step Number (e.g. 01, 02, 03)</label>
-                                <input placeholder="01" value={editingStep.step_number} onChange={e => setEditingStep({ ...editingStep, step_number: e.target.value })} style={modalInputStyle} />
+            {
+                editingStep && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                <h3>{editingStep.id ? 'EDIT STEP' : 'NEW STEP'}</h3>
+                                <button onClick={() => setEditingStep(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
-                            <div>
-                                <label style={labelStyle}>Title</label>
-                                <input placeholder="Research & Discovery" value={editingStep.title} onChange={e => setEditingStep({ ...editingStep, title: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Description</label>
-                                <textarea placeholder="Understanding your needs..." value={editingStep.description} onChange={e => setEditingStep({ ...editingStep, description: e.target.value })} rows={3} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-                                    gap: '12px',
-                                    maxHeight: '350px',
-                                    overflowY: 'auto',
-                                    background: '#111',
-                                    padding: '20px',
-                                    borderRadius: '16px',
-                                    border: '1px solid #222',
-                                    scrollbarWidth: 'thin'
-                                }}>
-                                    {SELECTABLE_ICONS.map(icon => {
-                                        const IconComp = ICON_COMPONENTS[icon];
-                                        return (
-                                            <button
-                                                key={icon}
-                                                onClick={() => setEditingStep({ ...editingStep, icon_name: icon })}
-                                                title={icon}
-                                                style={{
-                                                    aspectRatio: '1/1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                                                    background: editingStep.icon_name === icon ? 'var(--accent-color)' : '#0a0a0a',
-                                                    color: editingStep.icon_name === icon ? '#000' : '#fff',
-                                                    border: '1px solid #333', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                {IconComp ? <IconComp size={16} /> : <span>?</span>}
-                                                <span style={{ fontSize: '8px', opacity: 0.6 }}>{icon}</span>
-                                            </button>
-                                        );
-                                    })}
+                            <div style={{ display: 'grid', gap: '20px' }}>
+                                <div>
+                                    <label style={labelStyle}>Step Number (e.g. 01, 02, 03)</label>
+                                    <input placeholder="01" value={editingStep.step_number} onChange={e => setEditingStep({ ...editingStep, step_number: e.target.value })} style={modalInputStyle} />
                                 </div>
-                                <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected: {editingStep.icon_name}</div>
+                                <div>
+                                    <label style={labelStyle}>Title</label>
+                                    <input placeholder="Research & Discovery" value={editingStep.title} onChange={e => setEditingStep({ ...editingStep, title: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Description</label>
+                                    <textarea placeholder="Understanding your needs..." value={editingStep.description} onChange={e => setEditingStep({ ...editingStep, description: e.target.value })} rows={3} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                                        gap: '12px',
+                                        maxHeight: '350px',
+                                        overflowY: 'auto',
+                                        background: '#111',
+                                        padding: '20px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #222',
+                                        scrollbarWidth: 'thin'
+                                    }}>
+                                        {SELECTABLE_ICONS.map(icon => {
+                                            const IconComp = ICON_COMPONENTS[icon];
+                                            return (
+                                                <button
+                                                    key={icon}
+                                                    onClick={() => setEditingStep({ ...editingStep, icon_name: icon })}
+                                                    title={icon}
+                                                    style={{
+                                                        aspectRatio: '1/1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                                                        background: editingStep.icon_name === icon ? 'var(--accent-color)' : '#0a0a0a',
+                                                        color: editingStep.icon_name === icon ? '#000' : '#fff',
+                                                        border: '1px solid #333', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {IconComp ? <IconComp size={16} /> : <span>?</span>}
+                                                    <span style={{ fontSize: '8px', opacity: 0.6 }}>{icon}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected: {editingStep.icon_name}</div>
+                                </div>
+                                <button onClick={() => saveAboutStep(editingStep)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE STEP'}</button>
                             </div>
-                            <button onClick={() => saveAboutStep(editingStep)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE STEP'}</button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* HOBBY MODAL */}
-            {editingHobby && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                            <h3>{editingHobby.id ? 'EDIT HOBBY' : 'NEW HOBBY'}</h3>
-                            <button onClick={() => setEditingHobby(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
-                        </div>
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            <div>
-                                <label style={labelStyle}>Hobby Text</label>
-                                <input placeholder="Photography" value={editingHobby.text} onChange={e => setEditingHobby({ ...editingHobby, text: e.target.value })} style={modalInputStyle} />
+            {
+                editingHobby && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                <h3>{editingHobby.id ? 'EDIT HOBBY' : 'NEW HOBBY'}</h3>
+                                <button onClick={() => setEditingHobby(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
-                            <div>
-                                <label style={labelStyle}>Accent Color</label>
-                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                    <input type="color" value={editingHobby.color} onChange={e => setEditingHobby({ ...editingHobby, color: e.target.value })} style={{ width: '60px', height: '40px', border: '1px solid #333', borderRadius: '8px', cursor: 'pointer' }} />
-                                    <input value={editingHobby.color} onChange={e => setEditingHobby({ ...editingHobby, color: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
+                            <div style={{ display: 'grid', gap: '20px' }}>
+                                <div>
+                                    <label style={labelStyle}>Hobby Text</label>
+                                    <input placeholder="Photography" value={editingHobby.text} onChange={e => setEditingHobby({ ...editingHobby, text: e.target.value })} style={modalInputStyle} />
                                 </div>
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Horizontal Position (e.g. 20%, 50%, 80%)</label>
-                                <input placeholder="50%" value={editingHobby.position_x} onChange={e => setEditingHobby({ ...editingHobby, position_x: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Vertical Position (e.g. 20%, 50%, 80%)</label>
-                                <input placeholder="50%" value={editingHobby.position_y} onChange={e => setEditingHobby({ ...editingHobby, position_y: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <label style={labelStyle}>Custom SVG Code (Optional)</label>
-                                    <label style={{ fontSize: '11px', color: 'var(--accent-color)', cursor: 'pointer', fontWeight: '900', background: 'rgba(242, 167, 61, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>
-                                        UPLOAD SVG FILE
-                                        <input
-                                            type="file"
-                                            accept=".svg"
-                                            style={{ display: 'none' }}
-                                            onChange={e => {
-                                                const file = e.target.files?.[0];
-                                                if (file && editingHobby) {
-                                                    const reader = new FileReader();
-                                                    reader.onload = (re) => {
-                                                        const content = re.target?.result as string;
-                                                        if (content.includes('<svg')) {
-                                                            setEditingHobby({ ...editingHobby, icon_svg: content, icon_name: '' });
-                                                        } else {
-                                                            alert('Invalid SVG file. Please select a valid .svg file.');
-                                                        }
-                                                    };
-                                                    reader.readAsText(file);
-                                                }
-                                            }}
-                                        />
-                                    </label>
-                                </div>
-                                <textarea
-                                    placeholder='<svg ...>...</svg>'
-                                    value={editingHobby.icon_svg || ''}
-                                    onChange={e => setEditingHobby({ ...editingHobby, icon_svg: e.target.value })}
-                                    style={{ ...modalInputStyle, height: '80px', fontFamily: 'monospace', fontSize: '11px' }}
-                                />
-                                <div style={{ fontSize: '10px', color: '#666', marginBottom: '15px' }}>Tip: Use fill="currentColor" or stroke="currentColor" to inherit theme colors.</div>
-                                <label style={labelStyle}>Or Select Library Icon</label>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-                                    gap: '12px',
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    background: '#111',
-                                    padding: '20px',
-                                    borderRadius: '16px',
-                                    border: '1px solid #222',
-                                    scrollbarWidth: 'thin'
-                                }}>
-                                    {SELECTABLE_ICONS.map(icon => {
-                                        const IconComp = ICON_COMPONENTS[icon];
-                                        return (
-                                            <button
-                                                key={icon}
-                                                onClick={() => setEditingHobby({ ...editingHobby, icon_name: icon, icon_svg: '' })}
-                                                title={icon}
-                                                style={{
-                                                    aspectRatio: '1/1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                                                    background: (editingHobby.icon_name === icon && !editingHobby.icon_svg) ? 'var(--accent-color)' : '#0a0a0a',
-                                                    color: (editingHobby.icon_name === icon && !editingHobby.icon_svg) ? '#000' : '#fff',
-                                                    border: '1px solid #333', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                {IconComp ? <IconComp size={16} /> : <span>?</span>}
-                                                <span style={{ fontSize: '8px', opacity: 0.6 }}>{icon}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected Library Icon: {editingHobby.icon_name}</div>
-                            </div>
-                            <div style={{ padding: '20px', background: '#111', borderRadius: '12px', border: '1px solid #222' }}>
-                                <div style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>Preview:</div>
-                                <div style={{ height: '150px', background: '#0a0a0a', borderRadius: '8px', position: 'relative' }}>
-                                    <div style={{ position: 'absolute', left: editingHobby.position_x, top: editingHobby.position_y, transform: 'translate(-50%, -50%)', background: '#fff', color: '#000', padding: '8px 16px', borderRadius: '20px 20px 20px 2px', borderLeft: `4px solid ${editingHobby.color}`, fontSize: '12px', fontWeight: 'bold' }}>
-                                        {editingHobby.text || 'Hobby'}
+                                <div>
+                                    <label style={labelStyle}>Accent Color</label>
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <input type="color" value={editingHobby.color} onChange={e => setEditingHobby({ ...editingHobby, color: e.target.value })} style={{ width: '60px', height: '40px', border: '1px solid #333', borderRadius: '8px', cursor: 'pointer' }} />
+                                        <input value={editingHobby.color} onChange={e => setEditingHobby({ ...editingHobby, color: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
                                     </div>
                                 </div>
+                                <div>
+                                    <label style={labelStyle}>Horizontal Position (e.g. 20%, 50%, 80%)</label>
+                                    <input placeholder="50%" value={editingHobby.position_x} onChange={e => setEditingHobby({ ...editingHobby, position_x: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Vertical Position (e.g. 20%, 50%, 80%)</label>
+                                    <input placeholder="50%" value={editingHobby.position_y} onChange={e => setEditingHobby({ ...editingHobby, position_y: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <label style={labelStyle}>Custom SVG Code (Optional)</label>
+                                        <label style={{ fontSize: '11px', color: 'var(--accent-color)', cursor: 'pointer', fontWeight: '900', background: 'rgba(242, 167, 61, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>
+                                            UPLOAD SVG FILE
+                                            <input
+                                                type="file"
+                                                accept=".svg"
+                                                style={{ display: 'none' }}
+                                                onChange={e => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file && editingHobby) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = (re) => {
+                                                            const content = re.target?.result as string;
+                                                            if (content.includes('<svg')) {
+                                                                setEditingHobby({ ...editingHobby, icon_svg: content, icon_name: '' });
+                                                            } else {
+                                                                alert('Invalid SVG file. Please select a valid .svg file.');
+                                                            }
+                                                        };
+                                                        reader.readAsText(file);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+                                    <textarea
+                                        placeholder='<svg ...>...</svg>'
+                                        value={editingHobby.icon_svg || ''}
+                                        onChange={e => setEditingHobby({ ...editingHobby, icon_svg: e.target.value })}
+                                        style={{ ...modalInputStyle, height: '80px', fontFamily: 'monospace', fontSize: '11px' }}
+                                    />
+                                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '15px' }}>Tip: Use fill="currentColor" or stroke="currentColor" to inherit theme colors.</div>
+                                    <label style={labelStyle}>Or Select Library Icon</label>
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                                        gap: '12px',
+                                        maxHeight: '200px',
+                                        overflowY: 'auto',
+                                        background: '#111',
+                                        padding: '20px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #222',
+                                        scrollbarWidth: 'thin'
+                                    }}>
+                                        {SELECTABLE_ICONS.map(icon => {
+                                            const IconComp = ICON_COMPONENTS[icon];
+                                            return (
+                                                <button
+                                                    key={icon}
+                                                    onClick={() => setEditingHobby({ ...editingHobby, icon_name: icon, icon_svg: '' })}
+                                                    title={icon}
+                                                    style={{
+                                                        aspectRatio: '1/1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                                                        background: (editingHobby.icon_name === icon && !editingHobby.icon_svg) ? 'var(--accent-color)' : '#0a0a0a',
+                                                        color: (editingHobby.icon_name === icon && !editingHobby.icon_svg) ? '#000' : '#fff',
+                                                        border: '1px solid #333', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {IconComp ? <IconComp size={16} /> : <span>?</span>}
+                                                    <span style={{ fontSize: '8px', opacity: 0.6 }}>{icon}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected Library Icon: {editingHobby.icon_name}</div>
+                                </div>
+                                <div style={{ padding: '20px', background: '#111', borderRadius: '12px', border: '1px solid #222' }}>
+                                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>Preview:</div>
+                                    <div style={{ height: '150px', background: '#0a0a0a', borderRadius: '8px', position: 'relative' }}>
+                                        <div style={{ position: 'absolute', left: editingHobby.position_x, top: editingHobby.position_y, transform: 'translate(-50%, -50%)', background: '#fff', color: '#000', padding: '8px 16px', borderRadius: '20px 20px 20px 2px', borderLeft: `4px solid ${editingHobby.color}`, fontSize: '12px', fontWeight: 'bold' }}>
+                                            {editingHobby.text || 'Hobby'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => saveAboutHobby(editingHobby)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE HOBBY'}</button>
                             </div>
-                            <button onClick={() => saveAboutHobby(editingHobby)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE HOBBY'}</button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* TESTIMONIAL MODAL */}
-            {editingTestimonial && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                            <h3>{editingTestimonial.id ? 'EDIT TESTIMONIAL' : 'NEW TESTIMONIAL'}</h3>
-                            <button onClick={() => setEditingTestimonial(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
-                        </div>
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            <div>
-                                <label style={labelStyle}>Author Photo</label>
-                                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                                    <div style={{ width: '80px', height: '80px', background: '#111', borderRadius: '50%', overflow: 'hidden' }}>
-                                        {editingTestimonial.author_image ? <img src={editingTestimonial.author_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={20} color="#333" /></div>}
+            {
+                editingTestimonial && (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
+                                <h3>{editingTestimonial.id ? 'EDIT TESTIMONIAL' : 'NEW TESTIMONIAL'}</h3>
+                                <button onClick={() => setEditingTestimonial(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
+                            </div>
+                            <div style={{ display: 'grid', gap: '20px' }}>
+                                <div>
+                                    <label style={labelStyle}>Author Photo</label>
+                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                        <div style={{ width: '80px', height: '80px', background: '#111', borderRadius: '50%', overflow: 'hidden' }}>
+                                            {editingTestimonial.author_image ? <img src={editingTestimonial.author_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={20} color="#333" /></div>}
+                                        </div>
+                                        <label style={{ padding: '12px 24px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontWeight: '700', fontSize: '12px' }}>
+                                            UPLOAD PHOTO
+                                            <input type="file" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleAboutImageUpload(e.target.files[0], 'testimonial')} />
+                                        </label>
                                     </div>
-                                    <label style={{ padding: '12px 24px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontWeight: '700', fontSize: '12px' }}>
-                                        UPLOAD PHOTO
-                                        <input type="file" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleAboutImageUpload(e.target.files[0], 'testimonial')} />
-                                    </label>
                                 </div>
+                                <div>
+                                    <label style={labelStyle}>Author Name</label>
+                                    <input placeholder="John Doe" value={editingTestimonial.author_name} onChange={e => setEditingTestimonial({ ...editingTestimonial, author_name: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Author Role / Company</label>
+                                    <input placeholder="CEO at Company" value={editingTestimonial.author_role} onChange={e => setEditingTestimonial({ ...editingTestimonial, author_role: e.target.value })} style={modalInputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Testimonial Quote</label>
+                                    <textarea placeholder="Working with this professional was amazing..." value={editingTestimonial.quote} onChange={e => setEditingTestimonial({ ...editingTestimonial, quote: e.target.value })} rows={4} style={modalInputStyle} />
+                                </div>
+                                <button onClick={() => saveAboutTestimonial(editingTestimonial)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE TESTIMONIAL'}</button>
                             </div>
-                            <div>
-                                <label style={labelStyle}>Author Name</label>
-                                <input placeholder="John Doe" value={editingTestimonial.author_name} onChange={e => setEditingTestimonial({ ...editingTestimonial, author_name: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Author Role / Company</label>
-                                <input placeholder="CEO at Company" value={editingTestimonial.author_role} onChange={e => setEditingTestimonial({ ...editingTestimonial, author_role: e.target.value })} style={modalInputStyle} />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Testimonial Quote</label>
-                                <textarea placeholder="Working with this professional was amazing..." value={editingTestimonial.quote} onChange={e => setEditingTestimonial({ ...editingTestimonial, quote: e.target.value })} rows={4} style={modalInputStyle} />
-                            </div>
-                            <button onClick={() => saveAboutTestimonial(editingTestimonial)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE TESTIMONIAL'}</button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* PREVIEW MODAL */}
             {
