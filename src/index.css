@@ -326,52 +326,57 @@ nav ul li a {
 }
 
 
-/* Global: Hide scrollbars for all elements */
-*::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-* {
-  scrollbar-width: none !important;
-}
-
-/* Specific: Show only for main site scroll */
+/* Main Site Scrollbar - Visible and styled */
+html::-webkit-scrollbar,
 body::-webkit-scrollbar {
-  display: block !important;
-  width: 10px !important;
-  height: 10px !important;
+  width: 10px;
+  height: 10px;
 }
 
+html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track {
-  background: var(--bg-color) !important;
+  background: var(--bg-color);
 }
 
+html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 10px !important;
-  border: 2px solid var(--bg-color) !important;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  border: 2px solid var(--bg-color);
 }
 
+[data-theme='light'] html::-webkit-scrollbar-thumb,
 [data-theme='light'] body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.5) !important;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #FFFFFF;
 }
 
+html::-webkit-scrollbar-thumb:hover,
 body::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color) !important;
+  background: var(--accent-color);
 }
 
 /* Firefox Main Scroll */
 html,
 body {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 [data-theme='light'] html,
 [data-theme='light'] body {
-  scrollbar-color: rgba(0, 0, 0, 0.5) transparent !important;
+  scrollbar-color: rgba(0, 0, 0, 0.5) transparent;
+}
+
+/* Hide scrollbars for all other elements */
+*:not(html):not(body)::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*:not(html):not(body) {
+  scrollbar-width: none;
 }
 
 /* Home Project Card Specifics */
