@@ -75,13 +75,11 @@ const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemor
 };
 
 // Physics Tags Component (Com Matter.js para Simulação Real 2D)
-const PhysicsTags = ({ tags }: { tags: string[] }) => {
+const PhysicsTags = ({ tags, isMobile }: { tags: string[], isMobile: boolean }) => {
     const sceneRef = useRef<HTMLDivElement>(null);
     const engineRef = useRef(Matter.Engine.create());
     const [bodies, setBodies] = useState<{ body: Matter.Body, tag: string, isDark: boolean }[]>([]);
     const requestRef = useRef<number>(null);
-
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
     useEffect(() => {
         if (!sceneRef.current || !tags.length) return;
@@ -90,35 +88,36 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
         const world = engine.world;
 
         // Configurações de gravidade
-        engine.gravity.y = 1;
+        engine.gravity.y = 0.8; // Slightly softer gravity
 
-        const width = window.innerWidth;
+        const rect = sceneRef.current.getBoundingClientRect();
+        const width = rect.width || window.innerWidth;
         const height = isMobile ? 320 : 450;
 
         // Paredes e Chão
-        const ground = Matter.Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
-        const leftWall = Matter.Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
-        const rightWall = Matter.Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
+        const ground = Matter.Bodies.rectangle(width / 2, height + 50, width * 2, 100, { isStatic: true });
+        const leftWall = Matter.Bodies.rectangle(-20, height / 2, 40, height * 2, { isStatic: true });
+        const rightWall = Matter.Bodies.rectangle(width + 20, height / 2, 40, height * 2, { isStatic: true });
 
         Matter.World.add(world, [ground, leftWall, rightWall]);
 
         // Criar corpos para as tags
         const newBodies = tags.map((tag, i) => {
             const isDark = i % 2 === 0;
-            // Estimar largura baseada no texto (valor aproximado para colisão)
-            const tagWidth = tag.length * 10 + 40;
+            // Estimar largura baseada no texto
+            const tagWidth = isMobile ? (tag.length * 8 + 30) : (tag.length * 10 + 60);
             const tagHeight = isMobile ? 35 : 50;
 
             const body = Matter.Bodies.rectangle(
-                Math.random() * (width - 200) + 100,
-                -Math.random() * 500, // Começar fora da tela (gravidade fará cair)
+                Math.random() * (width - 100) + 50,
+                -Math.random() * 400, // Começar fora da tela
                 tagWidth,
                 tagHeight,
                 {
-                    chamfer: { radius: 20 }, // Bordas arredondadas na colisão
-                    restitution: 0.5, // Quicar levemente
+                    chamfer: { radius: isMobile ? 15 : 20 },
+                    restitution: 0.4,
                     friction: 0.1,
-                    angle: (Math.random() - 0.5) * 0.5
+                    angle: (Math.random() - 0.5) * 0.4
                 }
             );
             return { body, tag, isDark };
@@ -127,26 +126,27 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
         setBodies(newBodies);
         Matter.World.add(world, newBodies.map(b => b.body));
 
-        // Interação com Mouse
+        // Interação com Mouse e Touch
         const mouse = Matter.Mouse.create(sceneRef.current);
+
+        // Essencial para mobile dar certo com Matter.js
+        mouse.element.removeEventListener("mousewheel", (mouse as any).mousewheel);
+        mouse.element.removeEventListener("DOMMouseScroll", (mouse as any).mousewheel);
+
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
-                stiffness: 0.2,
+                stiffness: 0.1,
                 render: { visible: false }
             }
         });
+
         Matter.World.add(world, mouseConstraint);
 
         // Update loop
         const update = () => {
             Matter.Engine.update(engine, 1000 / 60);
-
-            // Forçamos o re-render do React para sincronizar as posições
-            // Em uma app de alta performance usaríamos refs diretas, 
-            // mas com poucas tags o state é fluido o suficiente.
             setBodies(prev => [...prev]);
-
             requestRef.current = requestAnimationFrame(update);
         };
         requestRef.current = requestAnimationFrame(update);
@@ -156,7 +156,7 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
             Matter.World.clear(world, false);
             Matter.Engine.clear(engine);
         };
-    }, [tags]);
+    }, [tags, isMobile]);
 
     if (!tags || tags.length === 0) return null;
 
@@ -171,7 +171,8 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
                 width: '100%',
                 background: 'transparent',
                 position: 'relative',
-                cursor: 'grab'
+                cursor: 'grab',
+                touchAction: 'none' // Crucial para não scrollar enquanto brinca no mobile
             }}>
                 {bodies.map((b, i) => (
                     <div
@@ -795,7 +796,7 @@ export default function About() {
                 )
             }
 
-            <PhysicsTags tags={uniqueTags} />
+            <PhysicsTags tags={uniqueTags} isMobile={isMobile} />
         </div >
     );
 }
