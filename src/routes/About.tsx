@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { motion /* , useScroll, useTransform */ } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import {
     ChevronLeft, ChevronRight, ArrowDown,
     Search, Rocket, Lightbulb, Code, Target, Heart, Star, Coffee,
@@ -15,7 +15,7 @@ import {
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
-import { aboutAPI, contentAPI, type AboutHobby, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
+import { aboutAPI, contentAPI, projectsAPI, type AboutHobby, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
 import { trackPageView } from '../lib/analytics';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -39,13 +39,13 @@ const SELECTABLE_ICONS: Record<string, any> = {
 };
 
 // Helper component for Scrollytelling text effect
-/* const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
+const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
     const opacity = useTransform(progress, [start, end], [0.1, 1]); // Starts semi-transparent, becomes fully opaque
     const y = useTransform(progress, [start, end], [5, 0]); // Slight slide-up effect
     return <motion.span style={{ ...style, opacity, y, marginRight: '6px', display: 'inline-block' }}>{word}</motion.span>;
-}; */
+};
 
-/* const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
+const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
     const x = useTransform(progress, [start, end], ["120%", "-120%"]);
     const rotate = i % 2 === 0 ? -3 : 3;
 
@@ -71,7 +71,73 @@ const SELECTABLE_ICONS: Record<string, any> = {
             <img src={m.image_url} alt="Memory" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </motion.div>
     );
-}; */
+};
+
+// Physics Tags Component (André Vieira Style)
+const PhysicsTags = ({ tags }: { tags: string[] }) => {
+    const constraintsRef = useRef(null);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    if (!tags || tags.length === 0) return null;
+
+    return (
+        <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginBottom: '120px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Expertise</span>
+                <h3 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-1px' }}>Interact with my Stack</h3>
+            </div>
+            <div ref={constraintsRef} style={{
+                height: isMobile ? '350px' : '480px',
+                background: 'rgba(255,255,255,0.02)',
+                borderRadius: '40px',
+                border: '1px solid var(--border-color)',
+                position: 'relative',
+                overflow: 'hidden',
+                cursor: 'grab'
+            }}>
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}>
+                    <div style={{ fontSize: '150px', fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '-10px' }}>PLAY</div>
+                </div>
+                {tags.map((tag, i) => {
+                    const initialX = Math.random() * (isMobile ? 150 : 800) + 20;
+                    const initialY = Math.random() * (isMobile ? 200 : 300) + 20;
+                    const rotate = Math.random() * 30 - 15;
+
+                    return (
+                        <motion.div
+                            key={`${tag}-${i}`}
+                            drag
+                            dragConstraints={constraintsRef}
+                            dragElastic={0.2}
+                            dragTransition={{ power: 0.3, timeConstant: 250 }}
+                            initial={{ x: initialX, y: initialY, rotate }}
+                            whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 100, rotate: 0 }}
+                            whileHover={{ scale: 1.05 }}
+                            style={{
+                                position: 'absolute',
+                                padding: isMobile ? '10px 18px' : '15px 30px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '100px',
+                                fontSize: isMobile ? '11px' : '14px',
+                                fontWeight: 900,
+                                textTransform: 'uppercase',
+                                color: 'var(--text-color)',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                                userSelect: 'none',
+                                whiteSpace: 'nowrap',
+                                letterSpacing: '1px'
+                            }}
+                        >
+                            {tag}
+                        </motion.div>
+                    );
+                })}
+            </div>
+            <p style={{ marginTop: '20px', fontSize: '10px', color: 'var(--text-muted)', opacity: 0.5, textAlign: 'center', letterSpacing: '2px', textTransform: 'uppercase' }}>Grab and toss elements to play</p>
+        </div>
+    );
+};
 
 // Typewriter Component for the Hero
 const TypewriterGreeting = ({ languages }: { languages: string[] }) => {
@@ -123,6 +189,7 @@ export default function About() {
         "こんにちは", "你好" // Japanese and Chinese
     ];
     const [isMobile, setIsMobile] = useState(false); // Default to desktop for safer hydration
+    const [uniqueTags, setUniqueTags] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [profilePhoto, setProfilePhoto] = useState("");
@@ -163,7 +230,7 @@ export default function About() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [pPhoto, pReveal, pTitle, pSub, pBio, pSpotify, pVisible, hobbiesData, testimonialsData, memoriesData] = await Promise.all([
+                const [pPhoto, pReveal, pTitle, pSub, pBio, pSpotify, pVisible, hobbiesData, testimonialsData, memoriesData, projectsData] = await Promise.all([
                     contentAPI.getByKey('about.profile_photo'),
                     contentAPI.getByKey('about.reveal_image'),
                     contentAPI.getByKey('about.name_title'),
@@ -173,8 +240,15 @@ export default function About() {
                     contentAPI.getByKey('about.visible'),
                     aboutAPI.getHobbies(),
                     aboutAPI.getTestimonials(),
-                    aboutAPI.getMemories()
+                    aboutAPI.getMemories(),
+                    projectsAPI.getAll()
                 ]);
+
+                if (projectsData) {
+                    const allTags = projectsData.flatMap(p => p.tags || []);
+                    const unique = Array.from(new Set(allTags)).filter(Boolean);
+                    setUniqueTags(unique);
+                }
 
                 if (pPhoto) setProfilePhoto(pPhoto.value);
                 if (pReveal) setRevealImage(pReveal.value);
@@ -209,11 +283,11 @@ export default function About() {
                 trigger: memoriesPin,
                 start: "top top",
                 end: () => `+=${Math.max(4000, memories.length * 1500)}`,
-                pin: false, // Temporarily disabled pinning
+                pin: true,
                 scrub: 1,
                 anticipatePin: 1,
                 invalidateOnRefresh: true,
-                pinSpacing: false // Set to false since pin is false
+                pinSpacing: true
             });
         }
 
@@ -224,10 +298,10 @@ export default function About() {
         };
     }, [isLoading, isMobile, memories.length]);
 
-    /* const { scrollYProgress: bioProgress } = useScroll({
+    const { scrollYProgress: bioProgress } = useScroll({
         target: memoriesPinRef,
         offset: ["start start", "end end"]
-    }); */
+    });
 
     if (!pageVisible) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Page is hidden</div>;
     if (isLoading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
@@ -423,8 +497,7 @@ export default function About() {
                 </div>
 
                 {/* Memories Overlay (Desktop) */}
-                {/* Memories Overlay (Temporarily Disabled) */}
-                {/* memories.length > 0 && !isMobile && (
+                {memories.length > 0 && !isMobile && (
                     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100 }}>
                         {memories.map((m, i) => {
                             const availableStart = 0.55;
@@ -436,7 +509,7 @@ export default function About() {
                             return <ScrollyMemory key={m.id || i} m={m} i={i} progress={bioProgress} start={startM} end={endM} isMobile={false} />;
                         })}
                     </div>
-                ) */}
+                )}
             </div>
 
             {/* Mobile Memories List */}
@@ -655,6 +728,9 @@ export default function About() {
                     </div>
                 )
             }
+
+            {/* Physics Stack Tags - André Vieira Style */}
+            <PhysicsTags tags={uniqueTags} />
 
             <div style={{ textAlign: 'center', paddingBottom: '100px', opacity: 0.3 }}>
                 <p style={{ fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', fontWeight: 700 }}>End of transmission</p>
