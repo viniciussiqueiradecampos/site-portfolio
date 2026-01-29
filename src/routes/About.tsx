@@ -205,11 +205,11 @@ export default function About() {
                 trigger: memoriesPin,
                 start: "top top",
                 end: () => `+=${Math.max(4000, memories.length * 1500)}`,
-                pin: true,
+                pin: false, // Temporarily disabled pinning
                 scrub: 1,
                 anticipatePin: 1,
                 invalidateOnRefresh: true,
-                pinSpacing: true
+                pinSpacing: false // Set to false since pin is false
             });
         }
 
@@ -231,24 +231,7 @@ export default function About() {
     return (
         <div ref={containerRef} style={{ background: 'var(--bg-color)', minHeight: '100vh', overflowX: 'hidden' }}>
 
-            {/* VERSION TAG FOR CACHE VERIFICATION */}
-            <div style={{
-                position: 'fixed',
-                top: '90px',
-                right: '20px',
-                background: '#ff0000',
-                color: '#fff',
-                padding: '5px 15px',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                zIndex: 99999,
-                borderRadius: '20px',
-                fontFamily: 'sans-serif',
-                pointerEvents: 'none',
-                boxShadow: '0 0 20px rgba(255,0,0,0.5)'
-            }}>
-                DEPLOY v4.0 - ACTIVE
-            </div>
+
 
             {/* 1. HERO SECTION WITH CLEAN REVEAL */}
             <section
@@ -398,26 +381,7 @@ export default function About() {
                             scrollbarWidth: 'thin',
                             scrollbarColor: 'var(--accent-color) transparent'
                         }}>
-                            {isMobile ? bioText.join('') : bioText.map((word, i) => {
-                                // Dynamic calculation for each word's animation start/end
-                                // Speed up text: finish by 0.5 progress
-                                const step = 0.5 / bioText.length;
-                                const start = i * step;
-                                const end = start + step;
-
-                                if (word.match(/\n/)) return <br key={i} />;
-
-                                return (
-                                    <ScrollyWord
-                                        key={`bio-${i}`}
-                                        word={word}
-                                        progress={bioProgress}
-                                        start={start}
-                                        end={end}
-                                        style={{ marginRight: word.match(/^\s+$/) ? '0' : '4px' }}
-                                    />
-                                );
-                            })}
+                            {bioText.join('')}
                         </div>
 
                         {/* Scroll Indicator */}
@@ -433,27 +397,20 @@ export default function About() {
                 </div>
 
                 {/* Memories Overlay (Desktop) */}
-                {memories.length > 0 && !isMobile && (
+                {/* Memories Overlay (Temporarily Disabled) */}
+                {/* memories.length > 0 && !isMobile && (
                     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100 }}>
                         {memories.map((m, i) => {
-                            // Delay memories to start AFTER text (0.55 to 1.0)
-                            // Even distribution until the end of scroll
                             const availableStart = 0.55;
-                            const availableEnd = 0.95; // Leave a tiny buffer at end
+                            const availableEnd = 0.95;
                             const range = availableEnd - availableStart;
-
-                            // Start positions spread across the range
                             const startM = availableStart + (i * (range / Math.max(1, memories.length)));
-
-                            // Each memory travels its path in X amount of "progress".
-                            // Since scroll is very long, 0.15 is plenty of pixels.
                             const duration = 0.15;
                             const endM = startM + duration;
-
                             return <ScrollyMemory key={m.id || i} m={m} i={i} progress={bioProgress} start={startM} end={endM} isMobile={false} />;
                         })}
                     </div>
-                )}
+                ) */}
             </div>
 
             {/* Mobile Memories List */}
