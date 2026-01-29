@@ -355,7 +355,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 [data-theme='light'] body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
 }
 
 body::-webkit-scrollbar-thumb:hover {
@@ -371,7 +371,7 @@ body {
 
 [data-theme='light'] html,
 [data-theme='light'] body {
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
+  scrollbar-color: rgba(0, 0, 0, 0.5) transparent !important;
 }
 
 /* Home Project Card Specifics */
