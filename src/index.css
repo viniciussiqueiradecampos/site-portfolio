@@ -26,6 +26,8 @@
   --border-color: rgba(255, 255, 255, 0.1);
   --border-hover: rgba(255, 255, 255, 0.3);
   --header-bg: rgba(5, 5, 5, 0.85);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.3);
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
 
   /* Fonts */
   --font-display: "Akira Expanded", sans-serif;
@@ -52,10 +54,12 @@
   --text-color: #0A0A0A;
   --accent-color: #704214;
   /* Much darker for AAA contrast on white background (approx 7.5:1 ratio) */
-  --text-muted: #4A4A4A;
-  --border-color: rgba(0, 0, 0, 0.15);
-  --border-hover: rgba(0, 0, 0, 0.4);
+  --text-muted: #333333;
+  --border-color: rgba(0, 0, 0, 0.25);
+  --border-hover: rgba(0, 0, 0, 0.5);
   --header-bg: rgba(255, 255, 255, 0.85);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.4);
+  --scrollbar-track: rgba(0, 0, 0, 0.03);
 }
 
 * {
@@ -323,43 +327,33 @@ nav ul li a {
 }
 
 
-/* Global Scrollbars - Transparent by default for elements */
+/* Custom Scrollbars made transparent per user request to hide them from design */
+/* Global Scrollbar - Visible as requested */
 ::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-  background: transparent;
-}
-
-/* Site Vertical Scrollbar - Visible as requested */
-body::-webkit-scrollbar {
   width: 10px;
   height: 10px;
-  display: block;
 }
 
-body::-webkit-scrollbar-track {
-  background: var(--bg-color);
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
 }
 
-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
   border-radius: 10px;
-  border: 2px solid var(--bg-color);
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
-body::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: var(--accent-color);
+  background-clip: border-box;
 }
 
 /* For Firefox */
 * {
-  scrollbar-width: none;
-}
-
-html,
-body {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 .horizontal-scroll-container {
@@ -368,6 +362,7 @@ body {
 
 .horizontal-scroll-container::-webkit-scrollbar {
   display: none;
+  /* Chrome Safari */
 }
 
 /* Home Project Card Specifics */
