@@ -327,42 +327,45 @@ nav ul li a {
 }
 
 
-/* Custom Scrollbars made transparent per user request to hide them from design */
-/* Global Scrollbar - Visible as requested */
-::-webkit-scrollbar {
+/* Main Scrollbar - Visible only for the body */
+body::-webkit-scrollbar {
   width: 10px;
   height: 10px;
+  display: block;
 }
 
-::-webkit-scrollbar-track {
+body::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
 }
 
-::-webkit-scrollbar-thumb {
+body::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
-::-webkit-scrollbar-thumb:hover {
+body::-webkit-scrollbar-thumb:hover {
   background: var(--accent-color);
   background-clip: border-box;
 }
 
-/* For Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+/* Hide scrollbars for all other elements by default */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
 }
 
-.horizontal-scroll-container {
+/* For Firefox */
+* {
   scrollbar-width: none;
 }
 
-.horizontal-scroll-container::-webkit-scrollbar {
-  display: none;
-  /* Chrome Safari */
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 /* Home Project Card Specifics */
