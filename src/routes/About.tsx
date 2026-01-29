@@ -325,7 +325,7 @@ export default function About() {
             </section>
 
             {/* Scroll Target to stop content centered vertically between header and bottom */}
-            <div id="scroll-target" style={{ height: '0', scrollMarginTop: 'calc(var(--header-height) / 2)' }} />
+            <div id="scroll-target" style={{ height: '0', scrollMarginTop: 'calc(var(--header-height) + 10vh)' }} />
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
             <div id="about-bio-section" ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflowX: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
@@ -519,7 +519,17 @@ export default function About() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
                         <div>
                             <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>Collaboration</span>
-                            <h3 style={{ fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-2px', margin: '10px 0', maxWidth: '80%' }}>Colleagues who<br />work with me</h3>
+                            <h3 style={{
+                                fontSize: isMobile ? '24px' : 'clamp(28px, 4.5vw, 54px)',
+                                fontWeight: 900,
+                                textTransform: 'uppercase',
+                                letterSpacing: '-1px',
+                                margin: '10px 0',
+                                maxWidth: isMobile ? '100%' : '500px',
+                                lineHeight: 1.1
+                            }}>
+                                Colleagues who<br />work with me
+                            </h3>
                         </div>
                         {testimonials.length > (isMobile ? 1 : 2) && (
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
