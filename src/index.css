@@ -134,14 +134,17 @@ nav ul li a {
 .dropdown-menu {
   position: absolute;
   top: 80px;
-  /* Detached from menu */
+  /* Flush with header bottom */
   left: -20px;
   background: var(--bg-color);
   min-width: 220px;
   list-style: none;
   padding: 20px 0;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-top: none;
+  /* Removed top border */
+  border-radius: 0 0 12px 12px;
+  /* Bottom only */
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
