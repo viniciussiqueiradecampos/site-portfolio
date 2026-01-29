@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentAPI } from '../lib/supabase';
@@ -12,6 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }
         return 'dark';
     });
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
@@ -117,9 +118,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </li>
                 {branding.navGetInTouch && (
                     <li>
-                        <a href="/#contact" className="clickable menu-link" onClick={(e) => { if (window.location.pathname === '/') { e.preventDefault(); const s = document.getElementById('contact'); if (s) s.scrollIntoView({ behavior: 'smooth' }); } }}>
+                        <button
+                            className="clickable menu-link"
+                            onClick={() => {
+                                if (window.location.pathname === '/') {
+                                    const s = document.getElementById('contact');
+                                    if (s) s.scrollIntoView({ behavior: 'smooth' });
+                                } else {
+                                    navigate('/');
+                                    setTimeout(() => {
+                                        const s = document.getElementById('contact');
+                                        if (s) s.scrollIntoView({ behavior: 'smooth' });
+                                    }, 100);
+                                }
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                        >
                             GET IN TOUCH
-                        </a>
+                        </button>
                     </li>
                 )}
                 {branding.navBlog && (
@@ -149,9 +165,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                 </div>
                 {branding.navGetInTouch && (
-                    <a href="/#contact" onClick={(e) => { e.preventDefault(); toggleMenu(); setTimeout(() => { const s = document.getElementById('contact'); if (s) s.scrollIntoView({ behavior: 'smooth' }); }, 300); }} className="mobile-link" style={style}>
+                    <button
+                        onClick={() => {
+                            toggleMenu();
+                            if (window.location.pathname === '/') {
+                                setTimeout(() => {
+                                    const s = document.getElementById('contact');
+                                    if (s) s.scrollIntoView({ behavior: 'smooth' });
+                                }, 300);
+                            } else {
+                                navigate('/');
+                                setTimeout(() => {
+                                    const s = document.getElementById('contact');
+                                    if (s) s.scrollIntoView({ behavior: 'smooth' });
+                                }, 400);
+                            }
+                        }}
+                        className="mobile-link"
+                        style={{ ...style, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
                         GET IN TOUCH
-                    </a>
+                    </button>
                 )}
                 {branding.navBlog && (
                     <NavLink onClick={toggleMenu} to="/blog" className="mobile-link" style={style}>
