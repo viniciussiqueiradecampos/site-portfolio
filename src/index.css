@@ -123,8 +123,16 @@ nav ul li a {
 }
 
 /* Navigation Dropdown */
+.desktop-nav,
+.desktop-nav ul,
+.desktop-nav ul li {
+  height: 100%;
+}
+
 .desktop-nav ul li {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .nav-dropdown {
@@ -133,8 +141,8 @@ nav ul li a {
 
 .dropdown-menu {
   position: absolute;
-  top: 80px;
-  /* Flush with header bottom */
+  top: 100%;
+  /* Positioned at exactly the bottom of the header */
   left: -20px;
   background: var(--bg-color);
   min-width: 220px;

@@ -95,7 +95,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     const renderDesktopNav = () => {
         return (
-            <ul style={{ display: 'flex', gap: '40px', listStyle: 'none', margin: 0, padding: 0 }}>
+            <ul style={{ display: 'flex', gap: '40px', listStyle: 'none', margin: 0, padding: 0, height: '100%' }}>
                 {branding.navHome && (
                     <li>
                         <NavLink
