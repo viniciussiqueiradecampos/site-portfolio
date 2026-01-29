@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import Matter from 'matter-js';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     ChevronLeft, ChevronRight, ArrowDown,
     Search, Rocket, Lightbulb, Code, Target, Heart, Star, Coffee,
@@ -41,6 +41,7 @@ const SELECTABLE_ICONS: Record<string, any> = {
 
 
 
+/*
 const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
     const x = useTransform(progress, [start, end], ["120%", "-120%"]);
     const rotate = i % 2 === 0 ? -3 : 3;
@@ -68,6 +69,7 @@ const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemor
         </motion.div>
     );
 };
+*/
 
 // Physics Tags Component (Com Matter.js para Simulação Real 2D)
 const PhysicsTags = ({ tags, isMobile }: { tags: string[], isMobile: boolean }) => {
@@ -339,19 +341,21 @@ export default function About() {
             // preventing console errors
         }, containerRef);
 
-        const memoriesPin = memoriesPinRef.current;
-        if (memoriesPin) {
-            ScrollTrigger.create({
-                trigger: memoriesPin,
-                start: "top top",
-                end: () => `+=${Math.max(2500, memories.length * 800)}`,
-                pin: true,
-                scrub: 1,
-                anticipatePin: 1,
-                invalidateOnRefresh: true,
-                pinSpacing: true
-            });
-        }
+        /*
+                const memoriesPin = memoriesPinRef.current;
+                if (memoriesPin) {
+                    ScrollTrigger.create({
+                        trigger: memoriesPin,
+                        start: "top top",
+                        end: () => `+=${Math.max(2500, memories.length * 800)}`,
+                        pin: true,
+                        scrub: 1,
+                        anticipatePin: 1,
+                        invalidateOnRefresh: true,
+                        pinSpacing: true
+                    });
+                }
+        */
 
         return () => {
             lenis.destroy();
@@ -360,10 +364,13 @@ export default function About() {
         };
     }, [isLoading, isMobile, memories.length]);
 
+    // bioProgress scroll hook removed as it was used for memories
+    /*
     const { scrollYProgress: bioProgress } = useScroll({
         target: memoriesPinRef,
         offset: ["start start", "end end"]
     });
+    */
 
     if (!pageVisible) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Page is hidden</div>;
     if (isLoading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
@@ -535,22 +542,25 @@ export default function About() {
                             </p>
                         </div>
 
-                        <div className="bio-scroll-container hide-scrollbar-except-this" style={{
-                            fontSize: '19.5px',
-                            lineHeight: 1.43,
-                            fontWeight: 400,
-                            color: 'var(--text-color)',
-                            textAlign: 'left',
-                            wordBreak: 'break-word',
-                            overflowWrap: 'break-word',
-                            maxWidth: '100%',
-                            maxHeight: isMobile ? 'none' : '40vh',
-                            overflowY: isMobile ? 'visible' : 'auto',
-                            paddingRight: '20px',
-                            whiteSpace: 'pre-wrap',
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: 'var(--accent-color) transparent'
-                        }}>
+                        <div className="bio-scroll-container hide-scrollbar-except-this"
+                            data-lenis-prevent
+                            style={{
+                                fontSize: '19.5px',
+                                lineHeight: 1.43,
+                                fontWeight: 400,
+                                color: 'var(--text-color)',
+                                textAlign: 'left',
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word',
+                                maxWidth: '100%',
+                                maxHeight: isMobile ? 'none' : '40vh',
+                                overflowY: isMobile ? 'visible' : 'auto',
+                                paddingRight: '20px',
+                                whiteSpace: 'pre-wrap',
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: 'var(--accent-color) transparent',
+                                pointerEvents: 'auto' // Ensure it's interactive
+                            }}>
                             {bioText.join('')}
                         </div>
 
@@ -558,7 +568,8 @@ export default function About() {
                     </div>
                 </div>
 
-                {/* Memories Overlay (Desktop) */}
+                {/* Memories Overlay Disabled */}
+                {/* 
                 {memories.length > 0 && !isMobile && (
                     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100 }}>
                         {memories.map((m, i) => {
@@ -572,9 +583,11 @@ export default function About() {
                         })}
                     </div>
                 )}
+                */}
             </div>
 
-            {/* Mobile Memories List */}
+            {/* Mobile Memories List Disabled */}
+            {/* 
             {
                 memories.length > 0 && isMobile && (
                     <div className="container" style={{ padding: '0 5% 60px', overflowX: 'auto' }}>
@@ -588,6 +601,7 @@ export default function About() {
                     </div>
                 )
             }
+            */}
 
 
             {/* 4. HOBBIES & INTERESTS - BENTO DESIGN */}
