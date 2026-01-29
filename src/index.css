@@ -324,25 +324,33 @@ nav ul li a {
 
 
 /* Custom Scrollbars made transparent per user request to hide them from design */
+/* Global Scrollbar - Visible as requested */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-color);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  border: 2px solid var(--bg-color);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: transparent;
+  background: var(--accent-color);
 }
 
 /* For Firefox */
 * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.horizontal-scroll-container {
   scrollbar-width: none;
 }
 
