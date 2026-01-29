@@ -710,7 +710,7 @@ export default function About() {
                                 maxWidth: isMobile ? '100%' : '900px',
                                 lineHeight: 1.1
                             }}>
-                                Colleagues who<br />work with me
+                                Colleagues who<br />worked with me
                             </h3>
                         </div>
                         {testimonials.length > (isMobile ? 1 : 2) && (
