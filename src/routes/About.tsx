@@ -81,41 +81,46 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
     if (!tags || tags.length === 0) return null;
 
     return (
-        <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginBottom: '120px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Expertise</span>
-                <h3 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '-1px' }}>Interact with my Stack</h3>
+        <div style={{ width: '100%', marginBottom: '120px', overflow: 'hidden' }}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <p style={{ fontSize: '10px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '2px', textTransform: 'uppercase' }}>Grab and toss elements to play</p>
             </div>
             <div ref={constraintsRef} style={{
-                height: isMobile ? '350px' : '480px',
-                background: 'rgba(255,255,255,0.02)',
-                borderRadius: '40px',
-                border: '1px solid var(--border-color)',
+                height: isMobile ? '400px' : '600px',
+                width: '100%',
+                background: 'transparent',
                 position: 'relative',
-                overflow: 'hidden',
                 cursor: 'grab'
             }}>
-                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}>
-                    <div style={{ fontSize: '150px', fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '-10px' }}>PLAY</div>
-                </div>
                 {tags.map((tag, i) => {
-                    const initialX = Math.random() * (isMobile ? 150 : 800) + 20;
-                    const initialY = Math.random() * (isMobile ? 200 : 300) + 20;
-                    const rotate = Math.random() * 30 - 15;
+                    const initialX = Math.random() * (isMobile ? 250 : 1200) + 50;
+                    const finalY = (isMobile ? 320 : 500) - (Math.random() * 50); // Fall to bottom
+                    const rotate = Math.random() * 40 - 20;
 
                     return (
                         <motion.div
                             key={`${tag}-${i}`}
                             drag
                             dragConstraints={constraintsRef}
-                            dragElastic={0.2}
-                            dragTransition={{ power: 0.3, timeConstant: 250 }}
-                            initial={{ x: initialX, y: initialY, rotate }}
-                            whileDrag={{ scale: 1.15, cursor: 'grabbing', zIndex: 100, rotate: 0 }}
+                            dragElastic={0.1}
+                            dragTransition={{ power: 0.4, timeConstant: 200 }}
+                            initial={{ x: initialX, y: -100, rotate: rotate * 2, opacity: 0 }}
+                            whileInView={{
+                                y: finalY,
+                                opacity: 1,
+                                transition: {
+                                    type: 'spring',
+                                    stiffness: 50,
+                                    damping: 15,
+                                    delay: i * 0.05
+                                }
+                            }}
+                            viewport={{ once: true }}
+                            whileDrag={{ scale: 1.1, cursor: 'grabbing', zIndex: 100, rotate: 0 }}
                             whileHover={{ scale: 1.05 }}
                             style={{
                                 position: 'absolute',
-                                padding: isMobile ? '10px 18px' : '15px 30px',
+                                padding: isMobile ? '8px 16px' : '15px 30px',
                                 background: 'var(--bg-color)',
                                 border: '1px solid var(--border-color)',
                                 borderRadius: '100px',
@@ -123,7 +128,7 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
                                 fontWeight: 900,
                                 textTransform: 'uppercase',
                                 color: 'var(--text-color)',
-                                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                                 userSelect: 'none',
                                 whiteSpace: 'nowrap',
                                 letterSpacing: '1px'
@@ -134,7 +139,6 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
                     );
                 })}
             </div>
-            <p style={{ marginTop: '20px', fontSize: '10px', color: 'var(--text-muted)', opacity: 0.5, textAlign: 'center', letterSpacing: '2px', textTransform: 'uppercase' }}>Grab and toss elements to play</p>
         </div>
     );
 };
@@ -282,7 +286,7 @@ export default function About() {
             ScrollTrigger.create({
                 trigger: memoriesPin,
                 start: "top top",
-                end: () => `+=${Math.max(4000, memories.length * 1500)}`,
+                end: () => `+=${Math.max(2500, memories.length * 800)}`,
                 pin: true,
                 scrub: 1,
                 anticipatePin: 1,
@@ -500,11 +504,11 @@ export default function About() {
                 {memories.length > 0 && !isMobile && (
                     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100 }}>
                         {memories.map((m, i) => {
-                            const availableStart = 0.55;
-                            const availableEnd = 0.95;
+                            const availableStart = 0.1; // Start almost immediately
+                            const availableEnd = 0.9;
                             const range = availableEnd - availableStart;
                             const startM = availableStart + (i * (range / Math.max(1, memories.length)));
-                            const duration = 0.15;
+                            const duration = 0.2;
                             const endM = startM + duration;
                             return <ScrollyMemory key={m.id || i} m={m} i={i} progress={bioProgress} start={startM} end={endM} isMobile={false} />;
                         })}
@@ -729,12 +733,7 @@ export default function About() {
                 )
             }
 
-            {/* Physics Stack Tags - André Vieira Style */}
             <PhysicsTags tags={uniqueTags} />
-
-            <div style={{ textAlign: 'center', paddingBottom: '100px', opacity: 0.3 }}>
-                <p style={{ fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', fontWeight: 700 }}>End of transmission</p>
-            </div>
         </div >
     );
 }
