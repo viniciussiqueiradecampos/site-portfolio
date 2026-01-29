@@ -63,8 +63,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useAuthEffect(() => {
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabaseClient.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error("Auth check failed:", error);
+        setSession(null);
+      } else {
+        setSession(data.session);
+      }
+      setLoading(false);
+    }).catch(err => {
+      console.error("Auth check exception:", err);
+      setSession(null);
       setLoading(false);
     });
 
