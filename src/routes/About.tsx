@@ -40,7 +40,6 @@ const SELECTABLE_ICONS: Record<string, any> = {
 };
 
 
-
 /*
 const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
     const x = useTransform(progress, [start, end], ["120%", "-120%"]);
@@ -624,6 +623,12 @@ export default function About() {
                 }}>
                     {hobbies.map((hobby, i) => {
                         const Icon = SELECTABLE_ICONS[hobby.icon_name as keyof typeof SELECTABLE_ICONS] || MessageCircle;
+                        const globalAccent = 'var(--accent-color)';
+
+                        // All items: White Background, Accent Color Icon
+                        const finalIconBg = '#fff';
+                        const finalIconColor = globalAccent;
+
                         return (
                             <motion.div
                                 key={hobby.id}
@@ -645,21 +650,38 @@ export default function About() {
                                 }}
                             >
                                 <div style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '12px',
-                                    background: hobby.color || 'var(--accent-color)',
+                                    width: '80px',
+                                    height: '80px',
+                                    borderRadius: '24px',
+                                    background: finalIconBg,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    color: '#000',
-                                    boxShadow: `0 10px 20px ${(hobby.color || 'var(--accent-color)')}33`
+                                    color: finalIconColor,
+                                    boxShadow: '0 8px 16px rgba(0,0,0,0.06)'
                                 }}>
-                                    <Icon size={18} />
+                                    {hobby.icon_svg ? (
+                                        <div
+                                            className="custom-hobby-icon"
+                                            style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: 'var(--accent-color)', // Force accent color for the wrapper
+                                                fill: 'currentColor',
+                                                stroke: 'currentColor'
+                                            }}
+                                            dangerouslySetInnerHTML={{ __html: hobby.icon_svg }}
+                                        />
+                                    ) : (
+                                        <Icon size={40} />
+                                    )}
                                 </div>
                                 <div>
                                     <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-color)', margin: '0 0 8px' }}>{hobby.text}</h4>
-                                    <div style={{ width: '40px', height: '2px', background: hobby.color || 'var(--accent-color)', borderRadius: '2px' }} />
+                                    <div style={{ width: '40px', height: '2px', background: globalAccent, borderRadius: '2px' }} />
                                 </div>
                             </motion.div>
                         );

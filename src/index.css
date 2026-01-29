@@ -828,3 +828,15 @@ body {
 .container {
   overflow-x: hidden;
 }
+
+/* Custom Hobby Icons Styling */
+.custom-hobby-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.custom-hobby-icon * {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}

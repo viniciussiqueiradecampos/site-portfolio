@@ -838,6 +838,7 @@ export interface AboutHobby {
     position_y: string;
     color: string;
     icon_name: string; // Added for icon selection
+    icon_svg?: string; // New: support for custom SVG code
     created_at: string;
 }
 
@@ -901,10 +902,10 @@ export const aboutAPI = {
                 const { id, created_at, ...updateData } = hobby as any;
                 let { data, error } = await supabase.from('about_hobbies').update(updateData).eq('id', id).select().single();
 
-                // Fallback for missing icon_name column
-                if (error && error.message?.includes('column "icon_name"')) {
-                    console.warn('⚠️ executing fallback: saving hobby without icon_name');
-                    const { icon_name, ...safeData } = updateData;
+                // Fallback for missing icon_name or icon_svg columns
+                if (error && (error.message?.includes('column "icon_name"') || error.message?.includes('column "icon_svg"'))) {
+                    console.warn('⚠️ executing fallback: saving hobby without new columns');
+                    const { icon_name, icon_svg, ...safeData } = updateData;
                     const res = await supabase.from('about_hobbies').update(safeData).eq('id', id).select().single();
                     data = res.data;
                     error = res.error;
@@ -917,10 +918,10 @@ export const aboutAPI = {
                 const { id, created_at, ...insertData } = hobby as any;
                 let { data, error } = await supabase.from('about_hobbies').insert([insertData]).select().single();
 
-                // Fallback for missing icon_name column
-                if (error && error.message?.includes('column "icon_name"')) {
-                    console.warn('⚠️ executing fallback: saving hobby without icon_name');
-                    const { icon_name, ...safeData } = insertData;
+                // Fallback for missing icon_name or icon_svg columns
+                if (error && (error.message?.includes('column "icon_name"') || error.message?.includes('column "icon_svg"'))) {
+                    console.warn('⚠️ executing fallback: saving hobby without new columns');
+                    const { icon_name, icon_svg, ...safeData } = insertData;
                     const res = await supabase.from('about_hobbies').insert([safeData]).select().single();
                     data = res.data;
                     error = res.error;

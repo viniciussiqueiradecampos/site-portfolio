@@ -1727,11 +1727,45 @@ export default function AdminDashboard() {
                                 <input placeholder="50%" value={editingHobby.position_y} onChange={e => setEditingHobby({ ...editingHobby, position_y: e.target.value })} style={modalInputStyle} />
                             </div>
                             <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <label style={labelStyle}>Custom SVG Code (Optional)</label>
+                                    <label style={{ fontSize: '11px', color: 'var(--accent-color)', cursor: 'pointer', fontWeight: '900', background: 'rgba(242, 167, 61, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>
+                                        UPLOAD SVG FILE
+                                        <input
+                                            type="file"
+                                            accept=".svg"
+                                            style={{ display: 'none' }}
+                                            onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                if (file && editingHobby) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (re) => {
+                                                        const content = re.target?.result as string;
+                                                        if (content.includes('<svg')) {
+                                                            setEditingHobby({ ...editingHobby, icon_svg: content, icon_name: '' });
+                                                        } else {
+                                                            alert('Invalid SVG file. Please select a valid .svg file.');
+                                                        }
+                                                    };
+                                                    reader.readAsText(file);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                                <textarea
+                                    placeholder='<svg ...>...</svg>'
+                                    value={editingHobby.icon_svg || ''}
+                                    onChange={e => setEditingHobby({ ...editingHobby, icon_svg: e.target.value })}
+                                    style={{ ...modalInputStyle, height: '80px', fontFamily: 'monospace', fontSize: '11px' }}
+                                />
+                                <div style={{ fontSize: '10px', color: '#666', marginBottom: '15px' }}>Tip: Use fill="currentColor" or stroke="currentColor" to inherit theme colors.</div>
+                                <label style={labelStyle}>Or Select Library Icon</label>
                                 <div style={{
                                     display: 'grid',
                                     gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
                                     gap: '12px',
-                                    maxHeight: '350px',
+                                    maxHeight: '200px',
                                     overflowY: 'auto',
                                     background: '#111',
                                     padding: '20px',
@@ -1744,12 +1778,12 @@ export default function AdminDashboard() {
                                         return (
                                             <button
                                                 key={icon}
-                                                onClick={() => setEditingHobby({ ...editingHobby, icon_name: icon })}
+                                                onClick={() => setEditingHobby({ ...editingHobby, icon_name: icon, icon_svg: '' })}
                                                 title={icon}
                                                 style={{
                                                     aspectRatio: '1/1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                                                    background: editingHobby.icon_name === icon ? 'var(--accent-color)' : '#0a0a0a',
-                                                    color: editingHobby.icon_name === icon ? '#000' : '#fff',
+                                                    background: (editingHobby.icon_name === icon && !editingHobby.icon_svg) ? 'var(--accent-color)' : '#0a0a0a',
+                                                    color: (editingHobby.icon_name === icon && !editingHobby.icon_svg) ? '#000' : '#fff',
                                                     border: '1px solid #333', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
                                                 }}
                                             >
@@ -1759,7 +1793,7 @@ export default function AdminDashboard() {
                                         );
                                     })}
                                 </div>
-                                <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected: {editingHobby.icon_name}</div>
+                                <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected Library Icon: {editingHobby.icon_name}</div>
                             </div>
                             <div style={{ padding: '20px', background: '#111', borderRadius: '12px', border: '1px solid #222' }}>
                                 <div style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>Preview:</div>
