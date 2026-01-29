@@ -170,7 +170,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 style={{
                     position: 'fixed', top: 0, left: 0, right: 0,
                     height: 'var(--header-height)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', // Use stretch to allow nav items to fill height
                     zIndex: 1000,
                     padding: '0 5%',
                     pointerEvents: 'auto',
@@ -187,7 +187,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     zIndex: 5
                 }} />
 
-                <div className="logo clickable" style={{ pointerEvents: 'auto', minWidth: '120px', position: 'relative', zIndex: 10 }}>
+                <div className="logo clickable" style={{ pointerEvents: 'auto', minWidth: '120px', position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center' }}>
                     <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                             <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText1}</span>
