@@ -583,6 +583,16 @@ export default function Home() {
 
                 <div className="footer-credits" style={{ marginTop: '150px', opacity: 0.3, fontSize: '12px', letterSpacing: '2px', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: footerText }} />
             </section>
+
+            {/* Current Inspiration Section on Home as requested */}
+            <section style={{ padding: '80px 0', background: 'var(--bg-color)', borderTop: '1px solid var(--border-color)' }}>
+                <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', textAlign: 'center' }}>
+                    <h3 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 900, marginBottom: '40px', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Inspiration</h3>
+                    <div style={{ maxWidth: '700px', margin: '0 auto', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.5)', border: '1px solid #111', background: '#050505' }}>
+                        <iframe style={{ borderRadius: '12px' }} src="https://open.spotify.com/embed/playlist/37i9dQZF1E38YhKqLwQ8n8?utm_source=generator" width="100%" height="152" frameBorder="0" allowFullScreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" />
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }

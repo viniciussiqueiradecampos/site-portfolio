@@ -109,7 +109,7 @@ const TypewriterGreeting = ({ languages }: { languages: string[] }) => {
     }, [blink]);
 
     return (
-        <span style={{ position: 'relative' }}>
+        <span style={{ position: 'relative', fontFamily: index >= 12 ? '"Noto Sans JP", sans-serif' : 'inherit' }}>
             {`${languages[index].substring(0, subIndex)}`}
             <span style={{ opacity: blink ? 1 : 0, color: 'var(--accent-color)' }}>|</span>
         </span>
@@ -117,7 +117,11 @@ const TypewriterGreeting = ({ languages }: { languages: string[] }) => {
 };
 
 export default function About() {
-    const languages = ["Hello", "Olá", "Hola", "Dia dhuit", "Ciao", "Bonjour", "Konnichiwa", "Namaste", "Salaam", "Guten Tag", "Nǐ hǎo", "Aloha"];
+    const languages = [
+        "Hello", "Olá", "Hola", "Dia dhuit", "Ciao", "Bonjour",
+        "Konnichiwa", "Namaste", "Salaam", "Guten Tag", "Nǐ hǎo", "Aloha",
+        "こんにちは", "你好" // Japanese and Chinese
+    ];
     const [isMobile, setIsMobile] = useState(false); // Default to desktop for safer hydration
     const [isLoading, setIsLoading] = useState(true);
 
@@ -252,17 +256,31 @@ export default function About() {
             >
                 <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1 }} />
 
-                <div style={{ position: 'relative', zIndex: 2, pointerEvents: 'none', width: '100%', padding: '0 5%', textAlign: 'center' }}>
+                <div style={{
+                    position: 'relative',
+                    zIndex: 2,
+                    pointerEvents: 'none',
+                    width: '100%',
+                    padding: isMobile ? '0 20px' : '0 10%',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%', // Ensure full height centering
+                    marginTop: '-40px' // Offset for the arrow indicator
+                }}>
                     <h1
                         style={{
-                            fontSize: 'clamp(50px, 12vw, 120px)',
+                            fontSize: 'clamp(32px, 10vw, 120px)', // Slightly smaller for better fit
                             fontWeight: 950,
                             fontFamily: 'var(--font-display)',
                             margin: 0,
                             lineHeight: 1,
                             color: '#fff',
                             textTransform: 'uppercase',
-                            letterSpacing: '-2px'
+                            letterSpacing: '-2px',
+                            maxWidth: '100%'
                         }}
                     >
                         <TypewriterGreeting languages={languages} />
@@ -283,7 +301,7 @@ export default function About() {
                 </div>
 
                 <a
-                    href="#about-bio-section"
+                    href="#scroll-target"
                     className="scroll-indicator"
                     style={{
                         position: 'absolute',
@@ -302,6 +320,9 @@ export default function About() {
                     <ArrowDown size={32} color="var(--accent-color)" />
                 </a>
             </section>
+
+            {/* Scroll Target to stop slightly above the photo */}
+            <div id="scroll-target" style={{ height: '0', scrollMarginTop: '120px' }} />
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
             <div id="about-bio-section" ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflowX: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
@@ -384,15 +405,7 @@ export default function About() {
                             {bioText.join('')}
                         </div>
 
-                        {/* Scroll Indicator */}
-                        <motion.div
-                            style={{ marginTop: '30px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', opacity: 0.8, position: 'relative', zIndex: 25 }}
-                            animate={{ y: [0, 5, 0], opacity: [0.5, 1, 0.5] }}
-                            transition={{ repeat: Infinity, duration: 2 }}
-                        >
-                            <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }}>Keep Scrolling</span>
-                            <ArrowDown size={14} />
-                        </motion.div>
+                        {/* Scroll Indicator Removed */}
                     </div>
                 </div>
 
@@ -494,43 +507,48 @@ export default function About() {
             {/* 5. TESTIMONIALS - FIGMA STACKED GRID */}
             <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginBottom: '150px', position: 'relative' }}>
                 <motion.div
-                    style={{ marginBottom: '60px' }}
+                    style={{ marginBottom: '60px', position: 'relative', zIndex: 20 }}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "0px 0px 200px 0px" }}
                     transition={{ duration: 0.6 }}
                 >
-                    <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>Collaboration</span>
-                    <h3 style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-2px', margin: '10px 0' }}>Colleagues who<br />work with me</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
+                        <div>
+                            <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase' }}>Collaboration</span>
+                            <h3 style={{ fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-2px', margin: '10px 0', maxWidth: '80%' }}>Colleagues who<br />work with me</h3>
+                        </div>
+                        {testimonials.length > (isMobile ? 1 : 2) && (
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                <button
+                                    onClick={() => setTestimonialIndex(prev => Math.max(0, prev - 1))}
+                                    style={{
+                                        width: '44px', height: '44px', borderRadius: '50%', background: 'var(--surface-color)',
+                                        border: '1px solid var(--border-color)', color: 'var(--text-color)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                                        opacity: testimonialIndex === 0 ? 0.3 : 1
+                                    }}
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button
+                                    onClick={() => setTestimonialIndex(prev => Math.min(testimonials.length - (isMobile ? 1 : 2), prev + 1))}
+                                    style={{
+                                        width: '44px', height: '44px', borderRadius: '50%', background: 'var(--surface-color)',
+                                        border: '1px solid var(--border-color)', color: 'var(--text-color)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                                        opacity: testimonialIndex >= testimonials.length - (isMobile ? 1 : 2) ? 0.3 : 1
+                                    }}
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </motion.div>
 
                 <div style={{ position: 'relative', minHeight: '400px' }}>
-                    {testimonials.length > 2 && (
-                        <div style={{ position: 'absolute', top: '-80px', right: 0, display: 'flex', gap: '10px' }}>
-                            <button
-                                onClick={() => setTestimonialIndex(prev => Math.max(0, prev - 1))}
-                                style={{
-                                    width: '44px', height: '44px', borderRadius: '50%', background: 'var(--surface-color)',
-                                    border: '1px solid var(--border-color)', color: 'var(--text-color)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                                    opacity: testimonialIndex === 0 ? 0.3 : 1
-                                }}
-                            >
-                                <ChevronLeft size={20} />
-                            </button>
-                            <button
-                                onClick={() => setTestimonialIndex(prev => Math.min(testimonials.length - 2, prev + 1))}
-                                style={{
-                                    width: '44px', height: '44px', borderRadius: '50%', background: 'var(--surface-color)',
-                                    border: '1px solid var(--border-color)', color: 'var(--text-color)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                                    opacity: testimonialIndex >= testimonials.length - 2 ? 0.3 : 1
-                                }}
-                            >
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
-                    )}
+                    {/* Controls moved to the title row above */}
 
                     <div className="testimonials-grid" style={{
                         display: 'grid',
@@ -577,16 +595,19 @@ export default function About() {
                                     </div>
 
                                     <p style={{
-                                        fontSize: '17px',
+                                        fontSize: isMobile ? '15px' : '17px',
                                         lineHeight: 1.6,
                                         color: 'var(--text-color)',
                                         margin: '0',
-                                        background: 'var(--bg-color)',
-                                        padding: '24px',
-                                        borderRadius: '16px',
+                                        background: 'rgba(255,255,255,0.02)', // Slightly lighter for contrast
+                                        padding: isMobile ? '20px' : '30px',
+                                        borderRadius: '24px',
                                         border: `1px solid var(--border-color)`,
                                         fontWeight: 500,
-                                        flex: 1
+                                        flex: 1,
+                                        overflowWrap: 'break-word',
+                                        wordBreak: 'break-word',
+                                        width: '100%' // Ensure no cutting
                                     }}>
                                         "{item.quote}"
                                     </p>

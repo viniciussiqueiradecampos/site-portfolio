@@ -64,6 +64,13 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -142,22 +149,19 @@ nav ul li a {
 .dropdown-menu {
   position: absolute;
   top: 100%;
-  /* Positioned at exactly the bottom of the header */
-  left: -20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
   background: var(--bg-color);
-  min-width: 220px;
+  min-width: 200px;
   list-style: none;
-  padding: 20px 0;
+  padding: 10px 0;
   border: 1px solid var(--border-color);
   border-top: none;
-  /* Removed top border */
-  border-radius: 0 0 12px 12px;
-  /* Bottom only */
+  border-radius: 0 0 16px 16px;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(10px);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1;
+  z-index: 100 !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
 }
@@ -165,7 +169,7 @@ nav ul li a {
 .desktop-nav ul li:hover .dropdown-menu {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 .dropdown-menu li {
@@ -668,4 +672,101 @@ nav ul li a {
   background: var(--surface-hover);
 }
 
-/* Cache Buster v2.3 */
+/* Cache Buster v2.4 */
+
+.article-content {
+  overflow-x: hidden !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+
+.article-content * {
+  max-width: 100% !important;
+  overflow-wrap: break-word !important;
+}
+
+.article-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 30px auto;
+  border-radius: 20px;
+}
+
+.article-content pre {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+}
+
+.article-content blockquote {
+  margin: 30px 0;
+  padding: 20px 30px;
+  border-left: 4px solid var(--accent-color);
+  background: rgba(255, 255, 255, 0.03);
+  font-style: italic;
+  border-radius: 0 12px 12px 0;
+}
+
+/* Blog Page Container Fix */
+.blog-page .container {
+  overflow: hidden !important;
+}
+
+.blog-card {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Global scroll fix */
+#root {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  position: relative;
+}
+
+.article-content {
+  overflow-x: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto !important;
+  display: block;
+  margin: 30px auto;
+}
+
+.article-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding: 20px;
+}
+
+.article-content blockquote {
+  margin: 30px 0;
+  padding: 20px;
+  border-left: 4px solid var(--accent-color);
+  background: rgba(255, 255, 255, 0.03);
+  font-style: italic;
+}
+
+/* Ensure blog cards don't overflow */
+.blog-card {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.container {
+  overflow-x: hidden;
+}
