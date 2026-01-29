@@ -262,13 +262,14 @@ export default function About() {
                     pointerEvents: 'none',
                     width: '100%',
                     padding: isMobile ? '0 20px' : '0 10%',
+                    paddingTop: isMobile ? 'calc(var(--header-height) + 20px)' : 'var(--header-height)', // More space for header on mobile
+                    paddingBottom: isMobile ? '80px' : 0, // Space for the arrow
                     textAlign: 'center',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: '100%', // Ensure full height centering
-                    marginTop: '-40px' // Offset for the arrow indicator
+                    height: '100%'
                 }}>
                     <h1
                         style={{
@@ -305,12 +306,14 @@ export default function About() {
                     className="scroll-indicator"
                     style={{
                         position: 'absolute',
-                        bottom: '60px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 9999, // Extreme z-index to ensure clickable
+                        bottom: '40px',
+                        left: '0',
+                        right: '0',
+                        margin: '0 auto',
+                        width: 'fit-content',
+                        zIndex: 2,
                         cursor: 'pointer',
-                        padding: '20px',
+                        padding: '10px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -321,8 +324,8 @@ export default function About() {
                 </a>
             </section>
 
-            {/* Scroll Target to stop slightly above the photo */}
-            <div id="scroll-target" style={{ height: '0', scrollMarginTop: '120px' }} />
+            {/* Scroll Target to stop content centered vertically between header and bottom */}
+            <div id="scroll-target" style={{ height: '0', scrollMarginTop: 'calc(var(--header-height) / 2)' }} />
 
             {/* 2. PINNED BIO + MEMORIES OVERLAY */}
             <div id="about-bio-section" ref={memoriesPinRef} style={{ background: 'var(--bg-color)', minHeight: isMobile ? 'auto' : '100vh', position: 'relative', overflowX: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: isMobile ? '0' : '60px' }}>
@@ -457,7 +460,8 @@ export default function About() {
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
-                    gap: '20px'
+                    gap: '20px',
+                    overflow: 'hidden' // Fix vertical overflow
                 }}>
                     {hobbies.map((hobby, i) => {
                         const Icon = SELECTABLE_ICONS[hobby.icon_name as keyof typeof SELECTABLE_ICONS] || MessageCircle;
@@ -565,14 +569,14 @@ export default function About() {
                                     transition={{ duration: 0.6, delay: idx * 0.1 }}
                                     className="testimonial-card"
                                     style={{
-                                        padding: '40px',
+                                        padding: isMobile ? '30px' : '40px',
                                         background: 'var(--surface-color)',
                                         borderRadius: '32px',
                                         border: `1px solid var(--border-color)`,
                                         boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        minHeight: '350px'
+                                        minHeight: isMobile ? 'auto' : '350px' // Remove forced height on mobile
                                     }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>

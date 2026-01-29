@@ -64,11 +64,14 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+html {
   overflow-x: hidden;
+}
+
+body {
   width: 100%;
   position: relative;
+  overflow-x: hidden;
 }
 
 body {
@@ -76,10 +79,8 @@ body {
   color: var(--text-color);
   font-family: var(--font-body);
   margin: 0;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.5s ease, color 0.5s ease;
-  scroll-behavior: smooth;
 }
 
 @keyframes bounce {
@@ -129,10 +130,9 @@ nav ul li a {
   z-index: 10;
 }
 
-/* Navigation Dropdown */
 .desktop-nav,
-.desktop-nav ul,
-.desktop-nav ul li {
+.desktop-nav>ul,
+.desktop-nav>ul>li {
   height: 100%;
 }
 
@@ -149,27 +149,32 @@ nav ul li a {
 .dropdown-menu {
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
+  /* Now correctly relative to 100% height header */
+  left: 0;
   background: var(--bg-color);
-  min-width: 200px;
+  min-width: 220px;
   list-style: none;
   padding: 10px 0;
   border: 1px solid var(--border-color);
   border-top: none;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 12px 12px;
   opacity: 0;
   visibility: hidden;
+  transform: translateY(10px);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 100 !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
+  pointer-events: none;
+  height: auto !important;
+  /* Fix: Force auto height instead of inherited 100% */
 }
 
 .desktop-nav ul li:hover .dropdown-menu {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .dropdown-menu li {
@@ -180,10 +185,10 @@ nav ul li a {
 
 .dropdown-menu li a {
   display: block;
-  padding: 14px 28px;
+  padding: 15px 30px;
   text-decoration: none;
   color: var(--text-color);
-  font-size: 10px !important;
+  font-size: 11px !important;
   letter-spacing: 0.15em !important;
   transition: all 0.3s;
   white-space: nowrap;
@@ -724,11 +729,14 @@ nav ul li a {
   width: 100% !important;
 }
 
-/* Global scroll fix */
+/* Global scroll fix - Removed root overflow to stop vertical issues */
 #root {
-  overflow-x: hidden !important;
-  width: 100% !important;
+  width: 100%;
   position: relative;
+}
+
+.selected-works-title {
+  font-size: 60px !important;
 }
 
 .article-content {
