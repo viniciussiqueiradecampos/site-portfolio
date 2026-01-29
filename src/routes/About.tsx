@@ -73,7 +73,7 @@ const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemor
     );
 };
 
-// Physics Tags Component (André Vieira Style)
+// Physics Tags Component (Com Gravidade Real e Cores Alternadas)
 const PhysicsTags = ({ tags }: { tags: string[] }) => {
     const constraintsRef = useRef(null);
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -94,44 +94,53 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
             }}>
                 {tags.map((tag, i) => {
                     const initialX = Math.random() * (isMobile ? 250 : 1200) + 50;
-                    const finalY = (isMobile ? 320 : 500) - (Math.random() * 50); // Fall to bottom
+                    const finalY = (isMobile ? 320 : 500) - (Math.random() * 60);
                     const rotate = Math.random() * 40 - 20;
+
+                    // Intercalar cores: Preto com texto branco / Branco com texto preto
+                    const isDark = i % 2 === 0;
+                    const bg = isDark ? '#000' : '#fff';
+                    const color = isDark ? '#fff' : '#000';
 
                     return (
                         <motion.div
                             key={`${tag}-${i}`}
                             drag
                             dragConstraints={constraintsRef}
-                            dragElastic={0.1}
+                            dragElastic={0.05}
                             dragTransition={{ power: 0.4, timeConstant: 200 }}
-                            initial={{ x: initialX, y: -100, rotate: rotate * 2, opacity: 0 }}
+                            initial={{ x: initialX, y: -200, rotate: rotate * 2, opacity: 0 }}
                             whileInView={{
                                 y: finalY,
                                 opacity: 1,
                                 transition: {
                                     type: 'spring',
-                                    stiffness: 50,
-                                    damping: 15,
+                                    stiffness: 40,
+                                    damping: 12,
                                     delay: i * 0.05
                                 }
                             }}
+                            // Gravity: Sempre volta para o finalY
+                            animate={{ y: finalY }}
+                            transition={{ type: 'spring', stiffness: 30, damping: 10 }}
                             viewport={{ once: true }}
                             whileDrag={{ scale: 1.1, cursor: 'grabbing', zIndex: 100, rotate: 0 }}
                             whileHover={{ scale: 1.05 }}
                             style={{
                                 position: 'absolute',
                                 padding: isMobile ? '8px 16px' : '15px 30px',
-                                background: 'var(--bg-color)',
-                                border: '1px solid var(--border-color)',
+                                background: bg,
+                                border: '1px solid rgba(255,255,255,0.1)',
                                 borderRadius: '100px',
                                 fontSize: isMobile ? '11px' : '14px',
                                 fontWeight: 900,
                                 textTransform: 'uppercase',
-                                color: 'var(--text-color)',
+                                color: color,
                                 boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                                 userSelect: 'none',
                                 whiteSpace: 'nowrap',
-                                letterSpacing: '1px'
+                                letterSpacing: '1px',
+                                zIndex: i
                             }}
                         >
                             {tag}
