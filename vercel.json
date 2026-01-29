@@ -1,7 +1,15 @@
 {
     "rewrites": [
         {
-            "source": "/(.*)",
+            "source": "/admin",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/admin/(.*)",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/((?!assets/|uploads/|favicon.ico|vite.svg).*)",
             "destination": "/index.html"
         }
     ],
@@ -37,6 +45,5 @@
         }
     ],
     "trailingSlash": false,
-    "cleanUrls": true,
     "framework": "vite"
 }
