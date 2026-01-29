@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useScroll, useTransform, motion, AnimatePresence } from 'framer-motion';
-import { Eye } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
@@ -142,6 +142,16 @@ export default function Home() {
             });
             setCurrentProjectIndex(index);
         }
+    };
+
+    const nextProject = () => {
+        const nextIndex = (currentProjectIndex + 1) % projects.length;
+        scrollToProject(nextIndex);
+    };
+
+    const prevProject = () => {
+        const prevIndex = (currentProjectIndex - 1 + projects.length) % projects.length;
+        scrollToProject(prevIndex);
     };
 
     // Auto-scroll effect
@@ -434,115 +444,175 @@ export default function Home() {
                         </Link>
                     </div>
 
-                    <div className="horizontal-scroll-container" ref={scrollContainerRef} onScroll={handleCarouselScroll} style={{ paddingLeft: '0' }}>
-                        {projects.map((item, i) => (
-                            <div
-                                key={i}
-                                className="home-project-card clickable"
-                                onClick={() => {
-                                    if (isDragging.current) return;
-                                    openModal(item);
-                                }}
+                    {/* Scroll Container Wrapper for Arrow Centering */}
+                    <div style={{ position: 'relative', width: '100%' }}>
+                        <div className="horizontal-scroll-container" ref={scrollContainerRef} onScroll={handleCarouselScroll} style={{ paddingLeft: '0' }}>
+                            {projects.map((item, i) => (
+                                <div
+                                    key={i}
+                                    className="home-project-card clickable"
+                                    onClick={() => {
+                                        if (isDragging.current) return;
+                                        openModal(item);
+                                    }}
+                                    style={{
+                                        marginLeft: i === 0 ? '0px' : '0px'
+                                    }}
+                                >
+                                    <div className="project-image-wrapper" style={{
+                                        width: '100%', height: '400px', overflow: 'hidden',
+                                        borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
+                                        padding: '15px', background: 'rgba(255,255,255,0.03)',
+                                        position: 'relative'
+                                    }}>
+                                        <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
+                                            <img src={item.image_url} alt={item.image_alt || item.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+                                            {/* HOVER OVERLAY WITH EYE ICON */}
+                                            <div className="card-hover-overlay" style={{
+                                                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
+                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                                gap: '12px', opacity: 0, transition: '0.3s ease'
+                                            }}>
+                                                <div style={{
+                                                    width: '64px', height: '64px',
+                                                    background: 'rgba(255,255,255,0.1)',
+                                                    backdropFilter: 'blur(10px)',
+                                                    borderRadius: '50%',
+                                                    color: '#fff',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    border: '1px solid rgba(255,255,255,0.2)'
+                                                }}>
+                                                    <Eye size={24} />
+                                                </div>
+                                                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap', marginTop: '20px' }}>
+                                        <div style={{ flex: 1, minWidth: '200px' }}>
+                                            <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: '0 0 10px 0' }}>{item.title}</h3></RevealText>
+                                            <div className="project-tags-container" style={{
+                                                display: 'flex',
+                                                gap: '10px',
+                                                flexWrap: 'nowrap',
+                                                overflowX: 'auto',
+                                                paddingBottom: '5px',
+                                                width: '100%',
+                                                msOverflowStyle: 'none',
+                                                scrollbarWidth: 'none',
+                                                WebkitOverflowScrolling: 'touch'
+                                            }}>
+                                                {item.tags?.map(tag => (
+                                                    <RevealText key={tag}>
+                                                        <div className="project-tag" style={{
+                                                            padding: '8px 16px', border: '1px solid var(--border-color)',
+                                                            borderRadius: '50px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px'
+                                                        }}>
+                                                            {tag}
+                                                        </div>
+                                                    </RevealText>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <RevealText>
+                                                <div style={{
+                                                    padding: '12px 32px',
+                                                    background: '#fff',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '100px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '900',
+                                                    color: '#000',
+                                                    letterSpacing: '1px',
+                                                    textTransform: 'uppercase',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+                                                }} className="learn-more-btn-pill">
+                                                    LEARN MORE →
+                                                </div>
+                                            </RevealText>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Navigation Arrows (Sides) - Centered with Image (400px height) */}
+                        <>
+                            <button
+                                onClick={prevProject}
+                                className="clickable"
                                 style={{
-                                    marginLeft: i === 0 ? '0px' : '0px' // Initial state, will adjust if needed
+                                    position: 'absolute',
+                                    left: isMobile ? '10px' : '-30px',
+                                    top: '200px',
+                                    transform: 'translateY(-50%)',
+                                    zIndex: 100,
+                                    background: 'rgba(255,255,255,0.05)',
+                                    backdropFilter: 'blur(15px)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    color: '#fff',
+                                    width: isMobile ? '44px' : '60px',
+                                    height: isMobile ? '44px' : '60px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
                                 }}
                             >
-                                <div className="project-image-wrapper" style={{
-                                    width: '100%', height: '400px', overflow: 'hidden',
-                                    borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
-                                    padding: '15px', background: 'rgba(255,255,255,0.03)',
-                                    position: 'relative'
-                                }}>
-                                    <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
-                                        <img src={item.image_url} alt={item.image_alt || item.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <ChevronLeft size={isMobile ? 20 : 24} />
+                            </button>
 
-                                        {/* HOVER OVERLAY WITH EYE ICON */}
-                                        <div className="card-hover-overlay" style={{
-                                            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
-                                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                            gap: '12px', opacity: 0, transition: '0.3s ease'
-                                        }}>
-                                            <div style={{
-                                                width: '64px', height: '64px',
-                                                background: 'rgba(255,255,255,0.1)',
-                                                backdropFilter: 'blur(10px)',
-                                                borderRadius: '50%',
-                                                color: '#fff',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '1px solid rgba(255,255,255,0.2)'
-                                            }}>
-                                                <Eye size={24} />
-                                            </div>
-                                            <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>VIEW PROJECT</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap', marginTop: '20px' }}>
-                                    <div style={{ flex: 1, minWidth: '200px' }}>
-                                        <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: '0 0 10px 0' }}>{item.title}</h3></RevealText>
-                                        <div className="project-tags-container" style={{
-                                            display: 'flex',
-                                            gap: '10px',
-                                            flexWrap: 'nowrap',
-                                            overflowX: 'auto',
-                                            paddingBottom: '5px',
-                                            width: '100%',
-                                            msOverflowStyle: 'none',
-                                            scrollbarWidth: 'none',
-                                            WebkitOverflowScrolling: 'touch'
-                                        }}>
-                                            {item.tags?.map(tag => (
-                                                <RevealText key={tag}>
-                                                    <div className="project-tag" style={{
-                                                        padding: '8px 16px', border: '1px solid var(--border-color)',
-                                                        borderRadius: '50px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px'
-                                                    }}>
-                                                        {tag}
-                                                    </div>
-                                                </RevealText>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <RevealText>
-                                            <div style={{
-                                                padding: '12px 32px',
-                                                background: '#fff',
-                                                border: '1px solid #ddd',
-                                                borderRadius: '100px',
-                                                fontSize: '11px',
-                                                fontWeight: '900',
-                                                color: '#000',
-                                                letterSpacing: '1px',
-                                                textTransform: 'uppercase',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                                boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
-                                            }} className="learn-more-btn-pill">
-                                                LEARN MORE →
-                                            </div>
-                                        </RevealText>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                            <button
+                                onClick={nextProject}
+                                className="clickable"
+                                style={{
+                                    position: 'absolute',
+                                    right: isMobile ? '10px' : '-30px',
+                                    top: '200px',
+                                    transform: 'translateY(-50%)',
+                                    zIndex: 100,
+                                    background: 'rgba(255,255,255,0.05)',
+                                    backdropFilter: 'blur(15px)',
+                                    border: '1px solid rgba(255,255,255,0.1)', // Fixed minor opacity diff
+                                    color: '#fff',
+                                    width: isMobile ? '44px' : '60px',
+                                    height: isMobile ? '44px' : '60px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                                }}
+                            >
+                                <ChevronRight size={isMobile ? 20 : 24} />
+                            </button>
+                        </>
                     </div>
 
                     {/* Pagination Dots */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '40px' }}>
                         {projects.map((_, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => scrollToProject(idx)}
                                 className="clickable"
                                 style={{
-                                    width: currentProjectIndex === idx ? '32px' : '12px',
-                                    height: '12px',
+                                    width: currentProjectIndex === idx ? '24px' : '8px',
+                                    height: '8px',
                                     borderRadius: '100px',
-                                    background: currentProjectIndex === idx ? 'var(--accent-color)' : 'var(--border-color)',
+                                    background: currentProjectIndex === idx ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
                                     border: 'none',
                                     cursor: 'pointer',
                                     transition: 'all 0.3s ease'
