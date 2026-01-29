@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import Matter from 'matter-js';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
     ChevronLeft, ChevronRight, ArrowDown,
@@ -73,80 +74,132 @@ const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemor
     );
 };
 
-// Physics Tags Component (Com Gravidade Real e Cores Alternadas)
+// Physics Tags Component (Com Matter.js para Simulação Real 2D)
 const PhysicsTags = ({ tags }: { tags: string[] }) => {
-    const constraintsRef = useRef(null);
+    const sceneRef = useRef<HTMLDivElement>(null);
+    const engineRef = useRef(Matter.Engine.create());
+    const [bodies, setBodies] = useState<{ body: Matter.Body, tag: string, isDark: boolean }[]>([]);
+    const requestRef = useRef<number>(null);
+
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    useEffect(() => {
+        if (!sceneRef.current || !tags.length) return;
+
+        const engine = engineRef.current;
+        const world = engine.world;
+
+        // Configurações de gravidade
+        engine.gravity.y = 1;
+
+        const width = window.innerWidth;
+        const height = isMobile ? 400 : 600;
+
+        // Paredes e Chão
+        const ground = Matter.Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
+        const leftWall = Matter.Bodies.rectangle(-50, height / 2, 100, height, { isStatic: true });
+        const rightWall = Matter.Bodies.rectangle(width + 50, height / 2, 100, height, { isStatic: true });
+
+        Matter.World.add(world, [ground, leftWall, rightWall]);
+
+        // Criar corpos para as tags
+        const newBodies = tags.map((tag, i) => {
+            const isDark = i % 2 === 0;
+            // Estimar largura baseada no texto (valor aproximado para colisão)
+            const tagWidth = tag.length * 10 + 40;
+            const tagHeight = isMobile ? 35 : 50;
+
+            const body = Matter.Bodies.rectangle(
+                Math.random() * (width - 200) + 100,
+                -Math.random() * 500, // Começar fora da tela (gravidade fará cair)
+                tagWidth,
+                tagHeight,
+                {
+                    chamfer: { radius: 20 }, // Bordas arredondadas na colisão
+                    restitution: 0.5, // Quicar levemente
+                    friction: 0.1,
+                    angle: (Math.random() - 0.5) * 0.5
+                }
+            );
+            return { body, tag, isDark };
+        });
+
+        setBodies(newBodies);
+        Matter.World.add(world, newBodies.map(b => b.body));
+
+        // Interação com Mouse
+        const mouse = Matter.Mouse.create(sceneRef.current);
+        const mouseConstraint = Matter.MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: { visible: false }
+            }
+        });
+        Matter.World.add(world, mouseConstraint);
+
+        // Update loop
+        const update = () => {
+            Matter.Engine.update(engine, 1000 / 60);
+
+            // Forçamos o re-render do React para sincronizar as posições
+            // Em uma app de alta performance usaríamos refs diretas, 
+            // mas com poucas tags o state é fluido o suficiente.
+            setBodies(prev => [...prev]);
+
+            requestRef.current = requestAnimationFrame(update);
+        };
+        requestRef.current = requestAnimationFrame(update);
+
+        return () => {
+            if (requestRef.current) cancelAnimationFrame(requestRef.current);
+            Matter.World.clear(world, false);
+            Matter.Engine.clear(engine);
+        };
+    }, [tags]);
 
     if (!tags || tags.length === 0) return null;
 
     return (
-        <div style={{ width: '100%', marginBottom: '120px', overflow: 'hidden' }}>
+        <div style={{ width: '100%', marginBottom: '0px', paddingBottom: '80px', overflow: 'hidden', position: 'relative' }}>
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <p style={{ fontSize: '10px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '2px', textTransform: 'uppercase' }}>Grab and toss elements to play</p>
             </div>
-            <div ref={constraintsRef} style={{
+
+            <div ref={sceneRef} style={{
                 height: isMobile ? '400px' : '600px',
                 width: '100%',
                 background: 'transparent',
                 position: 'relative',
                 cursor: 'grab'
             }}>
-                {tags.map((tag, i) => {
-                    const initialX = Math.random() * (isMobile ? 250 : 1200) + 50;
-                    const finalY = (isMobile ? 320 : 500) - (Math.random() * 60);
-                    const rotate = Math.random() * 40 - 20;
-
-                    // Intercalar cores: Preto com texto branco / Branco com texto preto
-                    const isDark = i % 2 === 0;
-                    const bg = isDark ? '#000' : '#fff';
-                    const color = isDark ? '#fff' : '#000';
-
-                    return (
-                        <motion.div
-                            key={`${tag}-${i}`}
-                            drag
-                            dragConstraints={constraintsRef}
-                            dragElastic={0.05}
-                            dragTransition={{ power: 0.4, timeConstant: 200 }}
-                            initial={{ x: initialX, y: -200, rotate: rotate * 2, opacity: 0 }}
-                            whileInView={{
-                                y: finalY,
-                                opacity: 1,
-                                transition: {
-                                    type: 'spring',
-                                    stiffness: 40,
-                                    damping: 12,
-                                    delay: i * 0.05
-                                }
-                            }}
-                            // Gravity: Sempre volta para o finalY
-                            animate={{ y: finalY }}
-                            transition={{ type: 'spring', stiffness: 30, damping: 10 }}
-                            viewport={{ once: true }}
-                            whileDrag={{ scale: 1.1, cursor: 'grabbing', zIndex: 100, rotate: 0 }}
-                            whileHover={{ scale: 1.05 }}
-                            style={{
-                                position: 'absolute',
-                                padding: isMobile ? '8px 16px' : '15px 30px',
-                                background: bg,
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '100px',
-                                fontSize: isMobile ? '11px' : '14px',
-                                fontWeight: 900,
-                                textTransform: 'uppercase',
-                                color: color,
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                                userSelect: 'none',
-                                whiteSpace: 'nowrap',
-                                letterSpacing: '1px',
-                                zIndex: i
-                            }}
-                        >
-                            {tag}
-                        </motion.div>
-                    );
-                })}
+                {bodies.map((b, i) => (
+                    <div
+                        key={`${b.tag}-${i}`}
+                        style={{
+                            position: 'absolute',
+                            left: b.body.position.x,
+                            top: b.body.position.y,
+                            transform: `translate(-50%, -50%) rotate(${b.body.angle}rad)`,
+                            padding: isMobile ? '8px 16px' : '15px 30px',
+                            background: b.isDark ? '#000' : '#fff',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '100px',
+                            fontSize: isMobile ? '11px' : '14px',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            color: b.isDark ? '#fff' : '#000',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                            userSelect: 'none',
+                            whiteSpace: 'nowrap',
+                            letterSpacing: '1px',
+                            pointerEvents: 'none', // Matter.js cuida do mouse constraint no container
+                            zIndex: 10
+                        }}
+                    >
+                        {b.tag}
+                    </div>
+                ))}
             </div>
         </div>
     );
