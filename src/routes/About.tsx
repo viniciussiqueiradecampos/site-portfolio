@@ -93,7 +93,7 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
         engine.gravity.y = 1;
 
         const width = window.innerWidth;
-        const height = isMobile ? 400 : 600;
+        const height = isMobile ? 320 : 450;
 
         // Paredes e Chão
         const ground = Matter.Bodies.rectangle(width / 2, height + 50, width, 100, { isStatic: true });
@@ -161,13 +161,13 @@ const PhysicsTags = ({ tags }: { tags: string[] }) => {
     if (!tags || tags.length === 0) return null;
 
     return (
-        <div style={{ width: '100%', marginBottom: '0px', paddingBottom: '80px', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ width: '100%', marginBottom: '0px', paddingBottom: '0px', overflow: 'hidden', position: 'relative' }}>
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <p style={{ fontSize: '10px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '2px', textTransform: 'uppercase' }}>Grab and toss elements to play</p>
             </div>
 
             <div ref={sceneRef} style={{
-                height: isMobile ? '400px' : '600px',
+                height: isMobile ? '320px' : '450px',
                 width: '100%',
                 background: 'transparent',
                 position: 'relative',
