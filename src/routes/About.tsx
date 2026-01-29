@@ -39,12 +39,7 @@ const SELECTABLE_ICONS: Record<string, any> = {
     'Medal': Medal
 };
 
-// Helper component for Scrollytelling text effect
-const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
-    const opacity = useTransform(progress, [start, end], [0.1, 1]); // Starts semi-transparent, becomes fully opaque
-    const y = useTransform(progress, [start, end], [5, 0]); // Slight slide-up effect
-    return <motion.span style={{ ...style, opacity, y, marginRight: '6px', display: 'inline-block' }}>{word}</motion.span>;
-};
+
 
 const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
     const x = useTransform(progress, [start, end], ["120%", "-120%"]);
