@@ -28,6 +28,7 @@
   --header-bg: rgba(5, 5, 5, 0.85);
   --scrollbar-thumb: rgba(255, 255, 255, 0.3);
   --scrollbar-track: rgba(255, 255, 255, 0.05);
+  --underline-color: var(--accent-color);
 
   /* Fonts */
   --font-display: "Akira Expanded", sans-serif;
@@ -60,6 +61,8 @@
   --header-bg: rgba(255, 255, 255, 0.85);
   --scrollbar-thumb: rgba(0, 0, 0, 0.4);
   --scrollbar-track: rgba(0, 0, 0, 0.03);
+  --underline-color: #5d3711;
+  /* Visible high-contrast version of accent for decorations */
 }
 
 * {

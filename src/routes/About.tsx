@@ -645,7 +645,7 @@ export default function About() {
                                 </div>
                                 <div>
                                     <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-color)', margin: '0 0 8px' }}>{hobby.text}</h4>
-                                    <div style={{ width: '40px', height: '2px', background: hobby.color || 'var(--accent-color)', borderRadius: '2px' }} />
+                                    <div style={{ width: '40px', height: '2px', background: hobby.color || 'var(--underline-color)', borderRadius: '2px' }} />
                                 </div>
                             </motion.div>
                         );
