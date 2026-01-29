@@ -83,7 +83,7 @@ const PhysicsTags = ({ tags, isMobile }: { tags: string[], isMobile: boolean }) 
         const world = engine.world;
 
         // Configurações de gravidade
-        engine.gravity.y = 0.8; // Slightly softer gravity
+        engine.gravity.y = 1.2; // Same responsive gravity for mobile and desktop
 
         const rect = sceneRef.current.getBoundingClientRect();
         const width = rect.width || window.innerWidth;

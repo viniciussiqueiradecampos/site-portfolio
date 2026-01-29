@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { contentAPI } from '../lib/supabase';
 
@@ -14,6 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     });
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
         logoText2: 'CAMPOS',
@@ -108,12 +109,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         </NavLink>
                     </li>
                 )}
-                <li className="nav-dropdown">
-                    <span className="clickable menu-link">ME</span>
-                    <ul className="dropdown-menu">
-                        {branding.navAbout && <li><NavLink to="/about">ABOUT</NavLink></li>}
-                        {branding.navCV && <li><NavLink to="/cv">CV</NavLink></li>}
-                        {branding.navPortfolio && <li><NavLink to="/projects">PORTFOLIO</NavLink></li>}
+                <li className="nav-dropdown" onMouseLeave={() => setIsDropdownOpen(false)}>
+                    <span
+                        className="clickable menu-link"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+                    >
+                        ME
+                        <ChevronDown
+                            size={14}
+                            style={{
+                                transition: 'transform 0.3s ease',
+                                transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                            }}
+                        />
+                    </span>
+                    <ul className={`dropdown-menu ${isDropdownOpen ? 'dropdown-open' : ''}`}>
+                        {branding.navAbout && <li><NavLink to="/about" onClick={() => setIsDropdownOpen(false)}>ABOUT</NavLink></li>}
+                        {branding.navCV && <li><NavLink to="/cv" onClick={() => setIsDropdownOpen(false)}>CV</NavLink></li>}
+                        {branding.navPortfolio && <li><NavLink to="/projects" onClick={() => setIsDropdownOpen(false)}>PORTFOLIO</NavLink></li>}
                     </ul>
                 </li>
                 {branding.navGetInTouch && (
