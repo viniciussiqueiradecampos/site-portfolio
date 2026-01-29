@@ -53,16 +53,12 @@
   --bg-color: #FFFFFF;
   --surface-color: #F5F5F5;
   --text-color: #0A0A0A;
-  --accent-color: #704214;
-  /* Much darker for AAA contrast on white background (approx 7.5:1 ratio) */
-  --text-muted: #333333;
-  --border-color: rgba(0, 0, 0, 0.25);
-  --border-hover: rgba(0, 0, 0, 0.5);
+  --accent-color: #5D3711;
+  /* Darker brown for AAA contrast */
+  --text-muted: #222222;
+  --border-color: rgba(0, 0, 0, 0.3);
+  --border-hover: rgba(0, 0, 0, 0.6);
   --header-bg: rgba(255, 255, 255, 0.85);
-  --scrollbar-thumb: rgba(0, 0, 0, 0.4);
-  --scrollbar-track: rgba(0, 0, 0, 0.03);
-  --underline-color: #5d3711;
-  /* Visible high-contrast version of accent for decorations */
 }
 
 * {
@@ -330,45 +326,52 @@ nav ul li a {
 }
 
 
-/* Main Scrollbar - Visible only for the body */
+/* Global: Hide scrollbars for all elements */
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+* {
+  scrollbar-width: none !important;
+}
+
+/* Specific: Show only for main site scroll */
 body::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-  display: block;
+  display: block !important;
+  width: 10px !important;
+  height: 10px !important;
 }
 
 body::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
+  background: var(--bg-color) !important;
 }
 
 body::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 10px !important;
+  border: 2px solid var(--bg-color) !important;
+}
+
+[data-theme='light'] body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2) !important;
 }
 
 body::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color);
-  background-clip: border-box;
+  background: var(--accent-color) !important;
 }
 
-/* Hide scrollbars for all other elements by default */
-::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-  display: none;
-}
-
-/* For Firefox */
-* {
-  scrollbar-width: none;
-}
-
+/* Firefox Main Scroll */
 html,
 body {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+[data-theme='light'] html,
+[data-theme='light'] body {
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
 }
 
 /* Home Project Card Specifics */
