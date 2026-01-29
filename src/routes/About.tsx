@@ -180,7 +180,7 @@ export default function About() {
                 if (pReveal) setRevealImage(pReveal.value);
                 if (pTitle) setNameTitle(pTitle.value);
                 if (pSub) setSubtitle(pSub.value);
-                if (pBio) setBioText(pBio.value.split(/(\s+)/));
+                if (pBio) setBioText([pBio.value]); // Keep it as a single string in an array for compatibility
                 if (pSpotify) setSpotifyUrl(pSpotify.value);
                 if (pVisible) setPageVisible(pVisible.value === 'true');
 
@@ -392,7 +392,7 @@ export default function About() {
 
                         <div className="bio-scroll-container" style={{
                             fontSize: '19.5px',
-                            lineHeight: 1.43,
+                            lineHeight: 1.6,
                             fontWeight: 400,
                             color: 'var(--text-color)',
                             textAlign: 'left',
@@ -400,7 +400,8 @@ export default function About() {
                             overflowWrap: 'break-word',
                             maxWidth: '100%',
                             height: 'auto',
-                            overflow: 'visible'
+                            overflow: 'visible',
+                            whiteSpace: 'pre-wrap' // Preserve line breaks
                         }}>
                             {bioText.join('')}
                         </div>
