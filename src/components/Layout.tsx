@@ -15,6 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
     const [branding, setBranding] = useState({
         logoText1: 'VINICIUS',
         logoText2: 'CAMPOS',
@@ -171,11 +172,46 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <NavLink onClick={toggleMenu} to="/" className="mobile-link" style={style}>HOME</NavLink>
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
-                    <span style={{ ...style, fontSize: '24px', opacity: 0.5 }}>ME</span>
-                    <div className="mobile-submenu" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
-                        {branding.navAbout && <NavLink onClick={toggleMenu} to="/about" className="mobile-submenu-link">ABOUT</NavLink>}
-                        {branding.navCV && <NavLink onClick={toggleMenu} to="/cv" className="mobile-submenu-link">CV</NavLink>}
-                        {branding.navPortfolio && <NavLink onClick={toggleMenu} to="/projects" className="mobile-submenu-link">PORTFOLIO</NavLink>}
+                    <button
+                        onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
+                        style={{
+                            ...style,
+                            fontSize: '32px',
+                            opacity: 1,
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px'
+                        }}
+                    >
+                        ME
+                        <ChevronDown
+                            size={24}
+                            style={{
+                                transition: 'transform 0.3s ease',
+                                transform: isMobileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                            }}
+                        />
+                    </button>
+                    <div
+                        className="mobile-submenu"
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '15px',
+                            marginTop: '10px',
+                            maxHeight: isMobileDropdownOpen ? '500px' : '0',
+                            overflow: 'hidden',
+                            transition: 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
+                            opacity: isMobileDropdownOpen ? 1 : 0
+                        }}
+                    >
+                        {branding.navAbout && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/about" className="mobile-submenu-link">ABOUT</NavLink>}
+                        {branding.navCV && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/cv" className="mobile-submenu-link">CV</NavLink>}
+                        {branding.navPortfolio && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/projects" className="mobile-submenu-link">PORTFOLIO</NavLink>}
                     </div>
                 </div>
                 {branding.navGetInTouch && (
