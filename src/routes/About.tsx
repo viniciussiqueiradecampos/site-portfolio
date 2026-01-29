@@ -714,7 +714,7 @@ export default function About() {
                             <h3 style={{
                                 fontSize: isMobile ? '24px' : 'clamp(28px, 3.5vw, 48px)',
                                 fontWeight: 900,
-                                textTransform: 'uppercase',
+                                textTransform: 'none',
                                 letterSpacing: '-1px',
                                 margin: '10px 0',
                                 maxWidth: isMobile ? '100%' : '900px',
