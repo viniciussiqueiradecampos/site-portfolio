@@ -29,11 +29,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         navCV: true,
         navPortfolio: true,
         navGetInTouch: true,
-        navBlog: false,
+        navBlog: true,
         navNewsletter: false,
-        navAbout: false,
+        navAbout: true,
         logoImageUrl: '',
-        navOrder: [] as string[]
+        navOrder: ['navHome', 'navCV', 'navPortfolio', 'navAbout', 'navBlog', 'navGetInTouch']
     });
 
     useEffect(() => {
