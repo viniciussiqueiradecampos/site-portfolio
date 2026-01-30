@@ -40,23 +40,30 @@ export default function Home() {
     });
     const [footerText, setFooterText] = useState('VINICIUS CAMPOS &copy; 2026 • PORTUGAL');
 
+
+
     // Refs for Sticky Sections
     const heroRef = useRef(null);
     const storyRef = useRef(null);
 
+    // Initial load and hash scroll handling
     useEffect(() => {
         trackPageView('/');
         loadData();
-        // Handle hash scroll
-        if (window.location.hash === '#contact') {
+    }, [i18n.language]);
+
+    // Handle hash scroll after projects (layout) are loaded
+    useEffect(() => {
+        if (window.location.hash === '#contact' && projects.length > 0) {
+            // Slight delay to ensure DOM render after state update
             setTimeout(() => {
                 const contactSection = document.getElementById('contact');
                 if (contactSection) {
                     contactSection.scrollIntoView({ behavior: 'smooth' });
                 }
-            }, 500);
+            }, 800);
         }
-    }, [i18n.language]);
+    }, [window.location.hash, projects]);
 
 
     const loadData = async () => {
@@ -632,7 +639,7 @@ export default function Home() {
             </section>
 
             {/* FOOTER */}
-            <section id="contact" className="footer-section" style={{ marginTop: '200px', paddingBottom: '100px', overflow: 'hidden' }}>
+            <section className="footer-section" style={{ marginTop: '200px', paddingBottom: '100px', overflow: 'hidden' }}>
                 <div className="ticker-wrapper" style={{ borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', padding: '40px 0' }}>
                     <motion.div
                         animate={{ x: [0, -1000] }}
@@ -646,7 +653,7 @@ export default function Home() {
                         ))}
                     </motion.div>
                 </div>
-                <div className="container" style={{ marginTop: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <div id="contact" className="container" style={{ scrollMarginTop: '150px', marginTop: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                     <div className="contact-links" style={{ display: 'flex', flexDirection: 'column', gap: '40px', fontFamily: 'var(--font-body)' }}>
                         <RevealText>
                             <a href={`mailto:${socials.footerEmail}`} className="clickable footer-email-link" style={{

@@ -118,7 +118,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
                     >
-                        ME
+                        ABOUT ME
                         <ChevronDown
                             size={14}
                             style={{
@@ -142,11 +142,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                     const s = document.getElementById('contact');
                                     if (s) s.scrollIntoView({ behavior: 'smooth' });
                                 } else {
-                                    navigate('/');
-                                    setTimeout(() => {
-                                        const s = document.getElementById('contact');
-                                        if (s) s.scrollIntoView({ behavior: 'smooth' });
-                                    }, 100);
+                                    navigate('/#contact');
                                 }
                             }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -189,7 +185,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             gap: '10px'
                         }}
                     >
-                        ME
+                        ABOUT ME
                         <ChevronDown
                             size={24}
                             style={{
@@ -226,11 +222,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                     if (s) s.scrollIntoView({ behavior: 'smooth' });
                                 }, 300);
                             } else {
-                                navigate('/');
-                                setTimeout(() => {
-                                    const s = document.getElementById('contact');
-                                    if (s) s.scrollIntoView({ behavior: 'smooth' });
-                                }, 400);
+                                navigate('/#contact');
                             }
                         }}
                         className="mobile-link"

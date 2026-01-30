@@ -6,7 +6,7 @@ const resources = {
         translation: {
             "nav": {
                 "home": "HOME",
-                "about": "ABOUT",
+                "about": "WHO I AM",
                 "cv": "CV",
                 "portfolio": "PORTFOLIO",
                 "blog": "BLOG",
