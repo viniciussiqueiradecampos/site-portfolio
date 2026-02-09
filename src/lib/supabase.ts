@@ -783,7 +783,7 @@ export const blogAPI = {
             .single();
 
         if (error) {
-            console.error('Error creating blog post:', error);
+            console.error('❌ Supabase Create Blog Error:', error.message, error.details, error.hint);
             return null;
         }
         return data;
@@ -797,7 +797,7 @@ export const blogAPI = {
             .eq('id', id);
 
         if (error) {
-            console.error('Error updating blog post:', error);
+            console.error('❌ Supabase Update Blog Error:', error.message, error.details, error.hint);
             return false;
         }
         return true;
