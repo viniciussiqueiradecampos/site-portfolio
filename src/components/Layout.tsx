@@ -94,16 +94,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
+        const root = document.documentElement;
         if (theme === 'dark') {
-            document.documentElement.style.setProperty('--accent-color', branding.accentColor);
-            document.documentElement.style.setProperty('--bg-color', branding.bgColor);
-            document.documentElement.style.setProperty('--text-color', '#ffffff');
-            document.documentElement.style.setProperty('--border-color', 'rgba(255, 255, 255, 0.1)');
+            root.style.setProperty('--accent-color', branding.accentColor);
+            root.style.setProperty('--bg-color', branding.bgColor);
+            root.style.setProperty('--text-color', '#ffffff');
+            root.style.setProperty('--border-color', 'rgba(255, 255, 255, 0.1)');
+            root.style.setProperty('--header-bg', 'rgba(5, 5, 5, 0.85)');
+            root.setAttribute('data-theme', 'dark');
         } else {
-            document.documentElement.style.setProperty('--accent-color', branding.lightAccentColor);
-            document.documentElement.style.setProperty('--bg-color', branding.lightBgColor);
-            document.documentElement.style.setProperty('--text-color', '#0a0a0a');
-            document.documentElement.style.setProperty('--border-color', 'rgba(0, 0, 0, 0.1)');
+            root.style.setProperty('--accent-color', branding.lightAccentColor);
+            root.style.setProperty('--bg-color', branding.lightBgColor);
+            root.style.setProperty('--text-color', '#0a0a0a');
+            root.style.setProperty('--border-color', 'rgba(0, 0, 0, 0.1)');
+            root.style.setProperty('--header-bg', 'rgba(255, 255, 255, 0.85)');
+            root.setAttribute('data-theme', 'light');
         }
     }, [theme, branding]);
 

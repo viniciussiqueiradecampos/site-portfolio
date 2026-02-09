@@ -11,29 +11,22 @@ interface RichTextEditorProps {
 export default function RichTextEditor({ value, onChange, style }: RichTextEditorProps) {
     const editorRef = useRef<HTMLDivElement>(null);
 
-    // Initial value sync
+    // Initial value sync - only when not focused
     useEffect(() => {
-        if (editorRef.current && value !== editorRef.current.innerHTML) {
-            // Only update if content is significantly different to avoid cursor jumps
-            // A simple check is usually enough for this basic editor
-            if (editorRef.current.innerHTML === '<br>' && !value) return;
-            // This is a naive implementation; proper sync handles cursor position. 
-            // For this task, we'll accept that external updates might reset cursor if we're not careful.
-            // But usually 'value' only changes from outside on init.
-            if (document.activeElement !== editorRef.current) {
-                editorRef.current.innerHTML = value || '';
-            }
+        if (editorRef.current && document.activeElement !== editorRef.current) {
+            editorRef.current.innerHTML = value || '';
         }
     }, [value]);
 
     const handleInput = () => {
         if (editorRef.current) {
-            onChange(editorRef.current.innerHTML);
+            const html = editorRef.current.innerHTML;
+            onChange(html);
         }
     };
 
-    const execCommand = (command: string, value: string | undefined = undefined) => {
-        document.execCommand(command, false, value);
+    const execCommand = (command: string, arg: string | undefined = undefined) => {
+        document.execCommand(command, false, arg);
         if (editorRef.current) {
             editorRef.current.focus();
             onChange(editorRef.current.innerHTML);
@@ -103,8 +96,6 @@ export default function RichTextEditor({ value, onChange, style }: RichTextEdito
                 ref={editorRef}
                 contentEditable
                 onInput={handleInput}
-                onFocus={() => { }}
-                onBlur={() => { }}
                 style={{
                     minHeight: '150px',
                     padding: '12px',
@@ -114,7 +105,6 @@ export default function RichTextEditor({ value, onChange, style }: RichTextEdito
                     lineHeight: '1.6'
                 }}
                 className="rich-editor-content"
-                dangerouslySetInnerHTML={{ __html: value || '' }}
             />
             {/* We use dangerouslySetInnerHTML for initial render, but effective updates happen via ref manipulation to avoid React re-render cursor jumps */}
             <style>{`
