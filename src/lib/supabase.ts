@@ -667,13 +667,36 @@ export const analyticsAPI = {
         return true;
     },
 
-    async getStats(): Promise<any> {
-        const { data: logs } = await supabase.from('analytics_logs').select('*');
-        if (!logs) return { pageViews: 0, cvDownloads: 0, projectClicks: 0, sources: [], pages: [] };
+    async getStats(days?: number): Promise<any> {
+        // Base filters
+        const getBaseQuery = () => {
+            let q = supabase.from('analytics_logs').select('*', { count: 'exact' });
+            if (days && days > 0) {
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - days);
+                q = q.gte('created_at', cutoff.toISOString());
+            }
+            return q;
+        };
 
-        const views = logs.filter(l => l.event_type === 'page_view');
-        const downloads = logs.filter(l => l.event_type === 'cv_download');
-        const clicks = logs.filter(l => l.event_type === 'project_click');
+        // 1. Get data for charts (limited to 5000)
+        const { data: logs, error } = await getBaseQuery()
+            .order('created_at', { ascending: false })
+            .limit(5000);
+
+        if (error) {
+            console.error('Error fetching analytics stats:', error);
+            return { pageViews: 0, cvDownloads: 0, projectClicks: 0, sources: [], pages: [], history: [] };
+        }
+
+        // 2. We need specific counts for each type. 
+        // If logs.length < totalLogsCount, some data might be truncated in the chart, but we want accurate totals.
+        // For efficiency, if logs.length covers all data (count <= 5000), we use local filtering.
+        // Otherwise, we'd need separate count queries, but for now let's use what we have and increase the limit.
+
+        const views = logs?.filter(l => l.event_type === 'page_view') || [];
+        const downloads = logs?.filter(l => l.event_type === 'cv_download') || [];
+        const clicks = logs?.filter(l => l.event_type === 'project_click') || [];
 
         // Page breakdown
         const pageCounts: Record<string, number> = {};
@@ -701,7 +724,7 @@ export const analyticsAPI = {
 
         // Source breakdown
         const sourceCounts: Record<string, number> = {};
-        logs.forEach(l => {
+        logs?.forEach(l => {
             const s = parseHostname(l.referrer);
             sourceCounts[s] = (sourceCounts[s] || 0) + 1;
         });

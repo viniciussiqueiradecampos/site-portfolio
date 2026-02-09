@@ -24,7 +24,7 @@ import {
     Wifi, Wrench, Brush, Cloud, Book, Mail, Phone, MapPin,
     Users, Check, Layers, Monitor, Tablet, Watch, Headphones, Video, ShoppingBag, CreditCard,
     Wallet, Calendar, Bell, Lock, Unlock, Key, Eye, EyeOff, Filter, Sliders, Navigation,
-    ExternalLink, Share, Play, Pause,
+    ExternalLink, Share, Play, Pause, ChevronLeft, ChevronRight,
     Square, Triangle, Smile, Flame, Sun, Moon, Wind, Trophy, Medal, Box, Anchor, Compass,
     Feather, Pen, Pencil, Columns, Grid, List
 } from 'lucide-react';
@@ -52,8 +52,8 @@ import {
 } from 'recharts';
 import { formatTranslatable, getTranslationParts } from '../lib/i18n-utils';
 
-const modalInputStyle = { width: '100%', padding: '12px', background: '#111', border: '1px solid #222', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '10px', whiteSpace: 'pre-wrap' as any };
-const labelStyle = { display: 'block', fontSize: '13px', color: '#A0A0A0', marginBottom: '8px', fontWeight: '500' };
+const modalInputStyle = { width: '100%', padding: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-color)', fontSize: '14px', marginBottom: '10px', whiteSpace: 'pre-wrap' as any, fontFamily: 'var(--font-body)' };
+const labelStyle = { display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700', fontFamily: 'var(--font-body)', textTransform: 'uppercase' as any, letterSpacing: '1px' };
 
 const getContrastColor = (hex: string) => {
     if (!hex || hex === 'transparent') return '#fff';
@@ -85,8 +85,10 @@ export default function AdminDashboard() {
         cvDownloads: 0,
         projectClicks: 0,
         pages: [] as { name: string, count: number }[],
-        sources: [] as { name: string, count: number }[]
+        sources: [] as { name: string, count: number }[],
+        history: [] as { date: string, count: number }[]
     });
+    const [dateFilter, setDateFilter] = useState<'7d' | '30d' | 'all'>('7d');
 
     // Content State
     const [heroTitle, setHeroTitle] = useState('');
@@ -154,6 +156,10 @@ export default function AdminDashboard() {
         loadAllData();
     }, []);
 
+    useEffect(() => {
+        loadStats();
+    }, [dateFilter]);
+
     const loadAllData = async () => {
         setSaving(true);
         await Promise.all([
@@ -170,7 +176,8 @@ export default function AdminDashboard() {
     };
 
     const loadStats = async () => {
-        const data = await analyticsAPI.getStats();
+        const days = dateFilter === '7d' ? 7 : dateFilter === '30d' ? 30 : undefined;
+        const data = await analyticsAPI.getStats(days);
         if (data) setStats(data);
     };
 
@@ -654,11 +661,11 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="admin-dashboard" style={{ display: 'flex', minHeight: '100vh', background: '#050505', color: '#fff' }}>
+        <div className="admin-dashboard" data-theme="light" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)', color: 'var(--text-color)', fontFamily: 'var(--font-body)' }}>
             <div style={{
                 width: isSidebarCollapsed ? '80px' : '260px',
-                background: '#0a0a0a',
-                borderRight: '1px solid #1a1a1a',
+                background: 'var(--surface-color)',
+                borderRight: '1px solid var(--border-color)',
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '24px 12px',
@@ -691,14 +698,14 @@ export default function AdminDashboard() {
                             )}
                         </div>
                         {!isSidebarCollapsed && (
-                            <div style={{ whiteSpace: 'nowrap' }}>
+                            <div style={{ whiteSpace: 'nowrap', fontFamily: 'var(--font-body)' }}>
                                 <div style={{ fontWeight: '700', fontSize: '15px' }}>{branding.logoText1}</div>
                                 <div style={{ fontWeight: '700', fontSize: '15px', marginTop: '-4px' }}>{branding.logoText2}</div>
                             </div>
                         )}
                     </div>
                     {!isDesktop && (
-                        <button onClick={() => setIsMobileNavOpen(false)} style={{ background: 'transparent', border: 'none', color: '#A0A0A0', cursor: 'pointer' }}>
+                        <button onClick={() => setIsMobileNavOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                             <X size={20} />
                         </button>
                     )}
@@ -742,7 +749,7 @@ export default function AdminDashboard() {
                                     <span style={{
                                         fontSize: '11px',
                                         fontWeight: '800',
-                                        fontFamily: 'var(--font-display)',
+                                        fontFamily: 'var(--font-body)',
                                         letterSpacing: '0.1em',
                                         textTransform: 'uppercase'
                                     }}>
@@ -760,7 +767,7 @@ export default function AdminDashboard() {
                     })}
                 </div>
 
-                <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {isDesktop && (
                         <button
                             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -771,14 +778,14 @@ export default function AdminDashboard() {
                                 gap: '12px',
                                 padding: '12px',
                                 background: 'rgba(255,255,255,0.03)',
-                                border: '1px solid #1a1a1a',
+                                border: '1px solid var(--border-color)',
                                 borderRadius: '10px',
-                                color: '#A0A0A0',
+                                color: 'var(--text-muted)',
                                 cursor: 'pointer',
                                 width: '100%'
                             }}
                         >
-                            <Menu size={18} />
+                            {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                             {!isSidebarCollapsed && <span style={{ fontSize: '11px', fontWeight: 'bold' }}>COLLAPSE MENU</span>}
                         </button>
                     )}
@@ -804,16 +811,17 @@ export default function AdminDashboard() {
                 flex: 1,
                 minWidth: 0,
                 marginLeft: isDesktop ? (isSidebarCollapsed ? '80px' : '260px') : 0,
-                transition: 'margin-left 0.3s ease'
+                transition: 'margin-left 0.3s ease',
+                background: 'var(--bg-color)'
             }}>
-                <header style={{ height: '72px', background: '#0a0a0a', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 50, justifyContent: 'space-between' }}>
+                <header style={{ height: '72px', background: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 50, justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         {!isDesktop && (
-                            <button onClick={() => setIsMobileNavOpen(true)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            <button onClick={() => setIsMobileNavOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <Menu size={24} />
                             </button>
                         )}
-                        <h2 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', color: '#999', letterSpacing: '1px' }}>{activeTab} Workspace</h2>
+                        <h2 style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '2px', fontFamily: 'var(--font-body)' }}>{activeTab} Workspace</h2>
                     </div>
                 </header>
 
@@ -825,44 +833,69 @@ export default function AdminDashboard() {
 
                     {activeTab === 'analytics' && (
                         <div style={{ display: 'grid', gap: '32px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3 style={{ fontSize: '18px', fontWeight: '900', textTransform: 'uppercase', fontFamily: 'var(--font-body)', letterSpacing: '2px' }}>Dashboard Overview</h3>
+                                <div style={{ display: 'flex', gap: '10px', background: 'var(--surface-color)', padding: '6px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                                    {(['7d', '30d', 'all'] as const).map(f => (
+                                        <button
+                                            key={f}
+                                            onClick={() => setDateFilter(f)}
+                                            style={{
+                                                padding: '8px 16px',
+                                                background: dateFilter === f ? 'var(--accent-color)' : 'var(--bg-color)',
+                                                color: dateFilter === f ? getContrastColor(branding.accentColor) : 'var(--text-color)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '8px',
+                                                fontSize: '11px',
+                                                fontWeight: 'bold',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {f === 'all' ? 'ALL TIME' : f.toUpperCase()}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
-                                <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)', transition: 'transform 0.3s ease' }}>
                                     <Globe size={20} color="var(--accent-color)" />
-                                    <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.pageViews}</div>
-                                    <div style={{ color: '#A0A0A0', fontSize: '12px' }}>Total Page Views</div>
+                                    <div style={{ fontSize: '40px', fontWeight: '900', margin: '15px 0', fontFamily: 'var(--font-body)' }}>{stats.pageViews}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Page Views</div>
                                 </div>
-                                <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
                                     <Download size={20} color="var(--accent-color)" />
-                                    <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.cvDownloads}</div>
-                                    <div style={{ color: '#A0A0A0', fontSize: '12px' }}>CV Downloads</div>
+                                    <div style={{ fontSize: '40px', fontWeight: '900', margin: '15px 0', fontFamily: 'var(--font-body)' }}>{stats.cvDownloads}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>CV Downloads</div>
                                 </div>
-                                <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                                <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
                                     <Activity size={20} color="var(--accent-color)" />
-                                    <div style={{ fontSize: '40px', fontWeight: '800', margin: '15px 0' }}>{stats.projectClicks}</div>
-                                    <div style={{ color: '#A0A0A0', fontSize: '12px' }}>Project Interactions</div>
+                                    <div style={{ fontSize: '40px', fontWeight: '900', margin: '15px 0', fontFamily: 'var(--font-body)' }}>{stats.projectClicks}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>Project Interactions</div>
                                 </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
-                                <div style={{ background: '#0a0a0a', padding: '32px', borderRadius: '24px', border: '1px solid #1a1a1a' }}>
-                                    <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase' }}>Popular Pages</h4>
+                                <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
+                                    <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase', fontFamily: 'var(--font-body)', letterSpacing: '1px' }}>Popular Pages</h4>
                                     <div style={{ height: '300px' }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={stats.pages.slice(0, 6)}>
-                                                <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
-                                                <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                                                <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
+                                                <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
                                                 <Tooltip
-                                                    contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
+                                                    contentStyle={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
                                                     itemStyle={{ color: 'var(--accent-color)' }}
-                                                    labelStyle={{ color: '#fff' }}
+                                                    labelStyle={{ color: 'var(--text-color)' }}
                                                 />
                                                 <Bar dataKey="count" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
-                                <div style={{ background: '#0a0a0a', padding: '32px', borderRadius: '24px', border: '1px solid #1a1a1a' }}>
-                                    <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase' }}>Traffic Sources</h4>
+                                <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
+                                    <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase', fontFamily: 'var(--font-body)', letterSpacing: '1px' }}>Traffic Sources</h4>
                                     <div style={{ height: '300px' }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
@@ -882,9 +915,9 @@ export default function AdminDashboard() {
                                                     })}
                                                 </Pie>
                                                 <Tooltip
-                                                    contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
-                                                    itemStyle={{ color: '#fff' }}
-                                                    labelStyle={{ color: '#fff' }}
+                                                    contentStyle={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+                                                    itemStyle={{ color: 'var(--accent-color)' }}
+                                                    labelStyle={{ color: 'var(--text-color)' }}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>
@@ -892,18 +925,20 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div style={{ background: '#0a0a0a', padding: '32px', borderRadius: '24px', border: '1px solid #1a1a1a' }}>
-                                <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase' }}>Traffic Trends (Last Days)</h4>
+                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
+                                <h4 style={{ marginBottom: '24px', fontSize: '14px', textTransform: 'uppercase', fontFamily: 'var(--font-body)', letterSpacing: '1px' }}>
+                                    Traffic Trends {dateFilter === 'all' ? '(All Time)' : `(Last ${dateFilter === '7d' ? '7' : '30'} Days)`}
+                                </h4>
                                 <div style={{ height: '300px' }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={(stats as any).history || []}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-                                            <XAxis dataKey="date" fontSize={10} axisLine={false} tickLine={false} />
-                                            <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                                        <LineChart data={stats.history}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+                                            <XAxis dataKey="date" fontSize={10} axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
+                                            <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
                                             <Tooltip
-                                                contentStyle={{ background: '#111', border: '1px solid #222', borderRadius: '8px' }}
+                                                contentStyle={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
                                                 itemStyle={{ color: 'var(--accent-color)' }}
-                                                labelStyle={{ color: '#fff' }}
+                                                labelStyle={{ color: 'var(--text-color)' }}
                                             />
                                             <Line type="monotone" dataKey="count" stroke="var(--accent-color)" strokeWidth={3} dot={{ fill: 'var(--accent-color)', r: 4 }} activeDot={{ r: 6 }} />
                                         </LineChart>
@@ -915,7 +950,7 @@ export default function AdminDashboard() {
 
                     {activeTab === 'cv' && (
                         <div>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '40px', background: '#0a0a0a', padding: '10px', borderRadius: '16px', border: '1px solid #1a1a1a', overflowX: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '40px', background: 'var(--surface-color)', padding: '10px', borderRadius: '16px', border: '1px solid var(--border-color)', overflowX: 'auto' }} className="hide-scrollbar">
                                 {[
                                     { id: 'profile', label: 'Summary', icon: User },
                                     { id: 'experience', label: 'Experience', icon: Briefcase },
@@ -930,7 +965,7 @@ export default function AdminDashboard() {
                                         style={{
                                             display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px',
                                             background: cvSubTab === tab.id ? 'var(--accent-color)' : 'transparent',
-                                            color: cvSubTab === tab.id ? '#000' : '#A0A0A0', border: 'none', borderRadius: '10px',
+                                            color: cvSubTab === tab.id ? getContrastColor(branding.accentColor) : 'var(--text-color)', border: 'none', borderRadius: '10px',
                                             fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap'
                                         }}
                                     >
@@ -940,15 +975,15 @@ export default function AdminDashboard() {
                             </div>
 
                             {cvSubTab === 'profile' ? (
-                                <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
-                                    <h3 style={{ marginBottom: '24px', fontFamily: 'var(--font-display)', fontSize: '16px' }}>Public Identity</h3>
-                                    <div style={{ marginBottom: '32px', padding: '24px', background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a' }}>
+                                <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
+                                    <h3 style={{ marginBottom: '24px', fontFamily: 'var(--font-body)', fontSize: '16px' }}>Public Identity</h3>
+                                    <div style={{ marginBottom: '32px', padding: '24px', background: 'var(--surface-color)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
                                         <label style={labelStyle}>CV DOCUMENT (PDF)</label>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                            <div style={{ padding: '15px 25px', background: '#111', borderRadius: '12px', border: '1px solid #333', fontSize: '12px', color: cvProfile.pdf_url ? 'var(--accent-color)' : '#999', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            <div style={{ padding: '15px 25px', background: 'var(--bg-color)', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '12px', color: cvProfile.pdf_url ? 'var(--accent-color)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {cvProfile.pdf_url ? cvProfile.pdf_url.split('/').pop() : 'No PDF uploaded'}
                                             </div>
-                                            <label className="clickable" style={{ padding: '15px 25px', background: '#fff', color: '#000', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                                            <label className="clickable" style={{ padding: '15px 25px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
                                                 UPLOAD PDF
                                                 <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
                                                     if (e.target.files?.[0]) {
@@ -973,7 +1008,7 @@ export default function AdminDashboard() {
                                             style={{ ...modalInputStyle, height: 'auto', minHeight: '150px' }}
                                         />
                                     </div>
-                                    <button onClick={saveCVProfile} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900', width: '100%', fontSize: '14px', fontFamily: 'var(--font-display)', letterSpacing: '1px' }}>
+                                    <button onClick={saveCVProfile} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '16px', fontWeight: '900', width: '100%', fontSize: '14px', fontFamily: 'var(--font-body)', letterSpacing: '1px' }}>
                                         {saving ? 'SAVING...' : 'UPDATE CV IDENTITY'}
                                     </button>
                                 </div>
@@ -981,23 +1016,23 @@ export default function AdminDashboard() {
                                 <div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                                         <h3 style={{ textTransform: 'capitalize' }}>{cvSubTab} List</h3>
-                                        <button onClick={() => setEditingCV({ id: 'new', section_type: cvSubTab, title: '', subtitle: '', date_range: '', description: '', order_index: cvSections.length, visible: true } as any)} style={{ background: '#fff', color: '#000', padding: '10px 20px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ ADD {cvSubTab.toUpperCase()}</button>
+                                        <button onClick={() => setEditingCV({ id: 'new', section_type: cvSubTab, title: '', subtitle: '', date_range: '', description: '', order_index: cvSections.length, visible: true } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '10px 20px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ ADD {cvSubTab.toUpperCase()}</button>
                                     </div>
                                     <div style={{ display: 'grid', gap: '15px' }}>
                                         {filteredCV.map((s, idx) => (
-                                            <div key={s.id} style={{ background: '#111', padding: '24px', borderRadius: '16px', border: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div key={s.id} style={{ background: 'var(--surface-color)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <button disabled={idx === 0 || saving} onClick={() => reorderCV(idx, 'up')} style={{ background: 'transparent', border: 'none', color: idx === 0 ? '#333' : '#A0A0A0', cursor: 'pointer' }}><ArrowUp size={14} /></button>
-                                                        <button disabled={idx === filteredCV.length - 1 || saving} onClick={() => reorderCV(idx, 'down')} style={{ background: 'transparent', border: 'none', color: idx === filteredCV.length - 1 ? '#333' : '#A0A0A0', cursor: 'pointer' }}><ArrowDown size={14} /></button>
+                                                        <button disabled={idx === 0 || saving} onClick={() => reorderCV(idx, 'up')} style={{ background: 'transparent', border: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--text-color)', cursor: 'pointer' }}><ArrowUp size={14} /></button>
+                                                        <button disabled={idx === filteredCV.length - 1 || saving} onClick={() => reorderCV(idx, 'down')} style={{ background: 'transparent', border: 'none', color: idx === filteredCV.length - 1 ? 'var(--text-muted)' : 'var(--text-color)', cursor: 'pointer' }}><ArrowDown size={14} /></button>
                                                     </div>
                                                     <div>
                                                         <h4 style={{ margin: '0 0 5px 0' }}>{s.title}</h4>
-                                                        <p style={{ margin: 0, fontSize: '13px', color: '#C0C0C0' }}>{s.subtitle} • {s.date_range}</p>
+                                                        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>{s.subtitle} • {s.date_range}</p>
                                                     </div>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <button onClick={() => setEditingCV(s)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                    <button onClick={() => setEditingCV(s)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
                                                     <button onClick={() => { if (confirm('Delete?')) cvAPI.delete(s.id).then(loadCV) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                 </div>
                                             </div>
@@ -1013,13 +1048,13 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', alignItems: 'center' }}>
                                 <div>
                                     <h3 style={{ margin: 0 }}>Portfolio Projects</h3>
-                                    <span style={{ fontSize: '11px', color: '#A0A0A0', letterSpacing: '1px' }}>{projects.length} ITEMS TOTAL</span>
+                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '1px' }}>{projects.length} ITEMS TOTAL</span>
                                 </div>
-                                <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], order_index: projects.length, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
+                                <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], order_index: projects.length, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                 {projects.map((p, idx) => (
-                                    <div key={p.id} style={{ background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a', overflow: 'hidden' }}>
+                                    <div key={p.id} style={{ background: 'var(--surface-color)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
                                         <div style={{ height: '180px', background: `url(${p.image_url}) center/cover`, position: 'relative' }}>
                                             <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '5px' }}>
                                                 <button disabled={idx === 0 || saving} onClick={() => reorderProject(idx, 'up')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowUp size={14} /></button>
@@ -1029,7 +1064,7 @@ export default function AdminDashboard() {
                                         <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ fontSize: '14px', fontWeight: '600' }}>{p.title}</span>
                                             <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
                                                 <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                             </div>
                                         </div>
@@ -1041,7 +1076,7 @@ export default function AdminDashboard() {
 
                     {activeTab === 'content' && (
                         <div style={{ display: 'grid', gap: '32px' }}>
-                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '32px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)', display: 'flex', justifyContent: 'space-between' }}>
                                     Hero Experience
                                 </h3>
@@ -1055,7 +1090,7 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '32px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)', display: 'flex', justifyContent: 'space-between' }}>
                                     Storytelling
                                 </h3>
@@ -1074,7 +1109,7 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
                             </div>
-                            <button onClick={saveContent} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '800' }}>PUBLISH CHANGES</button>
+                            <button onClick={saveContent} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '16px', fontWeight: '800' }}>PUBLISH CHANGES</button>
                         </div>
                     )}
 
@@ -1082,21 +1117,21 @@ export default function AdminDashboard() {
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
                                 <h3>Blog Posts</h3>
-                                <button onClick={() => setEditingPost({ id: 'new', title: '', content: '', category: 'Design', tags: [], visible: true } as any)} style={{ background: 'var(--accent-color)', color: '#000', padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW POST</button>
+                                <button onClick={() => setEditingPost({ id: 'new', title: '', content: '', category: 'Design', tags: [], visible: true } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW POST</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                 {posts.map(post => (
-                                    <div key={post.id} style={{ background: '#0a0a0a', borderRadius: '16px', border: '1px solid #1a1a1a', overflow: 'hidden' }}>
-                                        <div style={{ height: '180px', background: post.image_url ? `url(${post.image_url}) center/cover` : '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {!post.image_url && <BookOpen size={40} color="#222" />}
+                                    <div key={post.id} style={{ background: 'var(--surface-color)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                                        <div style={{ height: '180px', background: post.image_url ? `url(${post.image_url}) center/cover` : 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {!post.image_url && <BookOpen size={40} color="var(--text-muted)" />}
                                         </div>
                                         <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <div>
                                                 <span style={{ fontSize: '14px', fontWeight: '600', display: 'block' }}>{post.title}</span>
-                                                <span style={{ fontSize: '11px', color: '#A0A0A0' }}>{post.category} • {new Date(post.created_at).toLocaleDateString()}</span>
+                                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{post.category} • {new Date(post.created_at).toLocaleDateString()}</span>
                                             </div>
                                             <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingPost(post)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                <button onClick={() => setEditingPost(post)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
                                                 <button onClick={() => { if (confirm('Delete?')) blogAPI.delete(post.id).then(loadBlog) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                             </div>
                                         </div>
@@ -1111,23 +1146,23 @@ export default function AdminDashboard() {
                             {/* SQL Help Message if something goes wrong */}
                             <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: '10px' }}>
                                 <div style={{ fontSize: '13px', color: '#3B82F6', fontWeight: 'bold', marginBottom: '5px' }}>💡 Pro Tip: Database Setup</div>
-                                <div style={{ fontSize: '12px', color: '#A0A0A0' }}>If saving fails, ensure the tables <code>about_steps</code>, <code>about_hobbies</code>, <code>about_testimonials</code>, and <code>about_memories</code> exist in your Supabase project.</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>If saving fails, ensure the tables <code>about_steps</code>, <code>about_hobbies</code>, <code>about_testimonials</code>, and <code>about_memories</code> exist in your Supabase project.</div>
                             </div>
 
                             {/* Profile Section */}
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ marginBottom: '24px', fontSize: '18px', color: 'var(--accent-color)' }}>About Identity</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? '220px 1fr' : '1fr', gap: '32px' }}>
                                     <div>
                                         <label style={labelStyle}>Profile Photo</label>
-                                        <div style={{ width: '100%', aspectRatio: '3/4', background: '#0a0a0a', borderRadius: '16px', overflow: 'hidden', marginBottom: '16px', border: '1px solid #222' }}>
+                                        <div style={{ width: '100%', aspectRatio: '3/4', background: 'var(--surface-color)', borderRadius: '16px', overflow: 'hidden', marginBottom: '16px', border: '1px solid var(--border-color)' }}>
                                             {aboutProfile.photo ? (
                                                 <img src={aboutProfile.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : (
-                                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={40} color="#333" /></div>
+                                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={40} color="var(--text-muted)" /></div>
                                             )}
                                         </div>
-                                        <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer', padding: '12px 24px', background: '#fff', color: '#000', borderRadius: '10px', fontWeight: '900', fontSize: '12px' }}>
+                                        <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer', padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), borderRadius: '10px', fontWeight: '900', fontSize: '12px' }}>
                                             UPLOAD NEW
                                             <input type="file" hidden onChange={e => {
                                                 if (e.target.files?.[0]) {
@@ -1138,14 +1173,14 @@ export default function AdminDashboard() {
                                         </label>
 
                                         <label style={labelStyle}>Torch Reveal Image (Homepage Only)</label>
-                                        <div style={{ width: '100%', height: '100px', background: '#0a0a0a', borderRadius: '16px', overflow: 'hidden', marginBottom: '16px', border: '1px solid #222' }}>
+                                        <div style={{ width: '100%', height: '100px', background: 'var(--surface-color)', borderRadius: '16px', overflow: 'hidden', marginBottom: '16px', border: '1px solid var(--border-color)' }}>
                                             {aboutProfile.reveal_image ? (
                                                 <img src={aboutProfile.reveal_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : (
-                                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={30} color="#333" /></div>
+                                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={30} color="var(--text-muted)" /></div>
                                             )}
                                         </div>
-                                        <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer', padding: '12px 24px', background: '#222', color: '#fff', borderRadius: '10px', fontWeight: '900', border: '1px solid #333', fontSize: '11px' }}>
+                                        <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer', padding: '12px 24px', background: 'var(--bg-color)', color: 'var(--text-color)', borderRadius: '10px', fontWeight: '900', border: '1px solid var(--border-color)', fontSize: '11px' }}>
                                             UPLOAD REVEAL IMAGE
                                             <input type="file" hidden onChange={e => {
                                                 if (e.target.files?.[0]) {
@@ -1171,7 +1206,7 @@ export default function AdminDashboard() {
                                         <div>
                                             <label style={labelStyle}>Spotify Playlist URL</label>
                                             <input placeholder="https://open.spotify.com/playlist/..." style={modalInputStyle} value={aboutProfile.spotify} onChange={e => setAboutProfile({ ...aboutProfile, spotify: e.target.value })} />
-                                            <span style={{ fontSize: '11px', color: '#666' }}>Automatically converts to embed format.</span>
+                                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Automatically converts to embed format.</span>
                                         </div>
                                         <button onClick={saveAboutProfile} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}>{saving ? 'SAVING...' : 'SAVE ALL IDENTITY CHANGES'}</button>
                                     </div>
@@ -1179,18 +1214,18 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Memories Section */}
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                     <h3 style={{ fontSize: '18px' }}>Memories (Floating Images)</h3>
-                                    <button onClick={() => setEditingMemory({ id: '', image_url: '', position_x: '50%', width: '250px', aspect_ratio: '1/1', speed: 1.0 } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD MEMORY</button>
+                                    <button onClick={() => setEditingMemory({ id: '', image_url: '', position_x: '50%', width: '250px', aspect_ratio: '1/1', speed: 1.0 } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD MEMORY</button>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
                                     {aboutMemories.map(m => (
-                                        <div key={m.id} style={{ background: '#0a0a0a', padding: '16px', borderRadius: '16px', border: '1px solid #222' }}>
+                                        <div key={m.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
                                             <img src={m.image_url} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
-                                            <div style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>X: {m.position_x} | W: {m.width}</div>
+                                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>X: {m.position_x} | W: {m.width}</div>
                                             <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingMemory(m)} style={{ flex: 1, padding: '8px 16px', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
+                                                <button onClick={() => setEditingMemory(m)} style={{ flex: 1, padding: '8px 16px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
                                                 <button onClick={() => deleteAboutMemory(m.id)} style={{ padding: '8px', background: 'rgba(255,0,0,0.1)', border: 'none', borderRadius: '6px', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
                                             </div>
                                         </div>
@@ -1199,21 +1234,21 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Steps Section */}
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                     <h3 style={{ fontSize: '18px' }}>How Do I Work? (Steps)</h3>
-                                    <button onClick={() => setEditingStep({ id: '', step_number: '01', title: '', description: '', icon_name: 'Search' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD STEP</button>
+                                    <button onClick={() => setEditingStep({ id: '', step_number: '01', title: '', description: '', icon_name: 'Search' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD STEP</button>
                                 </div>
                                 <div style={{ display: 'grid', gap: '16px' }}>
                                     {aboutSteps.map(s => (
-                                        <div key={s.id} style={{ background: '#0a0a0a', padding: '20px', borderRadius: '16px', border: '1px solid #222', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                        <div key={s.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '20px' }}>
                                             <div style={{ color: 'var(--accent-color)', fontWeight: '900' }}>#{s.step_number}</div>
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ fontWeight: '700' }}>{s.title}</div>
-                                                <div style={{ fontSize: '13px', color: '#666' }}>{s.description}</div>
+                                                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{s.description}</div>
                                             </div>
                                             <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingStep(s)} style={{ padding: '8px 16px', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
+                                                <button onClick={() => setEditingStep(s)} style={{ padding: '8px 16px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
                                                 <button onClick={() => deleteAboutStep(s.id)} style={{ color: '#ff4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                             </div>
                                         </div>
@@ -1222,16 +1257,16 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Hobbies Section */}
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                     <h3 style={{ fontSize: '18px' }}>Hobbies & Interests</h3>
-                                    <button onClick={() => setEditingHobby({ id: '', text: '', color: '#ffffff', position_x: '50%', position_y: '50%' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD HOBBY</button>
+                                    <button onClick={() => setEditingHobby({ id: '', text: '', color: '#ffffff', position_x: '50%', position_y: '50%' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD HOBBY</button>
                                 </div>
                                 <div style={{ marginBottom: '24px' }}>
-                                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>Visual Preview:</div>
-                                    <div style={{ height: '300px', background: '#0a0a0a', borderRadius: '16px', position: 'relative', border: '1px solid #222' }}>
+                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>Visual Preview:</div>
+                                    <div style={{ height: '300px', background: 'var(--surface-color)', borderRadius: '16px', position: 'relative', border: '1px solid var(--border-color)' }}>
                                         {aboutHobbies.map(h => (
-                                            <div key={h.id} style={{ position: 'absolute', left: h.position_x, top: h.position_y, transform: 'translate(-50%, -50%)', background: '#fff', color: '#000', padding: '8px 16px', borderRadius: '20px 20px 20px 2px', borderLeft: `4px solid ${h.color}`, fontSize: '12px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                            <div key={h.id} style={{ position: 'absolute', left: h.position_x, top: h.position_y, transform: 'translate(-50%, -50%)', background: 'var(--surface-color)', color: 'var(--text-color)', padding: '8px 16px', borderRadius: '20px 20px 20px 2px', borderLeft: `4px solid ${h.color}`, fontSize: '12px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
                                                 {h.text}
                                             </div>
                                         ))}
@@ -1239,14 +1274,14 @@ export default function AdminDashboard() {
                                 </div>
                                 <div style={{ display: 'grid', gap: '12px' }}>
                                     {aboutHobbies.map(h => (
-                                        <div key={h.id} style={{ background: '#0a0a0a', padding: '16px', borderRadius: '12px', border: '1px solid #222', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div key={h.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
                                             <div style={{ width: '4px', height: '40px', background: h.color, borderRadius: '2px' }}></div>
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ fontWeight: '700', fontSize: '14px' }}>{h.text}</div>
-                                                <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>Position: {h.position_x} × {h.position_y}</div>
+                                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Position: {h.position_x} × {h.position_y}</div>
                                             </div>
                                             <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingHobby(h)} style={{ padding: '8px 16px', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
+                                                <button onClick={() => setEditingHobby(h)} style={{ padding: '8px 16px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
                                                 <button onClick={() => deleteAboutHobby(h.id)} style={{ padding: '8px', background: 'rgba(255,0,0,0.1)', border: 'none', borderRadius: '8px', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
                                             </div>
                                         </div>
@@ -1255,25 +1290,25 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Testimonials Section */}
-                            <div style={{ background: '#111', padding: '32px', borderRadius: '24px' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                     <h3 style={{ fontSize: '18px' }}>Testimonials</h3>
-                                    <button onClick={() => setEditingTestimonial({ id: '', author_name: '', author_role: '', quote: '', author_image: '' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD TESTIMONIAL</button>
+                                    <button onClick={() => setEditingTestimonial({ id: '', author_name: '', author_role: '', quote: '', author_image: '' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD TESTIMONIAL</button>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                     {aboutTestimonials.map(t => (
-                                        <div key={t.id} style={{ background: '#0a0a0a', padding: '24px', borderRadius: '16px', border: '1px solid #222' }}>
-                                            <p style={{ fontSize: '14px', fontStyle: 'italic', color: '#ccc', marginBottom: '20px' }}>"{t.quote}"</p>
+                                        <div key={t.id} style={{ background: 'var(--surface-color)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                                            <p style={{ fontSize: '14px', fontStyle: 'italic', color: 'var(--text-muted)', marginBottom: '20px' }}>"{t.quote}"</p>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#222', overflow: 'hidden' }}>
+                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-color)', overflow: 'hidden' }}>
                                                     {t.author_image && <img src={t.author_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                                                 </div>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ fontWeight: '700', fontSize: '13px' }}>{t.author_name}</div>
-                                                    <div style={{ fontSize: '11px', color: '#666' }}>{t.author_role}</div>
+                                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{t.author_role}</div>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '8px' }}>
-                                                    <button onClick={() => setEditingTestimonial(t)} style={{ padding: '8px 16px', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
+                                                    <button onClick={() => setEditingTestimonial(t)} style={{ padding: '8px 16px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
                                                     <button onClick={() => deleteAboutTestimonial(t.id)} style={{ color: '#ff4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                 </div>
                                             </div>
@@ -1286,13 +1321,13 @@ export default function AdminDashboard() {
 
                     {activeTab === 'settings' && (
                         <div style={{ display: 'grid', gap: '32px' }}>
-                            <div style={{ background: '#0a0a0a', padding: '40px', borderRadius: '32px', border: '1px solid #1a1a1a' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '32px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Visual Identity</h3>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '32px' }}>
-                                    <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #333' }}>
+                                    <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                                         {branding.logoImageUrl ? <img src={branding.logoImageUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Target size={32} />}
                                     </div>
-                                    <label className="clickable" style={{ padding: '12px 24px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333' }}>
+                                    <label className="clickable" style={{ padding: '12px 24px', background: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)' }}>
                                         CHANGE LOGO
                                         <input type="file" style={{ display: 'none' }} onChange={async (e) => { if (e.target.files?.[0]) { const url = await storageAPI.uploadImage(e.target.files[0], 'general'); if (url) setBranding({ ...branding, logoImageUrl: url }); } }} />
                                     </label>
@@ -1322,14 +1357,14 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
                             </div>
-                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Socials</h3>
                                 <input placeholder="LinkedIn" value={branding.linkedin} onChange={e => setBranding({ ...branding, linkedin: e.target.value })} style={modalInputStyle} />
                                 <input placeholder="Instagram" value={branding.instagram} onChange={e => setBranding({ ...branding, instagram: e.target.value })} style={modalInputStyle} />
                                 <input placeholder="Email" value={branding.footerEmail} onChange={e => setBranding({ ...branding, footerEmail: e.target.value })} style={modalInputStyle} />
                                 <input placeholder="Phone" value={branding.phone} onChange={e => setBranding({ ...branding, phone: e.target.value })} style={modalInputStyle} />
                             </div>
-                            <div style={{ background: '#111', padding: '40px', borderRadius: '24px', border: '1px solid #222' }}>
+                            <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Navigation Toggles</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
                                     {[
@@ -1345,7 +1380,7 @@ export default function AdminDashboard() {
                                             {toggle.label}
                                         </label>
                                     ))}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#0a0a0a', padding: '16px', borderRadius: '16px', border: '1px solid #222' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
                                         <input type="checkbox" checked={branding.navAbout} onChange={e => {
                                             const val = e.target.checked;
                                             setBranding({ ...branding, navAbout: val });
@@ -1355,11 +1390,11 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div style={{ background: '#111', padding: '32px', borderRadius: '24px', border: '1px solid #222', marginTop: '40px' }}>
+                                <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)', marginTop: '40px' }}>
                                     <h3 style={{ marginBottom: '24px', color: 'var(--accent-color)', fontSize: '16px' }}>Order Menu Items</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         {branding.navOrder.map((item: string, idx: number) => (
-                                            <div key={item} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0a0a0a', padding: '12px 20px', borderRadius: '12px', border: '1px solid #222' }}>
+                                            <div key={item} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-color)', padding: '12px 20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                                                 <span style={{ fontWeight: 'bold', fontSize: '13px', textTransform: 'uppercase' }}>{item.replace('nav', '')}</span>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
                                                     <button
@@ -1369,7 +1404,7 @@ export default function AdminDashboard() {
                                                             [newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]];
                                                             setBranding({ ...branding, navOrder: newOrder });
                                                         }}
-                                                        style={{ background: '#222', border: 'none', color: '#fff', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}
+                                                        style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}
                                                     >
                                                         <ArrowUp size={14} />
                                                     </button>
@@ -1380,7 +1415,7 @@ export default function AdminDashboard() {
                                                             [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
                                                             setBranding({ ...branding, navOrder: newOrder });
                                                         }}
-                                                        style={{ background: '#222', border: 'none', color: '#fff', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}
+                                                        style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}
                                                     >
                                                         <ArrowDown size={14} />
                                                     </button>
@@ -1389,7 +1424,7 @@ export default function AdminDashboard() {
                                         ))}
                                     </div>
                                 </div>
-                                <button onClick={saveSettings} style={{ padding: '24px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '16px', fontWeight: '900' }}>SAVE CONFIGURATION</button>
+                                <button onClick={saveSettings} style={{ padding: '24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '16px', fontWeight: '900' }}>SAVE CONFIGURATION</button>
                             </div>
                         </div>
                     )}
@@ -1399,20 +1434,20 @@ export default function AdminDashboard() {
             {/* BLOG MODAL (Detailed with Toolbar) */}
             {
                 editingPost && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '800px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: 'var(--surface-color)', width: '100%', maxWidth: '800px', borderRadius: '24px', border: '1px solid var(--border-color)', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                                 <h3>{editingPost.id === 'new' ? 'NEW POST' : 'EDIT POST'}</h3>
-                                <button onClick={() => setEditingPost(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={24} /></button>
+                                <button onClick={() => setEditingPost(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)' }}><X size={24} /></button>
                             </div>
                             <div style={{ display: 'grid', gap: '20px' }}>
                                 <div>
                                     <label style={labelStyle}>Image</label>
                                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                                        <div style={{ width: '120px', aspectRatio: '16/9', background: '#111', borderRadius: '8px', overflow: 'hidden' }}>
-                                            {editingPost.image_url ? <img src={editingPost.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+                                        <div style={{ width: '120px', aspectRatio: '16/9', background: 'var(--surface-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                                            {editingPost.image_url ? <img src={editingPost.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="var(--text-muted)" /></div>}
                                         </div>
-                                        <label className="clickable" style={{ padding: '8px 16px', background: '#222', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                                        <label className="clickable" style={{ padding: '8px 16px', background: 'var(--bg-color)', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}>
                                             UPLOAD
                                             <input type="file" style={{ display: 'none' }} onChange={async (e) => { if (e.target.files?.[0]) { const url = await storageAPI.uploadImage(e.target.files[0], 'blog'); if (url) setEditingPost({ ...editingPost, image_url: url }); } }} />
                                         </label>
@@ -1432,14 +1467,14 @@ export default function AdminDashboard() {
                                 <input placeholder="Title" value={editingPost.title} onChange={e => setEditingPost({ ...editingPost, title: e.target.value })} style={modalInputStyle} />
                                 <div>
                                     <label style={labelStyle}>Tags</label>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', background: '#111', padding: '10px', borderRadius: '8px' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', background: 'var(--bg-color)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                                         {editingPost.tags?.map(t => (
-                                            <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '4px 10px', borderRadius: '100px', fontSize: '11px', fontWeight: 'bold' }}>{t} <X size={10} onClick={() => setEditingPost({ ...editingPost, tags: editingPost.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>
+                                            <span key={t} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '4px 10px', borderRadius: '100px', fontSize: '11px', fontWeight: 'bold' }}>{t} <X size={10} onClick={() => setEditingPost({ ...editingPost, tags: editingPost.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>
                                         ))}
-                                        <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addBlogTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
+                                        <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addBlogTag()} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', outline: 'none' }} />
                                     </div>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        {allBlogTags.slice(0, 5).map(tag => <button key={tag} onClick={() => addBlogTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>)}
+                                        {allBlogTags.slice(0, 5).map(tag => <button key={tag} onClick={() => addBlogTag(tag)} style={{ fontSize: '10px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+ {tag}</button>)}
                                     </div>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
@@ -1457,7 +1492,7 @@ export default function AdminDashboard() {
                                         style={{ height: '400px' }}
                                     />
                                 </div>
-                                <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'PUBLISH POST'}</button>
+                                <button onClick={savePost} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'PUBLISH POST'}</button>
                             </div>
                         </div>
                     </div>
@@ -1468,18 +1503,18 @@ export default function AdminDashboard() {
             {
                 editingProject && !editingPost && (
                     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                        <div style={{ background: 'var(--surface-color)', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid var(--border-color)', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                                 <h3 style={{ fontSize: '28px', fontWeight: '900' }}>EDIT PROJECT</h3>
                                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                     <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
-                                    <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: '#A0A0A0' }}><X size={24} /></button>
+                                    <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)' }}><X size={24} /></button>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                                <button onClick={() => setEditLang('en')} style={{ padding: '8px 16px', background: editLang === 'en' ? 'var(--accent-color)' : '#111', color: editLang === 'en' ? '#000' : '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>EN</button>
-                                <button onClick={() => setEditLang('pt')} style={{ padding: '8px 16px', background: editLang === 'pt' ? 'var(--accent-color)' : '#111', color: editLang === 'pt' ? '#000' : '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>PT</button>
-                                {editLang === 'pt' && <button onClick={() => handleAutoTranslateField('projectTitle')} style={{ fontSize: '10px', background: '#222', padding: '5px 10px', borderRadius: '5px', color: '#fff', border: '1px solid #333', cursor: 'pointer' }}>✨ AUTO-PT</button>}
+                                <button onClick={() => setEditLang('en')} style={{ padding: '8px 16px', background: editLang === 'en' ? 'var(--accent-color)' : 'var(--bg-color)', color: editLang === 'en' ? getContrastColor(branding.accentColor) : 'var(--text-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>EN</button>
+                                <button onClick={() => setEditLang('pt')} style={{ padding: '8px 16px', background: editLang === 'pt' ? 'var(--accent-color)' : 'var(--bg-color)', color: editLang === 'pt' ? getContrastColor(branding.accentColor) : 'var(--text-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>PT</button>
+                                {editLang === 'pt' && <button onClick={() => handleAutoTranslateField('projectTitle')} style={{ fontSize: '10px', background: 'var(--bg-color)', padding: '5px 10px', borderRadius: '5px', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', cursor: 'pointer', fontWeight: 'bold' }}>✨ AUTO-PT</button>}
                             </div>
                             <div style={{ display: 'grid', gap: '24px' }}>
                                 <input
@@ -1492,30 +1527,30 @@ export default function AdminDashboard() {
                                     }}
                                     style={modalInputStyle}
                                 />
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: '#111', padding: '12px', borderRadius: '8px' }}>
-                                    {editingProject.tags?.map(t => <span key={t} style={{ background: 'var(--accent-color)', color: '#000', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold' }}>{t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: editingProject.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>)}
-                                    <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none' }} />
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: 'var(--surface-color)', padding: '12px', borderRadius: '8px' }}>
+                                    {editingProject.tags?.map(t => <span key={t} style={{ background: 'var(--accent-color)', color: '#fff', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold' }}>{t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: editingProject.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>)}
+                                    <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', outline: 'none' }} />
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '15px' }}>
                                     {allProjectTags.filter(t => !editingProject.tags.includes(t)).map(tag => (
-                                        <button key={tag} onClick={() => addTag(tag)} style={{ fontSize: '10px', background: '#1a1a1a', border: '1px solid #333', color: '#C0C0C0', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {tag}</button>
+                                        <button key={tag} onClick={() => addTag(tag)} style={{ fontSize: '10px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+ {tag}</button>
                                     ))}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                    <div style={{ width: '120px', aspectRatio: '16/10', background: '#111', borderRadius: '12px', overflow: 'hidden' }}>
+                                    <div style={{ width: '120px', aspectRatio: '16/10', background: 'var(--surface-color)', borderRadius: '12px', overflow: 'hidden' }}>
                                         {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <ImageIcon size={24} color="#333" />}
                                     </div>
-                                    <label className="clickable" style={{ padding: '10px 20px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333' }}>
+                                    <label className="clickable" style={{ padding: '10px 20px', background: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)', color: 'var(--text-color)', fontSize: '12px', fontWeight: 'bold' }}>
                                         UPLOAD CAPA
                                         <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} />
                                     </label>
                                 </div>
 
                                 {/* GALLERY SECTION */}
-                                <div style={{ border: '1px solid #222', padding: '24px', borderRadius: '16px', background: '#0a0a0a' }}>
+                                <div style={{ border: '1px solid var(--border-color)', padding: '24px', borderRadius: '16px', background: 'var(--surface-color)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                         <h4 style={{ fontSize: '14px', fontWeight: 'bold' }}>PROJECT GALLERY (IMAGES & VIDEOS)</h4>
-                                        <label className="clickable" style={{ padding: '8px 16px', background: 'var(--accent-color)', color: '#000', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                                        <label className="clickable" style={{ padding: '8px 16px', background: 'var(--accent-color)', color: '#fff', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
                                             + ADD MEDIA
                                             <input
                                                 type="file"
@@ -1545,7 +1580,7 @@ export default function AdminDashboard() {
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                                         {/* Gallery Images */}
                                         {editingProject.gallery_images?.map((url, i) => (
-                                            <div key={`img-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222' }}>
+                                            <div key={`img-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                                                 <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                                 <button
                                                     onClick={() => {
@@ -1561,7 +1596,7 @@ export default function AdminDashboard() {
                                         ))}
                                         {/* Gallery Videos */}
                                         {editingProject.gallery_videos?.map((url, i) => (
-                                            <div key={`vid-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #222', background: '#000' }}>
+                                            <div key={`vid-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#000' }}>
                                                 <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                                                     <Activity size={16} color="var(--accent-color)" />
@@ -1604,7 +1639,7 @@ export default function AdminDashboard() {
                                     <div style={{ flex: 1 }}>
                                         <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
                                     </div>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#A0A0A0' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
                                         <input type="checkbox" checked={editingProject.visible !== false} onChange={e => setEditingProject({ ...editingProject, visible: e.target.checked })} />
                                         VISIBLE
                                     </label>
@@ -1612,7 +1647,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div style={{ marginTop: '20px', borderTop: '1px solid #222', paddingTop: '20px' }}>
-                                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: '#A0A0A0' }}>DOWNLOAD ASSETS (OPTIONAL)</h4>
+                                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: 'var(--text-muted)' }}>DOWNLOAD ASSETS (OPTIONAL)</h4>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                     <div>
                                         <label style={labelStyle}>Direct Download Link</label>
@@ -1674,11 +1709,11 @@ export default function AdminDashboard() {
             {/* MEMORY MODAL */}
             {
                 editingMemory && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: 'var(--surface-color)', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid var(--border-color)', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                                 <h3>{editingMemory.id ? 'EDIT MEMORY' : 'NEW MEMORY'}</h3>
-                                <button onClick={() => setEditingMemory(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
+                                <button onClick={() => setEditingMemory(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
                             <div style={{ display: 'grid', gap: '20px' }}>
                                 <div>
@@ -1713,7 +1748,7 @@ export default function AdminDashboard() {
                                     <label style={labelStyle}>Parallax Speed (0.5 = slow, 1.0 = normal, 1.5 = fast)</label>
                                     <input type="number" step="0.1" placeholder="1.0" value={editingMemory.speed} onChange={e => setEditingMemory({ ...editingMemory, speed: parseFloat(e.target.value) })} style={modalInputStyle} />
                                 </div>
-                                <button onClick={() => saveAboutMemory(editingMemory)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE MEMORY'}</button>
+                                <button onClick={() => saveAboutMemory(editingMemory)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE MEMORY'}</button>
                             </div>
                         </div>
                     </div>
@@ -1723,11 +1758,11 @@ export default function AdminDashboard() {
             {/* STEP MODAL */}
             {
                 editingStep && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: 'var(--surface-color)', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid var(--border-color)', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                                 <h3>{editingStep.id ? 'EDIT STEP' : 'NEW STEP'}</h3>
-                                <button onClick={() => setEditingStep(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
+                                <button onClick={() => setEditingStep(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
                             <div style={{ display: 'grid', gap: '20px' }}>
                                 <div>
@@ -1777,7 +1812,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected: {editingStep.icon_name}</div>
                                 </div>
-                                <button onClick={() => saveAboutStep(editingStep)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE STEP'}</button>
+                                <button onClick={() => saveAboutStep(editingStep)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE STEP'}</button>
                             </div>
                         </div>
                     </div>
@@ -1787,11 +1822,11 @@ export default function AdminDashboard() {
             {/* HOBBY MODAL */}
             {
                 editingHobby && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: 'var(--surface-color)', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid var(--border-color)', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                                 <h3>{editingHobby.id ? 'EDIT HOBBY' : 'NEW HOBBY'}</h3>
-                                <button onClick={() => setEditingHobby(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
+                                <button onClick={() => setEditingHobby(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
                             <div style={{ display: 'grid', gap: '20px' }}>
                                 <div>
@@ -1801,7 +1836,7 @@ export default function AdminDashboard() {
                                 <div>
                                     <label style={labelStyle}>Accent Color</label>
                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        <input type="color" value={editingHobby.color} onChange={e => setEditingHobby({ ...editingHobby, color: e.target.value })} style={{ width: '60px', height: '40px', border: '1px solid #333', borderRadius: '8px', cursor: 'pointer' }} />
+                                        <input type="color" value={editingHobby.color} onChange={e => setEditingHobby({ ...editingHobby, color: e.target.value })} style={{ width: '60px', height: '40px', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer' }} />
                                         <input value={editingHobby.color} onChange={e => setEditingHobby({ ...editingHobby, color: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
                                     </div>
                                 </div>
@@ -1883,14 +1918,14 @@ export default function AdminDashboard() {
                                     <div style={{ marginTop: '5px', fontSize: '11px', color: '#666' }}>Selected Library Icon: {editingHobby.icon_name}</div>
                                 </div>
                                 <div style={{ padding: '20px', background: '#111', borderRadius: '12px', border: '1px solid #222' }}>
-                                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>Preview:</div>
+                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>Preview:</div>
                                     <div style={{ height: '150px', background: '#0a0a0a', borderRadius: '8px', position: 'relative' }}>
                                         <div style={{ position: 'absolute', left: editingHobby.position_x, top: editingHobby.position_y, transform: 'translate(-50%, -50%)', background: '#fff', color: '#000', padding: '8px 16px', borderRadius: '20px 20px 20px 2px', borderLeft: `4px solid ${editingHobby.color}`, fontSize: '12px', fontWeight: 'bold' }}>
                                             {editingHobby.text || 'Hobby'}
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => saveAboutHobby(editingHobby)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE HOBBY'}</button>
+                                <button onClick={() => saveAboutHobby(editingHobby)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE HOBBY'}</button>
                             </div>
                         </div>
                     </div>
@@ -1900,11 +1935,11 @@ export default function AdminDashboard() {
             {/* TESTIMONIAL MODAL */}
             {
                 editingTestimonial && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <div style={{ background: 'var(--surface-color)', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid var(--border-color)', padding: '40px', maxHeight: '90vh', overflowY: 'auto' }} className="hide-scrollbar">
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                                 <h3>{editingTestimonial.id ? 'EDIT TESTIMONIAL' : 'NEW TESTIMONIAL'}</h3>
-                                <button onClick={() => setEditingTestimonial(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
+                                <button onClick={() => setEditingTestimonial(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
                             <div style={{ display: 'grid', gap: '20px' }}>
                                 <div>
@@ -1913,7 +1948,7 @@ export default function AdminDashboard() {
                                         <div style={{ width: '80px', height: '80px', background: '#111', borderRadius: '50%', overflow: 'hidden' }}>
                                             {editingTestimonial.author_image ? <img src={editingTestimonial.author_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={20} color="#333" /></div>}
                                         </div>
-                                        <label style={{ padding: '12px 24px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontWeight: '700', fontSize: '12px' }}>
+                                        <label style={{ padding: '12px 24px', background: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)', fontWeight: '700', fontSize: '12px', color: 'var(--text-color)' }}>
                                             UPLOAD PHOTO
                                             <input type="file" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleAboutImageUpload(e.target.files[0], 'testimonial')} />
                                         </label>
@@ -1931,7 +1966,7 @@ export default function AdminDashboard() {
                                     <label style={labelStyle}>Testimonial Quote</label>
                                     <textarea placeholder="Working with this professional was amazing..." value={editingTestimonial.quote} onChange={e => setEditingTestimonial({ ...editingTestimonial, quote: e.target.value })} rows={4} style={modalInputStyle} />
                                 </div>
-                                <button onClick={() => saveAboutTestimonial(editingTestimonial)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE TESTIMONIAL'}</button>
+                                <button onClick={() => saveAboutTestimonial(editingTestimonial)} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '900', cursor: 'pointer' }}>{saving ? 'SAVING...' : 'SAVE TESTIMONIAL'}</button>
                             </div>
                         </div>
                     </div>

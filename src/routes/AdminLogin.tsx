@@ -139,7 +139,7 @@ export default function AdminLogin() {
                             width: '100%',
                             padding: '14px',
                             background: 'var(--accent-color)',
-                            color: '#000',
+                            color: '#fff',
                             border: 'none',
                             borderRadius: '8px',
                             fontFamily: 'var(--font-display)',
