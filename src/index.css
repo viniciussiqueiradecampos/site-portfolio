@@ -457,7 +457,7 @@ body {
   }
 
   .hero-title {
-    font-size: 10vw !important;
+    font-size: 9vw !important;
     /* Reduced to fit better */
     white-space: normal !important;
     /* Wrap on mobile */
