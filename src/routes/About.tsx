@@ -243,7 +243,7 @@ export default function About() {
     const [bioText, setBioText] = useState<string[]>([]);
     const [testimonials, setTestimonials] = useState<AboutTestimonial[]>([]);
     const [memories, setMemories] = useState<AboutMemory[]>([]);
-
+    // Build Fix: Ensure line 246 is not problematic
     const [spotifyUrl, setSpotifyUrl] = useState("");
     const [testimonialIndex, setTestimonialIndex] = useState(0);
     const [pageVisible, setPageVisible] = useState(true);
@@ -270,7 +270,7 @@ export default function About() {
         const loadData = async () => {
             const lang = i18n.language;
             try {
-                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, , pSpotify] = await Promise.all([
+                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, pSpotify] = await Promise.all([
                     contentAPI.getByKey('about.profile_photo'),
                     contentAPI.getByKey('about.reveal_image'),
                     contentAPI.getByKey('about.name_title'),
@@ -279,7 +279,6 @@ export default function About() {
                     contentAPI.getByKey('about.visible'),
                     aboutAPI.getTestimonials(),
                     aboutAPI.getMemories(),
-                    aboutAPI.getHobbies(),
                     contentAPI.getByKey('about.spotify_embed_url')
                 ]);
 
