@@ -63,17 +63,26 @@ const HighlightItem = ({ section, idx, mutedColor }: { section: any, idx: number
                         borderRadius: '12px',
                         overflow: 'hidden',
                         height: 'auto',
-                        background: 'transparent',
+                        background: 'rgba(0,0,0,0.02)', // give standard faint background to videos/images
                         boxShadow: '0 4px 30px rgba(0, 0, 0, 0.06)'
                     }}>
                         {section.image && isVideoUrl(section.image) ? (
                             <video
                                 src={section.image}
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                                style={mediaStyle}
+                                autoPlay={true}
+                                loop={true}
+                                muted={true}
+                                playsInline={true}
+                                preload="auto"
+                                style={{ ...mediaStyle, background: 'transparent' }}
+                                ref={(el) => {
+                                    if (el) {
+                                        el.defaultMuted = true;
+                                        el.muted = true;
+                                        // Auto-play might be blocked, so we catch the promise
+                                        el.play().catch(err => console.log('Autoplay prevented:', err));
+                                    }
+                                }}
                             />
                         ) : (
                             <img src={section.image} alt={section.title} style={mediaStyle} />
@@ -223,15 +232,23 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                                 {isVideo ? (
                                     <video
                                         src={img}
-                                        autoPlay
-                                        loop
-                                        muted
-                                        playsInline
+                                        autoPlay={true}
+                                        loop={true}
+                                        muted={true}
+                                        playsInline={true}
+                                        preload="auto"
                                         style={{
                                             height: '100%',
                                             width: 'auto',
                                             objectFit: 'contain',
                                             display: 'block'
+                                        }}
+                                        ref={(el) => {
+                                            if (el) {
+                                                el.defaultMuted = true;
+                                                el.muted = true;
+                                                el.play().catch(e => console.log('Autoplay prevented:', e));
+                                            }
                                         }}
                                     />
                                 ) : (
@@ -272,16 +289,24 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                         {isCurrentVideo ? (
                             <video
                                 src={currentItem}
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
+                                autoPlay={true}
+                                loop={true}
+                                muted={true}
+                                playsInline={true}
+                                preload="auto"
                                 style={{
                                     width: '100%',
                                     height: '100%',
                                     objectFit: 'contain',
                                     borderRadius: 'var(--radius-lg)',
                                     boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                                }}
+                                ref={(el) => {
+                                    if (el) {
+                                        el.defaultMuted = true;
+                                        el.muted = true;
+                                        el.play().catch(e => console.log('Autoplay prevented:', e));
+                                    }
                                 }}
                             />
                         ) : (
@@ -508,14 +533,23 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                             {isCurrentVideo ? (
                                 <video
                                     src={currentItem}
-                                    controls
-                                    autoPlay
+                                    controls={true}
+                                    autoPlay={true}
+                                    loop={true}
+                                    muted={false} // user might want sound in fullscreen
+                                    playsInline={true}
+                                    preload="auto"
                                     style={{
                                         maxWidth: '95vw',
                                         maxHeight: '95vh',
                                         objectFit: 'contain',
                                         borderRadius: '16px',
                                         boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+                                    }}
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.play().catch(e => console.log('Autoplay prevented:', e));
+                                        }
                                     }}
                                 />
                             ) : (
