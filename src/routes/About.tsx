@@ -16,7 +16,7 @@ import { parseTranslatable } from '../lib/i18n-utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Physics Tags Component (Com Matter.js para Simulação Real 2D)
+// Physics Tags Component (Com Matter.js para Simulacao Real 2D)
 const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) => {
 
     const sceneRef = useRef<HTMLDivElement>(null);
@@ -24,6 +24,7 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
     const containersRef = useRef<(HTMLDivElement | null)[]>([]);
     const bodiesRef = useRef<{ body: Matter.Body, type: string, label?: string, icon?: any }[]>([]);
     const requestRef = useRef<number>(null);
+    const [renderItems, setRenderItems] = useState<{ type: string, label?: string, icon?: any }[]>([]);
 
     useEffect(() => {
         if (!sceneRef.current) return;
@@ -31,17 +32,14 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
         const engine = engineRef.current;
         const world = engine.world;
 
-        // Limpar mundo anterior para evitar duplicatas em hot-reload
         Matter.World.clear(world, false);
         Matter.Engine.clear(engine);
 
-        // 1. Configurar Gravidade e Precisão do Motor
         engine.gravity.y = 1.8;
-        engine.positionIterations = 30; // MAXIMA PRECISAO
-        engine.velocityIterations = 30; // MAXIMA PRECISAO
+        engine.positionIterations = 30;
+        engine.velocityIterations = 30;
         engine.enableSleeping = false;
 
-        // Variáveis de limites
         let ground: Matter.Body;
         let leftWall: Matter.Body;
         let rightWall: Matter.Body;
@@ -52,10 +50,8 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
             const width = sceneRef.current.clientWidth;
             const height = sceneRef.current.clientHeight;
 
-            // Remover limites antigos se existirem
             if (ground) Matter.World.remove(world, [ground, leftWall, rightWall, ceiling]);
 
-            // 2. Criar Chão (Boundaries)
             ground = Matter.Bodies.rectangle(width / 2, height + 250, width, 500, {
                 isStatic: true,
                 friction: 1,
@@ -63,47 +59,31 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
                 label: 'Ground'
             });
 
-            // 3. Paredes Laterais
             leftWall = Matter.Bodies.rectangle(-500, height / 2, 1000, height * 2, { isStatic: true, friction: 0, restitution: 0.5, label: 'LeftWall' });
             rightWall = Matter.Bodies.rectangle(width + 500, height / 2, 1000, height * 2, { isStatic: true, friction: 0, restitution: 0.5, label: 'RightWall' });
-
-            // Teto
             ceiling = Matter.Bodies.rectangle(width / 2, -500, width, 100, { isStatic: true });
 
             Matter.World.add(world, [ground, leftWall, rightWall, ceiling]);
         };
 
-        // Inicializar limites
         updateBoundaries();
 
-        // Listener de Resize para Responsividade
         const handleResize = () => {
             updateBoundaries();
-            // Opcional: Acordar corpos para se reacomodarem
             bodiesRef.current.forEach(b => Matter.Body.setStatic(b.body as Matter.Body, false));
         };
         window.addEventListener('resize', handleResize);
 
-
-
-        // Criar Tags
         const width = sceneRef.current.getBoundingClientRect().width;
         const items: { body: Matter.Body, type: string, label?: string, icon?: any }[] = [];
 
-        // Use tags from DB, fallback to defaults if empty
         const activeTags = tags.length > 0 ? tags : ["DIGITAL DESIGNER", "UI DESIGNER", "DESIGN SYSTEM", "FIGMA ADVANCED", "WORDPRESS"];
 
         activeTags.forEach((tag, i) => {
-            // Visual Height: Font 24px + Padding (20px * 2) = 64px ~ 70px safe
-            // Mobile: Font 16px + Padding (10px * 2) = 36px ~ 50px safe
             const tagHeight = isMobile ? 50 : 70;
-
-            // Width Calculation: Approx char width (24px font -> ~14px) * length + padding (80px)
             const charWidth = isMobile ? 10 : 16;
             const extraPadding = isMobile ? 60 : 100;
             const tagWidth = (tag.length * charWidth) + extraPadding;
-
-            // Spawn grid
             const col = i % 3;
             const row = Math.floor(i / 3);
             const startX = (width / 4) * (col + 1);
@@ -116,11 +96,11 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
                 tagHeight,
                 {
                     chamfer: { radius: isMobile ? 25 : 35 },
-                    restitution: 0.2, // SÓLIDO
-                    friction: 0.5,    // ESTÁVEL
+                    restitution: 0.2,
+                    friction: 0.5,
                     frictionAir: 0.001,
                     density: 0.01,
-                    slop: 0, // Zero tolerância para sobreposição
+                    slop: 0,
                     angle: (Math.random() - 0.5) * 0.1
                 }
             );
@@ -138,46 +118,39 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
         ];
 
         designIcons.forEach((di, i) => {
-            const radius = isMobile ? 25 : 35; // 70px diameter desktop
-
-            // Spawn icons interspersed or after tags
+            const radius = isMobile ? 25 : 35;
             const startX = (width / (designIcons.length + 1)) * (i + 1);
             const startY = -200 - (i * 80);
 
-            const body = Matter.Bodies.circle(
-                startX,
-                startY,
-                radius,
-                {
-                    restitution: 0.2,
-                    friction: 0.5,
-                    frictionAir: 0.001,
-                    density: 0.01,
-                    slop: 0 // Zero tolerância
-                }
-            );
+            const body = Matter.Bodies.circle(startX, startY, radius, {
+                restitution: 0.2,
+                friction: 0.5,
+                frictionAir: 0.001,
+                density: 0.01,
+                slop: 0
+            });
             items.push({ body, type: 'icon', icon: di.icon });
         });
 
         bodiesRef.current = items;
         Matter.World.add(world, items.map(i => i.body));
 
-        // Mouse Control
+        // Trigger re-render so JSX picks up the new items
+        setRenderItems(items.map(({ body: _body, ...rest }) => rest));
+
         const mouse = Matter.Mouse.create(sceneRef.current);
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
-                stiffness: 0.2, // Firme o suficiente para pegar os objetos pesados/grandes
+                stiffness: 0.2,
                 render: { visible: false }
             }
         });
         Matter.World.add(world, mouseConstraint);
 
-        // Fix scroll issue with Matter.js inputs
         mouseConstraint.mouse.element.removeEventListener("mousewheel", (mouseConstraint.mouse as any).mousewheel);
         mouseConstraint.mouse.element.removeEventListener("DOMMouseScroll", (mouseConstraint.mouse as any).mousewheel);
 
-        // Render Loop
         const update = () => {
             Matter.Engine.update(engine, 1000 / 60);
 
@@ -186,7 +159,6 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
                 if (el && b.body) {
                     const { x, y } = b.body.position;
                     const angle = b.body.angle;
-                    // Otimização: translate3d + Centralização
                     el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) rotate(${angle}rad)`;
                 }
             });
@@ -212,7 +184,7 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
             overflow: 'visible',
             zIndex: 100
         }}>
-            {bodiesRef.current.map((item: any, i: number) => {
+            {renderItems.map((item: any, i: number) => {
                 const isTag = item.type === 'tag';
                 const isIcon = item.type === 'icon';
                 const isDark = i % 2 === 0;
@@ -257,6 +229,7 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
         </div>
     );
 };
+
 
 export default function About() {
     const { t, i18n } = useTranslation();

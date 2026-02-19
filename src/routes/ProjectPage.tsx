@@ -200,6 +200,7 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                     }}
                 >
                     {displayImages.map((img, i) => {
+                        const isVideo = isVideoUrl(img);
                         return (
                             <div
                                 key={i}
@@ -213,16 +214,32 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                                     boxShadow: '0 4px 30px rgba(0, 0, 0, 0.06)'
                                 }}
                             >
-                                <img
-                                    src={img}
-                                    alt={`Gallery ${i}`}
-                                    style={{
-                                        height: '100%',
-                                        width: 'auto',
-                                        objectFit: 'contain',
-                                        display: 'block'
-                                    }}
-                                />
+                                {isVideo ? (
+                                    <video
+                                        src={img}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        style={{
+                                            height: '100%',
+                                            width: 'auto',
+                                            objectFit: 'contain',
+                                            display: 'block'
+                                        }}
+                                    />
+                                ) : (
+                                    <img
+                                        src={img}
+                                        alt={`Gallery ${i}`}
+                                        style={{
+                                            height: '100%',
+                                            width: 'auto',
+                                            objectFit: 'contain',
+                                            display: 'block'
+                                        }}
+                                    />
+                                )}
                             </div>
                         );
                     })}
@@ -231,27 +248,49 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
         );
     }
 
+    const currentItem = images[index];
+    const isCurrentVideo = isVideoUrl(currentItem);
+
     return (
         <>
             <div style={{ position: 'relative', width: '100%', height: '70vh', overflow: 'hidden', borderRadius: 'var(--radius-lg)', background: 'transparent' }}>
                 <AnimatePresence mode="wait">
-                    <motion.img
+                    <motion.div
                         key={index}
-                        src={images[index]}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }} // Faster animation
-                        style={{
-                            position: 'relative',
-                            zIndex: 1,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain', // Changed from cover to contain to avoid cropping
-                            borderRadius: 'var(--radius-lg)',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-                        }}
-                    />
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        style={{ width: '100%', height: '100%', position: 'relative' }}
+                    >
+                        {isCurrentVideo ? (
+                            <video
+                                src={currentItem}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain',
+                                    borderRadius: 'var(--radius-lg)',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                                }}
+                            />
+                        ) : (
+                            <img
+                                src={currentItem}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain',
+                                    borderRadius: 'var(--radius-lg)',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                                }}
+                            />
+                        )}
+                    </motion.div>
                 </AnimatePresence>
 
                 {/* Navigation and Controls */}
@@ -448,19 +487,44 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                             </>
                         )}
 
-                        <motion.img
+                        <motion.div
                             key={index}
-                            src={images[index]}
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
                             style={{
-                                maxWidth: '95vw',
-                                maxHeight: '95vh',
-                                objectFit: 'contain',
-                                borderRadius: '16px',
-                                boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
                             }}
-                        />
+                        >
+                            {isCurrentVideo ? (
+                                <video
+                                    src={currentItem}
+                                    controls
+                                    autoPlay
+                                    style={{
+                                        maxWidth: '95vw',
+                                        maxHeight: '95vh',
+                                        objectFit: 'contain',
+                                        borderRadius: '16px',
+                                        boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+                                    }}
+                                />
+                            ) : (
+                                <img
+                                    src={currentItem}
+                                    style={{
+                                        maxWidth: '95vw',
+                                        maxHeight: '95vh',
+                                        objectFit: 'contain',
+                                        borderRadius: '16px',
+                                        boxShadow: '0 0 50px rgba(0,0,0,0.5)'
+                                    }}
+                                />
+                            )}
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -769,11 +833,17 @@ export default function ProjectPage() {
             )}
 
             {/* Gallery */}
-            {project.gallery_images && project.gallery_images.length > 0 && (
-                <section style={{ margin: '60px 0', backgroundColor: 'transparent' }}>
-                    <ImageCarousel images={project.gallery_images} />
-                </section>
-            )}
+            {(() => {
+                const allMedia = [
+                    ...(project.gallery_images || []),
+                    ...(project.gallery_videos || [])
+                ];
+                return allMedia.length > 0 ? (
+                    <section style={{ margin: '60px 0', backgroundColor: 'transparent' }}>
+                        <ImageCarousel images={allMedia} />
+                    </section>
+                ) : null;
+            })()}
 
             {/* Highlights Sections (Alternating 70/30) */}
             {project.highlights && project.highlights.length > 0 && (
