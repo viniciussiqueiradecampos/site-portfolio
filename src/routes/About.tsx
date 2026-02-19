@@ -77,7 +77,7 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
         const width = sceneRef.current.getBoundingClientRect().width;
         const items: { body: Matter.Body, type: string, label?: string, icon?: any }[] = [];
 
-        const activeTags = tags.length > 0 ? tags : ["DIGITAL DESIGNER", "UI DESIGNER", "DESIGN SYSTEM", "FIGMA ADVANCED", "WORDPRESS"];
+        const activeTags = tags.length > 0 ? tags : ["Digital Designer", "UI Designer", "Design", "São Paulo", "Brazil", "Portugal"];
 
         activeTags.forEach((tag, i) => {
             const tagHeight = isMobile ? 50 : 70;
