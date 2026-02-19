@@ -362,7 +362,13 @@ export default function AdminDashboard() {
 
             if (result.error) {
                 console.error('❌ Supabase Save Error:', result.error);
-                alert(`ERRO SUPABASE (${activeTab}): ${result.error.message}\nCódigo: ${result.error.code}\nDetalhes: ${result.error.details}`);
+                let errorMsg = `ERRO SUPABASE: ${result.error.message}`;
+
+                if (result.error.message.includes('gallery_videos') || result.error.message.includes('column')) {
+                    errorMsg += "\n\nDICA: A coluna 'gallery_videos' pode estar faltando. Certifique-se de rodar o script SQL 'fix_gallery_videos_column.sql' no SQL Editor do Supabase.";
+                }
+
+                alert(errorMsg);
                 setMessage('❌ Falha ao salvar');
             } else {
                 console.log('✅ Projeto salvo com sucesso! Data:', result.data);

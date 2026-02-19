@@ -26,6 +26,8 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
     const requestRef = useRef<number>(null);
     const [renderItems, setRenderItems] = useState<{ type: string, label?: string, icon?: any }[]>([]);
 
+    console.log('🏗️ PhysicsTags Data:', { isMobile, tags });
+
     useEffect(() => {
         if (!sceneRef.current) return;
 

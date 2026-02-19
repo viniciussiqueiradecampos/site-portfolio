@@ -28,7 +28,13 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
     </motion.div>
 );
 
-const isVideoUrl = (url: string) => /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+const isVideoUrl = (url: string) => {
+    if (!url) return false;
+    // Standard extensions or explicitly containing 'video' in the path/query
+    return /\.(mp4|webm|ogg|mov|avi|m4v|quicktime)($|\?)/i.test(url) || url.toLowerCase().includes('video_');
+};
+
+console.log('🚀 ProjectPage component initialized - Build: 2026-02-19-15-55');
 
 const HighlightItem = ({ section, idx, mutedColor }: { section: any, idx: number, mutedColor: string }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -570,12 +576,18 @@ export default function ProjectPage() {
         }
 
         setLoading(true);
+        console.log('🔍 Fetching project with slug:', slug);
         const data = await projectsAPI.getBySlug(slug);
+        console.log('📊 Raw Project Data from Supabase:', data);
 
         if (!data) {
+            console.warn('⚠️ Project not found for slug:', slug);
             navigate('/projects');
             return;
         }
+
+        console.log('📽️ Gallery Images:', data.gallery_images);
+        console.log('📽️ Gallery Videos:', data.gallery_videos);
 
         const lang = i18n.language;
         setProject({

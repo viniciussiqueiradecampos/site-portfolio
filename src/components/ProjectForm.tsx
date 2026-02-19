@@ -678,7 +678,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginTop: '16px' }}>
                                     {project.gallery_videos?.map((vid, index) => (
                                         <div key={index} style={{ position: 'relative' }}>
-                                            <video src={vid} muted style={{
+                                            <video src={vid} controls muted style={{
                                                 width: '100%',
                                                 height: '120px',
                                                 objectFit: 'cover',

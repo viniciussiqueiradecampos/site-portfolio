@@ -13,7 +13,7 @@ export const storageAPI = {
         onProgress?: (progress: number) => void
     ): Promise<string | null> {
         try {
-            console.log(`📤 Uploading file to folder: ${folder}`, file.name);
+            console.log(`📤 Uploading file: ${file.name} (Type: ${file.type}, Size: ${file.size} bytes) to ${folder}`);
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
             const filePath = folder ? `${folder}/${fileName}` : fileName;
@@ -23,9 +23,9 @@ export const storageAPI = {
                 .upload(filePath, file, {
                     cacheControl: '3600',
                     upsert: false,
-                    // If the supabase version supports it
-                    onUploadProgress: (progress: { loaded: number; total: number }) => {
-                        if (onProgress) {
+                    contentType: file.type || 'application/octet-stream',
+                    onUploadProgress: (progress: any) => {
+                        if (onProgress && progress.total) {
                             const percent = (progress.loaded / progress.total) * 100;
                             onProgress(percent);
                         }
@@ -33,8 +33,15 @@ export const storageAPI = {
                 } as any);
 
             if (error) {
-                console.error('❌ Error uploading image:', error);
-                alert(`ERRO NO STORAGE: ${error.message} - ${error.name}`);
+                console.error('❌ Supabase Storage Error:', error);
+
+                // Detailed diagnostic for the user
+                let errorMsg = `STORAGE ERROR: ${error.message}`;
+                if (file.size > 5 * 1024 * 1024) {
+                    errorMsg += "\n\nO arquivo é grande (>5MB). Verifique o limite de tamanho do bucket no Supabase.";
+                }
+
+                alert(errorMsg);
                 return null;
             }
 
