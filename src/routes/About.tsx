@@ -9,7 +9,7 @@ import {
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
-import { aboutAPI, contentAPI, type AboutTestimonial, type AboutMemory, type AboutHobby } from '../lib/supabase';
+import { aboutAPI, contentAPI, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
 import { trackPageView } from '../lib/analytics';
 import { useTranslation } from 'react-i18next';
 import { parseTranslatable } from '../lib/i18n-utils';
@@ -243,7 +243,7 @@ export default function About() {
     const [bioText, setBioText] = useState<string[]>([]);
     const [testimonials, setTestimonials] = useState<AboutTestimonial[]>([]);
     const [memories, setMemories] = useState<AboutMemory[]>([]);
-    const [hobbies, setHobbies] = useState<AboutHobby[]>([]);
+
     const [spotifyUrl, setSpotifyUrl] = useState("");
     const [testimonialIndex, setTestimonialIndex] = useState(0);
     const [pageVisible, setPageVisible] = useState(true);
@@ -270,7 +270,7 @@ export default function About() {
         const loadData = async () => {
             const lang = i18n.language;
             try {
-                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, hobbiesData, pSpotify] = await Promise.all([
+                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, , pSpotify] = await Promise.all([
                     contentAPI.getByKey('about.profile_photo'),
                     contentAPI.getByKey('about.reveal_image'),
                     contentAPI.getByKey('about.name_title'),
@@ -296,7 +296,6 @@ export default function About() {
                     quote: parseTranslatable(t.quote, lang)
                 })));
                 setMemories(memoriesData);
-                setHobbies(hobbiesData);
             } catch (e) { console.error(e); } finally { setIsLoading(false); }
         };
         loadData();
