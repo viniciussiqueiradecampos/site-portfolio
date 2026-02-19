@@ -625,8 +625,47 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {/* GALLERY SECTION */}
                     {activeSection === 'gallery' && (
                         <div>
-                            {/* Gallery images */}
-                            <label style={labelStyle}>Imagens da Galeria</label>
+                            <label style={labelStyle}>Imagens da Galeria (Upload ou Link)</label>
+
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                                <input
+                                    type="text"
+                                    id="manual-gallery-image"
+                                    placeholder="URL ou path local (Ex: /img/minha_imagem.jpg)"
+                                    style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const input = e.currentTarget;
+                                            if (input.value) {
+                                                const currentImages = project.gallery_images || [];
+                                                onChange({ ...project, gallery_images: [...currentImages, input.value] });
+                                                input.value = '';
+                                            }
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        const input = document.getElementById('manual-gallery-image') as HTMLInputElement;
+                                        if (input && input.value) {
+                                            const currentImages = project.gallery_images || [];
+                                            onChange({ ...project, gallery_images: [...currentImages, input.value] });
+                                            input.value = '';
+                                        }
+                                    }}
+                                    style={{
+                                        padding: '0 20px',
+                                        background: 'var(--accent-color)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        color: 'var(--accent-contrast)',
+                                        cursor: 'pointer',
+                                        fontWeight: '700'
+                                    }}
+                                >
+                                    ADD
+                                </button>
+                            </div>
                             <input type="file" accept="image/*" onChange={addGalleryImage} style={modalInputStyle} />
                             {Object.entries(uploadProgress).filter(([k]) => k.startsWith('gal_')).map(([k, v]) => (
                                 <div key={k} style={{ marginBottom: '20px' }}>
@@ -668,69 +707,106 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 ))}
                             </div>
 
-                            {/* Gallery videos */}
-                            <div style={{ marginTop: '28px' }}>
-                                <label style={labelStyle}>Vídeos da Galeria (Highlights)</label>
-                                <input type="file" accept="video/*" onChange={addGalleryVideo} style={modalInputStyle} />
-                                {Object.entries(uploadProgress).filter(([k]) => k.startsWith('vid_')).map(([k, v]) => (
-                                    <div key={k} style={{ marginBottom: '20px' }}>
-                                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-color)' }}>UPLOADING VIDEO: {Math.round(v)}%</span>
-                                        <ProgressBar progress={v} />
+                            <label style={labelStyle}>Vídeos da Galeria (Upload ou Link)</label>
+
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                                <input
+                                    type="text"
+                                    id="manual-gallery-video"
+                                    placeholder="URL ou path local (Ex: /videos/meu-video.mp4)"
+                                    style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const input = e.currentTarget;
+                                            if (input.value) {
+                                                const currentVideos = project.gallery_videos || [];
+                                                onChange({ ...project, gallery_videos: [...currentVideos, input.value] });
+                                                input.value = '';
+                                            }
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        const input = document.getElementById('manual-gallery-video') as HTMLInputElement;
+                                        if (input && input.value) {
+                                            const currentVideos = project.gallery_videos || [];
+                                            onChange({ ...project, gallery_videos: [...currentVideos, input.value] });
+                                            input.value = '';
+                                        }
+                                    }}
+                                    style={{
+                                        padding: '0 20px',
+                                        background: 'var(--accent-color)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        color: 'var(--accent-contrast)',
+                                        cursor: 'pointer',
+                                        fontWeight: '700'
+                                    }}
+                                >
+                                    ADD
+                                </button>
+                            </div>
+                            <input type="file" accept="video/*" onChange={addGalleryVideo} style={modalInputStyle} />
+                            {Object.entries(uploadProgress).filter(([k]) => k.startsWith('vid_')).map(([k, v]) => (
+                                <div key={k} style={{ marginBottom: '20px' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-color)' }}>UPLOADING VIDEO: {Math.round(v)}%</span>
+                                    <ProgressBar progress={v} />
+                                </div>
+                            ))}
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginTop: '16px' }}>
+                                {project.gallery_videos?.map((vid, index) => (
+                                    <div key={index} style={{ position: 'relative' }}>
+                                        <video
+                                            src={vid}
+                                            controls={true}
+                                            muted={true}
+                                            preload="metadata"
+                                            style={{
+                                                width: '100%',
+                                                height: '120px',
+                                                objectFit: 'cover',
+                                                borderRadius: '8px',
+                                                background: '#111'
+                                            }}
+                                            ref={(el) => {
+                                                if (el) {
+                                                    el.defaultMuted = true;
+                                                    el.muted = true;
+                                                }
+                                            }}
+                                        />
+                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', wordBreak: 'break-all', padding: '0 2px' }}>
+                                            {vid.split('/').pop()?.split('?')[0]}
+                                        </div>
+                                        <button
+                                            onClick={() => removeGalleryVideo(index)}
+                                            style={{
+                                                position: 'absolute',
+                                                top: '8px',
+                                                right: '8px',
+                                                background: 'rgba(0,0,0,0.8)',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '28px',
+                                                height: '28px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#fff',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <X size={16} />
+                                        </button>
                                     </div>
                                 ))}
-
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginTop: '16px' }}>
-                                    {project.gallery_videos?.map((vid, index) => (
-                                        <div key={index} style={{ position: 'relative' }}>
-                                            <video
-                                                src={vid}
-                                                controls={true}
-                                                muted={true}
-                                                preload="metadata"
-                                                style={{
-                                                    width: '100%',
-                                                    height: '120px',
-                                                    objectFit: 'cover',
-                                                    borderRadius: '8px',
-                                                    background: '#111'
-                                                }}
-                                                ref={(el) => {
-                                                    if (el) {
-                                                        el.defaultMuted = true;
-                                                        el.muted = true;
-                                                    }
-                                                }}
-                                            />
-                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', wordBreak: 'break-all', padding: '0 2px' }}>
-                                                {vid.split('/').pop()?.split('?')[0]}
-                                            </div>
-                                            <button
-                                                onClick={() => removeGalleryVideo(index)}
-                                                style={{
-                                                    position: 'absolute',
-                                                    top: '8px',
-                                                    right: '8px',
-                                                    background: 'rgba(0,0,0,0.8)',
-                                                    border: 'none',
-                                                    borderRadius: '50%',
-                                                    width: '28px',
-                                                    height: '28px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: '#fff',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                                {(!project.gallery_videos || project.gallery_videos.length === 0) && (
-                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Nenhum vídeo. Faça upload para exibir vídeo nos highlights.</p>
-                                )}
                             </div>
+                            {(!project.gallery_videos || project.gallery_videos.length === 0) && (
+                                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Nenhum vídeo. Faça upload para exibir vídeo nos highlights.</p>
+                            )}
                         </div>
                     )}
 
@@ -833,6 +909,17 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                             </div>
                                         </div>
                                     )}
+
+                                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                        <input
+                                            type="text"
+                                            value={highlight.image}
+                                            onChange={(e) => updateHighlight(index, 'image', e.target.value)}
+                                            placeholder="URL direta ou arquivo (Ex: /videos/file.mp4)"
+                                            style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
+                                        />
+                                    </div>
+
                                     <input
                                         type="file"
                                         accept="image/*,video/*"
