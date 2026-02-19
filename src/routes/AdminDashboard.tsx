@@ -323,8 +323,7 @@ export default function AdminDashboard() {
         if (!editingProject) return;
         setSaving(true);
         try {
-            const dataToSave: any = {
-                ...editingProject,
+            const dataToSave = {
                 title: editingProject.title || '',
                 slug: editingProject.slug || undefined,
                 short_description: editingProject.short_description || '',
@@ -351,11 +350,12 @@ export default function AdminDashboard() {
                 visible: editingProject.visible !== false
             };
 
-            console.log('💾 Tentando salvar projeto:', { id, dataToSave });
+            const pid = editingProject.id;
+            console.log('💾 Tentando salvar projeto:', { id: pid, data: dataToSave });
 
             let result;
-            if (id && id !== '' && id !== 'new') {
-                result = await supabase.from('projects').update(dataToSave).eq('id', id);
+            if (pid && pid !== '' && pid !== 'new') {
+                result = await supabase.from('projects').update(dataToSave).eq('id', pid);
             } else {
                 result = await supabase.from('projects').insert([dataToSave]).select();
             }
