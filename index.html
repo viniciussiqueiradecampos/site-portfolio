@@ -4,12 +4,8 @@
 
 <head>
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self' https: https://mfjczcgqlgwydlmrutmq.supabase.co; 
-                 script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://tagmanager.google.com https://www.clarity.ms https://mfjczcgqlgwydlmrutmq.supabase.co; 
-                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://mfjczcgqlgwydlmrutmq.supabase.co; 
-                 img-src 'self' data: https: blob: https://mfjczcgqlgwydlmrutmq.supabase.co; 
-                 media-src 'self' blob: data: https: https://mfjczcgqlgwydlmrutmq.supabase.co; 
-                 connect-src 'self' https: wss: https://mfjczcgqlgwydlmrutmq.supabase.co wss://mfjczcgqlgwydlmrutmq.supabase.co https://*.supabase.co https://*.supabase.in https://www.google-analytics.com https://region1.google-analytics.com https://*.clarity.ms;">
+    content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob:; frame-src *; style-src * 'unsafe-inline'; media-src * blob:; worker-src * blob:;">
+
 
   <script>(function (w, d, s, l, i) {
       w[l] = w[l] || []; w[l].push({
