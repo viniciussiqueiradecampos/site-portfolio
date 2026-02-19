@@ -345,7 +345,7 @@ export default function About() {
                     justifyContent: 'center',
                     overflow: 'visible'
                 }}>
-                    <PhysicsTags isMobile={isMobile} tags={hobbies.map(h => h.text)} />
+                    <PhysicsTags isMobile={isMobile} tags={["Digital Designer", "UI Designer", "Design", "São Paulo", "Brazil", "Portugal"]} />
                 </div>
 
                 <div style={{
