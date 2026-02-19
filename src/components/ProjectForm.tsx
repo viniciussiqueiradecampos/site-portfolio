@@ -682,13 +682,25 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginTop: '16px' }}>
                                     {project.gallery_videos?.map((vid, index) => (
                                         <div key={index} style={{ position: 'relative' }}>
-                                            <video src={vid} controls muted style={{
-                                                width: '100%',
-                                                height: '120px',
-                                                objectFit: 'cover',
-                                                borderRadius: '8px',
-                                                background: '#000'
-                                            }} />
+                                            <video
+                                                src={vid}
+                                                controls={true}
+                                                muted={true}
+                                                preload="metadata"
+                                                style={{
+                                                    width: '100%',
+                                                    height: '120px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '8px',
+                                                    background: '#111'
+                                                }}
+                                                ref={(el) => {
+                                                    if (el) {
+                                                        el.defaultMuted = true;
+                                                        el.muted = true;
+                                                    }
+                                                }}
+                                            />
                                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', wordBreak: 'break-all', padding: '0 2px' }}>
                                                 {vid.split('/').pop()?.split('?')[0]}
                                             </div>
@@ -787,6 +799,11 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                             {isVideoUrl(highlight.image) ? (
                                                 <video
                                                     src={highlight.image}
+                                                    autoPlay={true}
+                                                    loop={true}
+                                                    muted={true}
+                                                    playsInline={true}
+                                                    preload="auto"
                                                     style={{
                                                         width: '100%',
                                                         height: '150px',
@@ -794,10 +811,13 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                                         borderRadius: '8px',
                                                         background: '#111'
                                                     }}
-                                                    muted
-                                                    loop
-                                                    autoPlay
-                                                    playsInline
+                                                    ref={(el) => {
+                                                        if (el) {
+                                                            el.defaultMuted = true;
+                                                            el.muted = true;
+                                                            el.play().catch(err => console.log('Autoplay prevented on form:', err));
+                                                        }
+                                                    }}
                                                     onError={(e) => console.error(`❌ Video load error for highlight[${index}]:`, (e.target as HTMLVideoElement).error)}
                                                 />
                                             ) : (
