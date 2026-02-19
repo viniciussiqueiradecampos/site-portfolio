@@ -199,12 +199,25 @@ export default function AdminDashboard() {
     };
 
     const loadProjects = async () => {
+        console.log('🔄 [v4.5] Carregando projetos do banco...');
         const { data, error } = await supabase.from('projects').select('*').order('order_index', { ascending: true }).limit(1000);
         if (!error && data) {
+            console.log('📊 [v4.5] Projetos recebidos:', data.length);
+            // Log details for the Bem Agro project specifically if it exists
+            const bemAgro = data.find(p => p.title?.toLowerCase().includes('bem agro'));
+            if (bemAgro) {
+                console.log('🧐 [v4.5] Dados atuais do Bem Agro:', {
+                    id: bemAgro.id,
+                    highlights_count: bemAgro.highlights?.length,
+                    first_highlight_media: bemAgro.highlights?.[0]?.image
+                });
+            }
             setProjects(data);
             const tags = new Set<string>();
             data.forEach(p => p.tags?.forEach((t: string) => tags.add(t.toUpperCase())));
             setAllProjectTags(Array.from(tags).sort());
+        } else if (error) {
+            console.error('❌ [v4.5] Erro ao carregar projetos:', error);
         }
     };
 
