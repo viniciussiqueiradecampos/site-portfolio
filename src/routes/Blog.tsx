@@ -194,7 +194,7 @@ export default function Blog() {
                                     style={{
                                         padding: '12px 15px',
                                         background: selectedCategory === null ? 'var(--accent-color)' : 'transparent',
-                                        color: selectedCategory === null ? '#000' : 'var(--text-muted)',
+                                        color: selectedCategory === null ? 'var(--accent-contrast)' : 'var(--text-muted)',
                                         border: 'none',
                                         borderRadius: '8px',
                                         textAlign: 'left',
@@ -213,7 +213,7 @@ export default function Blog() {
                                         style={{
                                             padding: '12px 15px',
                                             background: selectedCategory === cat ? 'var(--accent-color)' : 'transparent',
-                                            color: selectedCategory === cat ? '#000' : 'var(--text-muted)',
+                                            color: selectedCategory === cat ? 'var(--accent-contrast)' : 'var(--text-muted)',
                                             border: 'none',
                                             borderRadius: '8px',
                                             textAlign: 'left',
@@ -237,7 +237,7 @@ export default function Blog() {
                                     style={{
                                         padding: '6px 12px',
                                         background: selectedTag === null ? 'var(--accent-color)' : 'var(--surface-color)',
-                                        color: selectedTag === null ? '#000' : 'var(--text-muted)',
+                                        color: selectedTag === null ? 'var(--accent-contrast)' : 'var(--text-muted)',
                                         border: '1px solid var(--border-color)',
                                         borderRadius: '6px',
                                         fontSize: '11px',
@@ -254,7 +254,7 @@ export default function Blog() {
                                         style={{
                                             padding: '6px 12px',
                                             background: selectedTag === tag ? 'var(--accent-color)' : 'var(--surface-color)',
-                                            color: selectedTag === tag ? '#000' : 'var(--text-muted)',
+                                            color: selectedTag === tag ? 'var(--accent-contrast)' : 'var(--text-muted)',
                                             border: '1px solid var(--border-color)',
                                             borderRadius: '6px',
                                             fontSize: '11px',
@@ -269,7 +269,7 @@ export default function Blog() {
                         </div>
 
                         {showNewsletter && (
-                            <div style={{ padding: '30px', background: 'var(--accent-color)', borderRadius: '24px', color: '#000' }}>
+                            <div style={{ padding: '30px', background: 'var(--accent-color)', borderRadius: '24px', color: 'var(--accent-contrast)' }}>
                                 <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '14px', marginBottom: '15px' }}>Newsletter</h4>
                                 <p style={{ fontSize: '13px', lineHeight: 1.5, marginBottom: '20px' }}>Get the latest design insights directly in your inbox.</p>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

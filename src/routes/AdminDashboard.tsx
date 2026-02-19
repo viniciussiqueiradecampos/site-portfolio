@@ -26,7 +26,7 @@ import {
     Wallet, Calendar, Bell, Lock, Unlock, Key, Eye, EyeOff, Filter, Sliders, Navigation,
     ExternalLink, Share, Play, Pause, ChevronLeft, ChevronRight,
     Square, Triangle, Smile, Flame, Sun, Moon, Wind, Trophy, Medal, Box, Anchor, Compass,
-    Feather, Pen, Pencil, Columns, Grid, List
+    Feather, Pen, Pencil, Columns, Grid, List, Plus
 } from 'lucide-react';
 
 const ICON_COMPONENTS: Record<string, any> = {
@@ -38,12 +38,13 @@ const ICON_COMPONENTS: Record<string, any> = {
     Wallet, Calendar, Bell, Lock, Unlock, Key, Eye, EyeOff, Filter, Sliders, Navigation,
     ExternalLink, Share, Play, Pause,
     Square, Triangle, Smile, Flame, Sun, Moon, Wind, Trophy, Medal, Box, Anchor, Compass,
-    Feather, Pen, Pencil, Columns, Grid, List
+    Feather, Pen, Pencil, Columns, Grid, List, Plus
 };
 
 const SELECTABLE_ICONS = Object.keys(ICON_COMPONENTS).sort();
 import { storageAPI } from '../lib/storage';
 import { motion } from 'framer-motion';
+import ProjectForm from '../components/ProjectForm';
 import ProjectModal from '../components/ProjectModal';
 import RichTextEditor from '../components/RichTextEditor';
 import {
@@ -150,7 +151,7 @@ export default function AdminDashboard() {
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
-    const [editLang, setEditLang] = useState<'en' | 'pt'>('en');
+    const [editLang] = useState<'en' | 'pt'>('en');
 
     useEffect(() => {
         loadAllData();
@@ -259,13 +260,15 @@ export default function AdminDashboard() {
     };
 
     const loadAbout = async () => {
-        const photo = await contentAPI.getByKey('about.profile_photo');
-        const reveal = await contentAPI.getByKey('about.reveal_image');
-        const title = await contentAPI.getByKey('about.name_title');
-        const subtitle = await contentAPI.getByKey('about.subtitle');
-        const bio = await contentAPI.getByKey('about.bio_text');
-        const spotify = await contentAPI.getByKey('about.spotify_embed_url');
-        const visible = await contentAPI.getByKey('about.visible');
+        const [photo, reveal, title, subtitle, bio, spotify, visible] = await Promise.all([
+            contentAPI.getByKey('about.profile_photo'),
+            contentAPI.getByKey('about.reveal_image'),
+            contentAPI.getByKey('about.name_title'),
+            contentAPI.getByKey('about.subtitle'),
+            contentAPI.getByKey('about.bio_text'),
+            contentAPI.getByKey('about.spotify_embed_url'),
+            contentAPI.getByKey('about.visible')
+        ]);
 
         setAboutProfile({
             photo: photo?.value || '',
@@ -292,47 +295,6 @@ export default function AdminDashboard() {
                 setEditingPost({ ...editingPost, tags: newTags });
             }
             if (!tag) setTagInput('');
-        }
-    };
-
-    const handleAutoTranslateField = async (field: string) => {
-        let currentText = '';
-        if (field === 'heroTitle') currentText = heroTitle;
-        else if (field === 'heroDesc') currentText = heroDesc;
-        else if (field === 'storyText') currentText = storyText;
-        else if (field === 'pitchDesc') currentText = pitchDesc;
-        else if (field === 'pitchBtnText') currentText = pitchBtnText;
-        else if (field === 'projectTitle' && editingProject) currentText = editingProject.title;
-        else if (field === 'projectDesc' && editingProject) currentText = editingProject.description || '';
-        else if (field === 'postTitle' && editingPost) currentText = editingPost.title;
-        else if (field === 'postContent' && editingPost) currentText = editingPost.content;
-
-        const parts = getTranslationParts(currentText);
-        if (!parts.en) return;
-        setSaving(true);
-        try {
-            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(parts.en)}&langpair=en|pt`);
-            const data = await res.json();
-            const translated = data.responseData.translatedText;
-            if (translated) {
-                const newVal = formatTranslatable(parts.en, translated);
-                if (field === 'heroTitle') setHeroTitle(newVal);
-                else if (field === 'heroDesc') setHeroDesc(newVal);
-                else if (field === 'storyText') setStoryText(newVal);
-                else if (field === 'pitchDesc') setPitchDesc(newVal);
-                else if (field === 'pitchBtnText') setPitchBtnText(newVal);
-                else if (field === 'projectTitle' && editingProject) setEditingProject({ ...editingProject, title: newVal });
-                else if (field === 'projectDesc' && editingProject) setEditingProject({ ...editingProject, description: newVal });
-                else if (field === 'postTitle' && editingPost) setEditingPost({ ...editingPost, title: newVal });
-                else if (field === 'postContent' && editingPost) setEditingPost({ ...editingPost, content: newVal });
-                setMessage('✅ Translated!');
-            }
-        } catch (e) {
-            console.error('Translation error:', e);
-            setMessage('❌ Translation failed');
-        } finally {
-            setSaving(false);
-            setTimeout(() => setMessage(''), 3000);
         }
     };
 
@@ -363,16 +325,25 @@ export default function AdminDashboard() {
         try {
             const dataToSave: any = {
                 title: editingProject.title || '',
+                slug: editingProject.slug || undefined,
+                short_description: editingProject.short_description || '',
+                summary: editingProject.summary || '',
                 description: editingProject.description || '',
+                page_title: editingProject.page_title || '',
+                client_name: editingProject.client_name || '',
+                client_subtitle: editingProject.client_subtitle || '',
+                location: editingProject.location || '',
+                duration: editingProject.duration || '',
                 image_url: editingProject.image_url || '',
                 tags: editingProject.tags || [],
-                gallery_images: [
-                    ...(editingProject.gallery_images || []),
-                    ...(editingProject.gallery_videos || [])
-                ],
+                project_steps: editingProject.project_steps || [],
+                highlights: editingProject.highlights || [],
+                gallery_images: editingProject.gallery_images || [],
                 live_url: editingProject.live_url || '',
                 download_url: editingProject.download_url || '',
                 button_text: editingProject.button_text || '',
+                year: editingProject.year || '',
+                my_role: editingProject.my_role || '',
                 order_index: editingProject.order_index || 0,
                 visible: editingProject.visible !== false
             };
@@ -433,24 +404,7 @@ export default function AdminDashboard() {
         finally { setSaving(false); setTimeout(() => setMessage(''), 3000); }
     };
 
-    const addTag = (tag?: string) => {
-        const value = tag || tagInput.trim();
-        if (value && editingProject) {
-            const newTags = [...(editingProject.tags || [])];
-            if (!newTags.includes(value.toUpperCase())) {
-                newTags.push(value.toUpperCase());
-                setEditingProject({ ...editingProject, tags: newTags });
-            }
-            if (!tag) setTagInput('');
-        }
-    };
 
-    const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0] && editingProject) {
-            const url = await storageAPI.uploadImage(e.target.files[0], 'projects');
-            if (url) setEditingProject({ ...editingProject, image_url: url });
-        }
-    };
 
     const saveSettings = async () => {
         setSaving(true);
@@ -1327,10 +1281,31 @@ export default function AdminDashboard() {
                                     <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                                         {branding.logoImageUrl ? <img src={branding.logoImageUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Target size={32} />}
                                     </div>
-                                    <label className="clickable" style={{ padding: '12px 24px', background: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)' }}>
-                                        CHANGE LOGO
-                                        <input type="file" style={{ display: 'none' }} onChange={async (e) => { if (e.target.files?.[0]) { const url = await storageAPI.uploadImage(e.target.files[0], 'general'); if (url) setBranding({ ...branding, logoImageUrl: url }); } }} />
-                                    </label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label className="clickable" style={{ padding: '12px 24px', background: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
+                                            UPLOAD SVG LOGO
+                                            <input type="file" accept=".svg" style={{ display: 'none' }} onChange={async (e) => {
+                                                if (e.target.files?.[0]) {
+                                                    setMessage('⌛ Uploading SVG...');
+                                                    const url = await storageAPI.uploadImage(e.target.files[0], 'general');
+                                                    if (url) {
+                                                        setBranding({ ...branding, logoImageUrl: url });
+                                                        setMessage('✅ SVG Uploaded!');
+                                                    } else {
+                                                        setMessage('❌ Upload failed.');
+                                                    }
+                                                }
+                                            }} />
+                                        </label>
+                                        {branding.logoImageUrl && (
+                                            <button
+                                                onClick={() => setBranding({ ...branding, logoImageUrl: '' })}
+                                                style={{ padding: '8px 16px', background: 'rgba(255,0,0,0.1)', color: '#ff4444', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                                            >
+                                                REMOVE LOGO
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                     <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={modalInputStyle} />
@@ -1499,192 +1474,17 @@ export default function AdminDashboard() {
                 )
             }
 
-            {/* PROJECT EDIT MODAL (Existing logic) */}
+            {/* PROJECT EDIT MODAL (New Component) */}
             {
                 editingProject && !editingPost && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: 'var(--surface-color)', width: '100%', maxWidth: '900px', borderRadius: '24px', border: '1px solid var(--border-color)', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                                <h3 style={{ fontSize: '28px', fontWeight: '900' }}>EDIT PROJECT</h3>
-                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                    <button onClick={() => setIsPreviewOpen(true)} style={{ background: 'transparent', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>PREVIEW MODAL</button>
-                                    <button onClick={() => setEditingProject(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)' }}><X size={24} /></button>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                                <button onClick={() => setEditLang('en')} style={{ padding: '8px 16px', background: editLang === 'en' ? 'var(--accent-color)' : 'var(--bg-color)', color: editLang === 'en' ? getContrastColor(branding.accentColor) : 'var(--text-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>EN</button>
-                                <button onClick={() => setEditLang('pt')} style={{ padding: '8px 16px', background: editLang === 'pt' ? 'var(--accent-color)' : 'var(--bg-color)', color: editLang === 'pt' ? getContrastColor(branding.accentColor) : 'var(--text-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>PT</button>
-                                {editLang === 'pt' && <button onClick={() => handleAutoTranslateField('projectTitle')} style={{ fontSize: '10px', background: 'var(--bg-color)', padding: '5px 10px', borderRadius: '5px', color: 'var(--accent-color)', border: '1px solid var(--accent-color)', cursor: 'pointer', fontWeight: 'bold' }}>✨ AUTO-PT</button>}
-                            </div>
-                            <div style={{ display: 'grid', gap: '24px' }}>
-                                <input
-                                    placeholder="Title"
-                                    value={getTranslationParts(editingProject.title)[editLang]}
-                                    onChange={e => {
-                                        const p = getTranslationParts(editingProject.title);
-                                        p[editLang] = e.target.value;
-                                        setEditingProject({ ...editingProject, title: formatTranslatable(p.en, p.pt) });
-                                    }}
-                                    style={modalInputStyle}
-                                />
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', background: 'var(--surface-color)', padding: '12px', borderRadius: '8px' }}>
-                                    {editingProject.tags?.map(t => <span key={t} style={{ background: 'var(--accent-color)', color: '#fff', padding: '6px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: 'bold' }}>{t} <X size={12} onClick={() => setEditingProject({ ...editingProject, tags: editingProject.tags.filter(tag => tag !== t) })} style={{ cursor: 'pointer' }} /></span>)}
-                                    <input placeholder="Add tag..." value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', outline: 'none' }} />
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '15px' }}>
-                                    {allProjectTags.filter(t => !editingProject.tags.includes(t)).map(tag => (
-                                        <button key={tag} onClick={() => addTag(tag)} style={{ fontSize: '10px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+ {tag}</button>
-                                    ))}
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                    <div style={{ width: '120px', aspectRatio: '16/10', background: 'var(--surface-color)', borderRadius: '12px', overflow: 'hidden' }}>
-                                        {editingProject.image_url ? <img src={editingProject.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <ImageIcon size={24} color="#333" />}
-                                    </div>
-                                    <label className="clickable" style={{ padding: '10px 20px', background: 'var(--bg-color)', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)', color: 'var(--text-color)', fontSize: '12px', fontWeight: 'bold' }}>
-                                        UPLOAD CAPA
-                                        <input type="file" onChange={handleCoverChange} style={{ display: 'none' }} />
-                                    </label>
-                                </div>
-
-                                {/* GALLERY SECTION */}
-                                <div style={{ border: '1px solid var(--border-color)', padding: '24px', borderRadius: '16px', background: 'var(--surface-color)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                        <h4 style={{ fontSize: '14px', fontWeight: 'bold' }}>PROJECT GALLERY (IMAGES & VIDEOS)</h4>
-                                        <label className="clickable" style={{ padding: '8px 16px', background: 'var(--accent-color)', color: '#fff', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                            + ADD MEDIA
-                                            <input
-                                                type="file"
-                                                multiple
-                                                accept="image/*,video/*"
-                                                style={{ display: 'none' }}
-                                                onChange={async (e) => {
-                                                    if (e.target.files?.length) {
-                                                        const files = Array.from(e.target.files);
-                                                        const newImages = [...(editingProject.gallery_images || [])];
-                                                        const newVideos = [...(editingProject.gallery_videos || [])];
-
-                                                        for (const file of files) {
-                                                            const url = await storageAPI.uploadImage(file, 'projects');
-                                                            if (url) {
-                                                                if (file.type.startsWith('video')) newVideos.push(url);
-                                                                else newImages.push(url);
-                                                            }
-                                                        }
-                                                        setEditingProject({ ...editingProject, gallery_images: newImages, gallery_videos: newVideos });
-                                                    }
-                                                }}
-                                            />
-                                        </label>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                                        {/* Gallery Images */}
-                                        {editingProject.gallery_images?.map((url, i) => (
-                                            <div key={`img-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                                                <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                                <button
-                                                    onClick={() => {
-                                                        const news = [...editingProject.gallery_images!];
-                                                        news.splice(i, 1);
-                                                        setEditingProject({ ...editingProject, gallery_images: news });
-                                                    }}
-                                                    style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
-                                                >
-                                                    <X size={10} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        {/* Gallery Videos */}
-                                        {editingProject.gallery_videos?.map((url, i) => (
-                                            <div key={`vid-${i}`} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#000' }}>
-                                                <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                                                    <Activity size={16} color="var(--accent-color)" />
-                                                </div>
-                                                <button
-                                                    onClick={() => {
-                                                        const news = [...editingProject.gallery_videos!];
-                                                        news.splice(i, 1);
-                                                        setEditingProject({ ...editingProject, gallery_videos: news });
-                                                    }}
-                                                    style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: '50%', color: '#fff', padding: '4px', cursor: 'pointer' }}
-                                                >
-                                                    <X size={10} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div style={{ margin: '20px 0' }}>
-                                <label style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
-                                    Description ({editLang.toUpperCase()})
-                                    {editLang === 'pt' && <button onClick={() => handleAutoTranslateField('projectDesc')} style={{ fontSize: '10px', background: '#222', padding: '5px 10px', borderRadius: '5px', color: '#fff', border: '1px solid #333', cursor: 'pointer' }}>✨ AUTO-PT</button>}
-                                </label>
-                                <RichTextEditor
-                                    value={getTranslationParts(editingProject.description || '')[editLang]}
-                                    onChange={(val) => {
-                                        const p = getTranslationParts(editingProject.description || '');
-                                        p[editLang] = val;
-                                        setEditingProject({ ...editingProject, description: formatTranslatable(p.en, p.pt) });
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <input placeholder="Live Link (URL)" value={editingProject.live_url || ''} onChange={e => setEditingProject({ ...editingProject, live_url: e.target.value })} style={modalInputStyle} />
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <input placeholder="Button Text (e.g. VIEW SITE)" value={editingProject.button_text || ''} onChange={e => setEditingProject({ ...editingProject, button_text: e.target.value })} style={{ ...modalInputStyle, marginBottom: 0 }} />
-                                    </div>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
-                                        <input type="checkbox" checked={editingProject.visible !== false} onChange={e => setEditingProject({ ...editingProject, visible: e.target.checked })} />
-                                        VISIBLE
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div style={{ marginTop: '20px', borderTop: '1px solid #222', paddingTop: '20px' }}>
-                                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: 'var(--text-muted)' }}>DOWNLOAD ASSETS (OPTIONAL)</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                    <div>
-                                        <label style={labelStyle}>Direct Download Link</label>
-                                        <input
-                                            placeholder="https://example.com/file.zip"
-                                            value={editingProject.download_url || ''}
-                                            onChange={e => setEditingProject({ ...editingProject, download_url: e.target.value })}
-                                            style={modalInputStyle}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>Or Upload File</label>
-                                        <label className="clickable" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '42px', background: '#222', borderRadius: '8px', cursor: 'pointer', border: '1px solid #333', fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>
-                                            <Download size={16} style={{ marginRight: '8px' }} />
-                                            {editingProject.download_url && editingProject.download_url.includes('supabase') ? 'REPLACE FILE' : 'UPLOAD FILE'}
-                                            <input
-                                                type="file"
-                                                onChange={async (e) => {
-                                                    if (e.target.files?.[0]) {
-                                                        const url = await storageAPI.uploadImage(e.target.files[0], 'downloads');
-                                                        if (url) setEditingProject({ ...editingProject, download_url: url });
-                                                    }
-                                                }}
-                                                style={{ display: 'none' }}
-                                            />
-                                        </label>
-                                        {editingProject.download_url && editingProject.download_url.includes('supabase') && (
-                                            <div style={{ fontSize: '11px', color: 'var(--accent-color)', marginTop: '5px', textAlign: 'center' }}>
-                                                File uploaded successfully
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            <button onClick={saveProject} disabled={saving} style={{ width: '100%', padding: '20px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: '900' }}>{saving ? 'SAVING...' : 'SAVE PROJECT'}</button>
-                        </div>
-                    </div>
+                    <ProjectForm
+                        project={editingProject}
+                        onChange={setEditingProject}
+                        onSave={saveProject}
+                        onCancel={() => setEditingProject(null)}
+                        allTags={allProjectTags}
+                        saving={saving}
+                    />
                 )
             }
 

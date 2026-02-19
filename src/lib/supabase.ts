@@ -48,25 +48,68 @@ export interface CRMLead {
     updated_at: string;
 }
 
+export interface ProjectStep {
+    number: string;
+    name: string;
+    description: string;
+    tags: string;
+}
+
+export interface ProjectHighlight {
+    title: string;
+    text: string;
+    image: string;
+}
+
 export interface Project {
     id: string;
     title: string;
-    description?: string;
+    description?: string; // Long description for project page
+    short_description?: string; // Short text for home page
+    summary?: string; // New: Olho (eyebrow/summary) text
     rich_description?: string;
+
+    // Page Header Info
+    page_title?: string; // Main value proposition title
+    client_name?: string;
+    client_subtitle?: string;
+
+    // Metadata
     year?: string;
-    image_url: string;
+    location?: string;
+    duration?: string;
+
+    // Images
+    image_url: string; // Cover image
     image_alt?: string;
     gallery_images?: string[];
     gallery_videos?: string[]; // New: support for videos
+
+    // Tags & Links
     tags: string[];
     live_url?: string;
+    live_url_label?: string; // Customizable label for the live site link
     download_url?: string; // New: support for project download
+    download_url_label?: string; // Customizable label for the download link
+
+    // Project Steps (max 4)
+    project_steps?: ProjectStep[];
+
+    // Highlights Sections (alternating layout)
+    highlights?: ProjectHighlight[];
+
+    // Role
+    my_role?: string;
+
+    // SEO & Settings
     slug?: string;
     meta_title?: string;
     meta_description?: string;
     button_text?: string;
     button_icon?: string;
     password_protection?: string;
+
+    // Admin
     order_index: number;
     visible: boolean;
     is_published: boolean;
@@ -98,6 +141,7 @@ export interface ProjectData {
     download_url?: string;
     button_text?: string;
     button_icon?: string;
+    summary?: string;
 }
 
 export interface CVSection {
@@ -238,6 +282,39 @@ export const projectsAPI = {
             return [];
         }
         return data || [];
+    },
+
+    async getBySlug(slug: string): Promise<Project | null> {
+        // 1. Try fetching by slug column first
+        const { data: dataSlug, error: errorSlug } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('slug', slug)
+            .eq('visible', true)
+            .maybeSingle();
+
+        if (dataSlug) return dataSlug;
+
+        // 2. If not found, check if the "slug" string is actually a UUID and try fetching by ID
+        // simple regex for uuid format
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+        if (isUUID) {
+            const { data: dataId, error: errorId } = await supabase
+                .from('projects')
+                .select('*')
+                .eq('id', slug)
+                .eq('visible', true)
+                .maybeSingle();
+
+            if (dataId) return dataId;
+            if (errorId) console.error('Error fetching project by ID fallback:', errorId);
+        }
+
+        if (errorSlug) {
+            console.error('Error fetching project by slug:', errorSlug);
+        }
+
+        return null;
     },
 
     async update(id: string, updates: Partial<Project>): Promise<boolean> {

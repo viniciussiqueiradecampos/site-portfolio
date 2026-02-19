@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ProjectModal from '../components/ProjectModal';
+import { useNavigate } from 'react-router-dom';
 import { projectsAPI, type Project } from '../lib/supabase';
 import { trackPageView, trackProjectClick } from '../lib/analytics';
-import { Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { parseTranslatable } from '../lib/i18n-utils';
 
 export default function Projects() {
     const { t, i18n } = useTranslation();
-    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const navigate = useNavigate();
     const [projects, setProjects] = useState<Project[]>([]);
     const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [activeTag, setActiveTag] = useState('ALL');
     const [loading, setLoading] = useState(true);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -27,7 +25,8 @@ export default function Projects() {
     useEffect(() => {
         loadProjects();
         trackPageView('/projects');
-    }, [i18n.language]);
+        document.title = `${t('nav.portfolio')} | Vinicius Campos`;
+    }, [i18n.language, t]);
 
     useEffect(() => {
         // Show all visible projects
@@ -56,6 +55,8 @@ export default function Projects() {
             ...p,
             title: parseTranslatable(p.title, lang),
             description: parseTranslatable(p.description || '', lang),
+            summary: parseTranslatable(p.summary || '', lang),
+            short_description: parseTranslatable(p.short_description || '', lang),
             button_text: parseTranslatable(p.button_text || '', lang)
         }));
         setProjects(translatedData);
@@ -77,12 +78,6 @@ export default function Projects() {
         setLoading(false);
     };
 
-    const openModal = (project: Project) => {
-        trackProjectClick(project.id, project.title);
-        setSelectedProject(project);
-        setIsModalOpen(true);
-    };
-
     if (loading) {
         return (
             <div style={{ paddingTop: '150px', paddingBottom: '150px', textAlign: 'center' }}>
@@ -93,10 +88,8 @@ export default function Projects() {
 
     return (
         <div style={{ paddingTop: '150px', paddingBottom: '150px' }}>
-            <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
-            <div className="container">
-                <div style={{ marginBottom: '60px', borderBottom: '1px solid var(--border-color)', paddingBottom: '40px' }}>
+            <div style={{ maxWidth: '1600px', margin: '0 auto', padding: isMobile ? '0 20px' : '0 60px' }}>
+                <div style={{ marginBottom: '80px', borderBottom: '1px solid var(--border-color)', paddingBottom: '40px' }}>
                     <h1 className="selected-works-title" style={{ fontSize: isMobile ? '20px' : '60px', marginBottom: '20px', lineHeight: 1.1 }} dangerouslySetInnerHTML={{ __html: t('portfolio.title', 'SELECTED<br />WORKS') }} />
                 </div>
 
@@ -122,7 +115,7 @@ export default function Projects() {
                         style={{
                             padding: '10px 24px',
                             background: activeTag === 'ALL' ? 'var(--accent-color)' : 'transparent',
-                            color: activeTag === 'ALL' ? '#000' : 'var(--text-color)',
+                            color: activeTag === 'ALL' ? '#fff' : 'var(--text-color)',
                             border: activeTag === 'ALL' ? 'none' : '1px solid var(--border-color)',
                             borderRadius: '50px',
                             cursor: 'pointer',
@@ -141,7 +134,7 @@ export default function Projects() {
                             style={{
                                 padding: '10px 24px',
                                 background: activeTag === tag ? 'var(--accent-color)' : 'transparent',
-                                color: activeTag === tag ? '#000' : 'var(--text-color)',
+                                color: activeTag === tag ? '#fff' : 'var(--text-color)',
                                 border: activeTag === tag ? 'none' : '1px solid var(--border-color)',
                                 borderRadius: '50px',
                                 cursor: 'pointer',
@@ -158,8 +151,10 @@ export default function Projects() {
 
                 <div className="projects-grid" style={{
                     display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-                    gap: '40px'
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                    columnGap: '40px',
+                    rowGap: '120px',
+                    width: '100%'
                 }}>
                     <AnimatePresence mode="popLayout">
                         {filteredProjects.map((p) => (
@@ -171,81 +166,46 @@ export default function Projects() {
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                                 className="clickable project-card"
-                                onClick={() => openModal(p)}
+                                onClick={() => {
+                                    trackProjectClick(p.id, p.title);
+                                    navigate(`/project/${p.slug || p.id}`);
+                                }}
                                 style={{
                                     position: 'relative'
                                 }}
                             >
                                 <div style={{
-                                    borderRadius: 'var(--radius-md)',
+                                    borderRadius: 'var(--radius-lg)',
                                     overflow: 'hidden',
-                                    height: '320px',
-                                    marginBottom: '20px',
-                                    background: 'var(--surface-color)',
+                                    height: isMobile ? '350px' : '480px',
+                                    marginBottom: '24px',
+                                    background: 'transparent',
                                     position: 'relative'
                                 }} className="project-image-wrapper">
-                                    <div style={{
-                                        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
-                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                        gap: '12px', opacity: 0, transition: '0.3s ease', zIndex: 5
-                                    }} className="card-hover-overlay">
-                                        <div style={{
-                                            width: '64px', height: '64px',
-                                            background: 'rgba(255,255,255,0.1)',
-                                            backdropFilter: 'blur(10px)',
-                                            borderRadius: '50%',
-                                            color: '#fff',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '1px solid rgba(255,255,255,0.2)'
-                                        }}>
-                                            <Eye size={24} />
-                                        </div>
-                                        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>{t('portfolio.view_project', 'VIEW PROJECT')}</span>
-                                    </div>
-
                                     <img src={p.image_url} alt={p.title} loading="lazy" decoding="async" style={{
-                                        width: '100%', height: '100%', objectFit: 'contain',
+                                        width: '100%', height: '100%', objectFit: 'cover',
                                         transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
-                                        position: 'relative', zIndex: 1
+                                        position: 'relative', zIndex: 1,
+                                        background: 'transparent'
                                     }} className="card-img" />
                                 </div>
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
+                                <div style={{ padding: '0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
                                     <div style={{ flex: 1, minWidth: '150px' }}>
                                         <h3 style={{ fontSize: '20px', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>{p.title}</h3>
-                                        <div className="project-tags-container" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                            {p.tags?.map(tag => (
-                                                <span key={tag} className="project-tag" style={{
-                                                    fontSize: '10px', padding: '4px 10px',
-                                                    border: '1px solid var(--border-color)', borderRadius: '20px',
-                                                    textTransform: 'uppercase'
-                                                }}>
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{
-                                            padding: '12px 32px',
-                                            background: '#fff',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '100px',
-                                            fontSize: '11px',
-                                            fontWeight: '900',
-                                            color: '#000',
-                                            letterSpacing: '1px',
-                                            textTransform: 'uppercase',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-                                            transition: 'all 0.3s'
-                                        }} className="learn-more-btn-pill">
-                                            {t('portfolio.learn_more', 'LEARN MORE →')}
-                                        </div>
+                                        <p style={{
+                                            fontSize: '14px',
+                                            color: 'var(--text-muted)',
+                                            lineHeight: '1.4',
+                                            margin: '0',
+                                            display: isMobile ? 'block' : '-webkit-box',
+                                            WebkitLineClamp: isMobile ? 'none' : 2,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: isMobile ? 'visible' : 'hidden',
+                                            marginTop: '4px'
+                                        }}>
+                                            {p.summary || ''}
+                                        </p>
                                     </div>
                                 </div>
                             </motion.div>
@@ -253,6 +213,6 @@ export default function Projects() {
                     </AnimatePresence>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

@@ -146,7 +146,7 @@ export default function ProjectModal({ project, isOpen, onClose }: ProjectModalP
 
 
                             {project.live_url && (
-                                <a href={project.live_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'var(--accent-color)', color: '#000', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+                                <a href={project.live_url} target="_blank" rel="noopener noreferrer" className="clickable" style={{ display: 'flex', width: '100%', padding: '24px', background: 'var(--accent-color)', color: 'var(--accent-contrast)', borderRadius: '16px', fontSize: '16px', fontWeight: '800', justifyContent: 'center', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                                     {project.button_text || 'VIEW LIVE PROJECT'} <ExternalLink size={20} />
                                 </a>
                             )}

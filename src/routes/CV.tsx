@@ -74,8 +74,8 @@ export default function CV() {
                         style={{
                             padding: '12px 24px',
                             background: 'var(--accent-color)',
-                            color: '#000',
-                            borderRadius: '8px',
+                            color: 'var(--accent-contrast)',
+                            borderRadius: '100px',
                             textDecoration: 'none',
                             fontFamily: 'var(--font-display)',
                             fontSize: '12px',

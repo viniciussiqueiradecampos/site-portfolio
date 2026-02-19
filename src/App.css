@@ -10,15 +10,7 @@
   position: relative;
 }
 
-.menu-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--accent-color);
-}
+
 
 .hero-title {
   font-family: var(--font-display);

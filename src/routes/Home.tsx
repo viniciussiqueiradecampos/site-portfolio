@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useScroll, useTransform, motion, AnimatePresence } from 'framer-motion';
-import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
@@ -12,15 +12,36 @@ import { parseTranslatable } from '../lib/i18n-utils';
 // Helper component to fix Rule of Hooks (useTransform inside loop)
 const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
     const opacity = useTransform(progress, [start, end], [0.1, 1]);
-    return <motion.span style={{ ...style, opacity }}>{word}</motion.span>;
+
+    return (
+        <motion.span style={{
+            ...style,
+            opacity,
+            display: 'inline-block',
+            marginRight: '0.25em',
+            willChange: 'opacity'
+        }}>
+            {word}
+        </motion.span>
+    );
 };
+
 
 export default function Home() {
     const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
     const [maxX, setMaxX] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Data State
     const [heroTitle, setHeroTitle] = useState('figma • UI DESIGN • AI • WEB DESIGN');
@@ -40,8 +61,6 @@ export default function Home() {
     });
     const [footerText, setFooterText] = useState('VINICIUS CAMPOS &copy; 2026 • PORTUGAL');
 
-
-
     // Refs for Sticky Sections
     const heroRef = useRef(null);
     const storyRef = useRef(null);
@@ -50,6 +69,7 @@ export default function Home() {
     useEffect(() => {
         trackPageView('/');
         loadData();
+        document.title = "Vinicius Campos | Product Designer & Web Developer";
     }, [i18n.language]);
 
     // Handle hash scroll after projects (layout) are loaded
@@ -64,7 +84,6 @@ export default function Home() {
             }, 800);
         }
     }, [window.location.hash, projects]);
-
 
     const loadData = async () => {
         const lang = i18n.language;
@@ -90,10 +109,12 @@ export default function Home() {
 
         // Load Projects - Limited to 5 for Home
         const projs = await projectsAPI.getAll();
-        setProjects(projs.slice(0, 5).map(p => ({
+        setProjects(projs.slice(0, 8).map(p => ({
             ...p,
             title: parseTranslatable(p.title, lang),
-            description: parseTranslatable(p.description || '', lang)
+            description: parseTranslatable(p.description || '', lang),
+            summary: parseTranslatable(p.summary || '', lang),
+            short_description: parseTranslatable(p.short_description || '', lang)
         })));
 
         // Load Socials & Footer
@@ -121,7 +142,7 @@ export default function Home() {
     // Storytelling Section Scroll Progress
     const { scrollYProgress: storyProgress } = useScroll({
         target: storyRef,
-        offset: ["start start", "end end"]
+        offset: isMobile ? ["0.3 0.5", "1 1"] : ["start start", "end end"]
     });
 
     const [showPitch, setShowPitch] = useState(false);
@@ -136,23 +157,45 @@ export default function Home() {
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
 
     const handleCarouselScroll = () => {
-        if (scrollContainerRef.current) {
+        if (!scrollContainerRef.current) return;
+
+        // Use requestAnimationFrame to avoid blocking the main thread
+        requestAnimationFrame(() => {
+            if (!scrollContainerRef.current) return;
             const { scrollLeft } = scrollContainerRef.current;
-            const cardWidth = isMobile ? window.innerWidth * 0.85 : window.innerWidth * 0.48;
+            const cards = scrollContainerRef.current.children;
             const gap = isMobile ? 20 : 50;
-            const scrollAmount = cardWidth + gap;
-            const calculatedIndex = Math.round(scrollLeft / scrollAmount);
-            setCurrentProjectIndex(calculatedIndex);
-        }
+
+            let cumulativeWidth = 0;
+            let index = 0;
+
+            for (let i = 0; i < cards.length; i++) {
+                const cardWidth = (cards[i] as HTMLElement).clientWidth;
+                if (scrollLeft < cumulativeWidth + cardWidth / 2) {
+                    index = i;
+                    break;
+                }
+                cumulativeWidth += cardWidth + gap;
+                index = i;
+            }
+            if (index !== currentProjectIndex) {
+                setCurrentProjectIndex(index);
+            }
+        });
     };
 
     const scrollToProject = (index: number) => {
         if (scrollContainerRef.current) {
-            const cardWidth = isMobile ? window.innerWidth * 0.85 : window.innerWidth * 0.48;
+            const cards = Array.from(scrollContainerRef.current.querySelectorAll('.home-project-card'));
             const gap = isMobile ? 20 : 50;
-            const scrollAmount = cardWidth + gap;
+
+            let targetScroll = 0;
+            for (let i = 0; i < index; i++) {
+                targetScroll += cards[i].clientWidth + gap;
+            }
+
             scrollContainerRef.current.scrollTo({
-                left: index * scrollAmount,
+                left: targetScroll,
                 behavior: 'smooth'
             });
             setCurrentProjectIndex(index);
@@ -171,6 +214,7 @@ export default function Home() {
 
     // Auto-scroll effect
     useEffect(() => {
+        if (projects.length === 0) return;
         const interval = setInterval(() => {
             const nextIndex = (currentProjectIndex + 1) % projects.length;
             scrollToProject(nextIndex);
@@ -180,23 +224,10 @@ export default function Home() {
     }, [currentProjectIndex, projects.length]);
 
     // Modal State
-    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [selectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const openModal = (project: Project) => {
-        trackProjectClick(project.id, project.title);
-        setSelectedProject(project);
-        setIsModalOpen(true);
-    };
-
-    // --- RESPONSIVE ---
-    const [isMobile, setIsMobile] = useState(false);
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
+    // --- RESPONSIVE --- (Listeners already set up above)
 
     // Mouse Drag to Scroll
     const isDragging = useRef(false);
@@ -285,7 +316,7 @@ export default function Home() {
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
-            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? 'auto' : '300vh', marginBottom: isMobile ? '20px' : '0', position: 'relative' }}>
+            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? 'auto' : '550vh', marginBottom: isMobile ? '20px' : '0', position: 'relative' }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
@@ -325,7 +356,7 @@ export default function Home() {
                         textAlign: isMobile ? 'center' : 'right',
                         marginTop: isMobile ? '20px' : '0'
                     }}>
-                        <p style={{
+                        <div style={{
                             fontSize: isMobile ? '16px' : 'clamp(14px, 2vw, 20px)',
                             lineHeight: '1.6',
                             color: 'var(--text-muted)',
@@ -341,8 +372,9 @@ export default function Home() {
                                 const end = start + step;
                                 return <ScrollyWord key={`hero-${i}`} word={word} progress={heroProgress} start={start} end={end} />;
                             })}
-                        </p>
+                        </div>
                     </div>
+
 
                 </div>
             </section>
@@ -360,7 +392,7 @@ export default function Home() {
                             flexWrap: 'wrap',
                             justifyContent: 'center',
                             gap: isMobile ? '8px' : '12px',
-                            maxWidth: isMobile ? '260px' : 'none', // Even tighter for 3 words
+                            maxWidth: isMobile ? '260px' : 'none',
                             margin: '0 auto',
                             transition: 'all 0.5s ease',
                             opacity: showPitch ? 1 : 1,
@@ -368,7 +400,7 @@ export default function Home() {
                         }}>
                             {storyWords.map((word, i) => {
                                 const step = 0.6 / storyWords.length;
-                                const start = isMobile ? (i * step) : 0.1 + (i * step); // Start sooner on mobile
+                                const start = isMobile ? (i * step) : 0.1 + (i * step);
                                 const end = start + step;
                                 return (
                                     <ScrollyWord
@@ -423,9 +455,12 @@ export default function Home() {
                                 </motion.div>
                             )}
                         </AnimatePresence>
+
+                        {/* Removed Scroll Indicator as requested */}
                     </div>
                 </div>
             </section>
+
 
             {/* SECTION 3: PORTFOLIO */}
             <section id="portfolio" className="portfolio-section" style={{ padding: '60px 0 120px', background: 'var(--bg-color)', position: 'relative', zIndex: 10 }}>
@@ -442,20 +477,24 @@ export default function Home() {
                         gap: isMobile ? '20px' : '0'
                     }}>
                         <RevealText><h2 style={{ fontSize: isMobile ? 'clamp(40px, 8vw, 50px)' : 'clamp(40px, 8vw, 80px)', margin: 0, textAlign: isMobile ? 'center' : 'left' }}>{t('nav.portfolio')}</h2></RevealText>
-                        <Link to="/projects" className="clickable" style={{
-                            padding: '10px 30px',
-                            background: '#fff',
-                            color: '#000',
+                        <Link to="/projects" className="clickable view-all-btn" style={{
+                            padding: '12px 35px',
+                            background: 'var(--accent-color)',
+                            color: 'var(--accent-contrast)',
                             borderRadius: '100px',
                             textDecoration: 'none',
                             fontSize: '12px',
-                            fontWeight: 'bold',
+                            fontWeight: '900',
                             fontFamily: 'var(--font-display)',
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            border: 'none',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                            letterSpacing: '1px',
+                            transition: 'all 0.3s ease'
                         }}>
-                            {t('portfolio.view_all', 'VIEW ALL')}
+                            {t('portfolio.view_all', 'VIEW ALL')} →
                         </Link>
                     </div>
 
@@ -463,177 +502,140 @@ export default function Home() {
                     <div style={{ position: 'relative', width: '100%' }}>
                         <div className="horizontal-scroll-container" ref={scrollContainerRef} onScroll={handleCarouselScroll} style={{ paddingLeft: '0' }}>
                             {projects.map((item, i) => (
-                                <div
+                                <motion.div
                                     key={i}
                                     className="home-project-card clickable"
-                                    onClick={() => {
-                                        if (isDragging.current) return;
-                                        openModal(item);
+                                    initial={{ opacity: 0, y: 30, filter: 'none' }}
+                                    whileInView={{ opacity: 1, y: 0, filter: 'none' }}
+                                    viewport={{ once: true, amount: 0.1, margin: "0px" }}
+                                    transition={{ duration: 0.6, delay: (i % 3) * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                                    onClick={(e) => {
+                                        if (isDragging.current) e.preventDefault();
+                                        trackProjectClick(item.id, item.title);
+                                        navigate(`/project/${item.slug || item.id}`);
                                     }}
                                     style={{
-                                        marginLeft: i === 0 ? '0px' : '0px'
+                                        width: isMobile ? '85vw' : '750px',
+                                        marginLeft: '0px',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        display: 'block'
                                     }}
                                 >
                                     <div className="project-image-wrapper" style={{
-                                        width: '100%', height: '400px', overflow: 'hidden',
-                                        borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
-                                        padding: '15px', background: 'rgba(255,255,255,0.03)',
+                                        width: '100%', height: isMobile ? '300px' : '480px', overflow: 'hidden',
+                                        borderRadius: 'var(--radius-md)', border: 'none',
+                                        padding: '0', background: 'transparent',
                                         position: 'relative'
                                     }}>
-                                        <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
+                                        <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 'var(--radius-md)', position: 'relative' }}>
                                             <img src={item.image_url} alt={item.image_alt || item.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-
-                                            {/* HOVER OVERLAY WITH EYE ICON */}
-                                            <div className="card-hover-overlay" style={{
-                                                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
-                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                gap: '12px', opacity: 0, transition: '0.3s ease'
-                                            }}>
-                                                <div style={{
-                                                    width: '64px', height: '64px',
-                                                    background: 'rgba(255,255,255,0.1)',
-                                                    backdropFilter: 'blur(10px)',
-                                                    borderRadius: '50%',
-                                                    color: '#fff',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid rgba(255,255,255,0.2)'
-                                                }}>
-                                                    <Eye size={24} />
-                                                </div>
-                                                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', fontFamily: 'var(--font-display)' }}>{t('portfolio.view_project', 'VIEW PROJECT')}</span>
-                                            </div>
                                         </div>
                                     </div>
-                                    <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap', marginTop: '20px' }}>
-                                        <div style={{ flex: 1, minWidth: '200px' }}>
-                                            <RevealText><h3 className="project-title" style={{ fontSize: '24px', color: 'var(--accent-color)', margin: '0 0 10px 0' }}>{item.title}</h3></RevealText>
-                                            <div className="project-tags-container" style={{
-                                                display: 'flex',
-                                                gap: '10px',
-                                                flexWrap: 'nowrap',
-                                                overflowX: 'auto',
-                                                paddingBottom: '5px',
-                                                width: '100%',
-                                                msOverflowStyle: 'none',
-                                                scrollbarWidth: 'none',
-                                                WebkitOverflowScrolling: 'touch'
-                                            }}>
-                                                {item.tags?.map(tag => (
-                                                    <RevealText key={tag}>
-                                                        <div className="project-tag" style={{
-                                                            padding: '8px 16px', border: '1px solid var(--border-color)',
-                                                            borderRadius: '50px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px'
-                                                        }}>
-                                                            {tag}
-                                                        </div>
-                                                    </RevealText>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <RevealText>
-                                                <div style={{
-                                                    padding: '12px 32px',
-                                                    background: '#fff',
-                                                    border: '1px solid #ddd',
-                                                    borderRadius: '100px',
-                                                    fontSize: '11px',
-                                                    fontWeight: '900',
-                                                    color: '#000',
-                                                    letterSpacing: '1px',
-                                                    textTransform: 'uppercase',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px',
-                                                    boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
-                                                }} className="learn-more-btn-pill">
-                                                    {t('portfolio.learn_more', 'LEARN MORE')}
-                                                </div>
-                                            </RevealText>
-                                        </div>
+                                    <div style={{ width: '100%', marginTop: '25px' }}>
+                                        <h3 className="project-title" style={{ fontSize: '28px', color: 'var(--accent-color)', margin: '0 0 10px 0', fontFamily: 'var(--font-display)', fontWeight: 800 }}>{item.title}</h3>
+                                        <p style={{
+                                            fontSize: '16px',
+                                            color: 'var(--text-muted)',
+                                            lineHeight: '1.6',
+                                            margin: 0,
+                                            display: isMobile ? 'block' : '-webkit-box',
+                                            WebkitLineClamp: isMobile ? 'none' : 2,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: isMobile ? 'visible' : 'hidden',
+                                            maxWidth: '700px'
+                                        }}>
+                                            {(item.summary || '').replace(/<[^>]*>?/gm, '')}
+                                        </p>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
                         </div>
 
                         {/* Navigation Arrows (Sides) - Centered with Image (400px height) */}
-                        <>
-                            <button
-                                onClick={prevProject}
-                                className="clickable"
+                        {!isMobile && (
+                            <>
+                                <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevProject(); }}
+                                    className="clickable"
+                                    style={{
+                                        position: 'absolute',
+                                        left: '-30px',
+                                        top: '240px',
+                                        transform: 'translateY(-50%)',
+                                        zIndex: 100,
+                                        background: 'var(--surface-color)',
+                                        backdropFilter: 'blur(15px)',
+                                        border: '1px solid var(--border-color)',
+                                        color: 'var(--text-color)',
+                                        width: '60px',
+                                        height: '60px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                    }}
+                                >
+                                    <ChevronLeft size={24} />
+                                </button>
+
+                                <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextProject(); }}
+                                    className="clickable"
+                                    style={{
+                                        position: 'absolute',
+                                        right: '-30px',
+                                        top: '240px',
+                                        transform: 'translateY(-50%)',
+                                        zIndex: 100,
+                                        background: 'var(--surface-color)',
+                                        backdropFilter: 'blur(15px)',
+                                        border: '1px solid var(--border-color)',
+                                        color: 'var(--text-color)',
+                                        width: '60px',
+                                        height: '60px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                    }}
+                                >
+                                    <ChevronRight size={24} />
+                                </button>
+                            </>
+                        )}
+
+                        {/* Mobile Swipe Indicator Arrow */}
+                        {isMobile && (
+                            <motion.div
+                                animate={{ x: [0, 10, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                                 style={{
                                     position: 'absolute',
-                                    left: isMobile ? '10px' : '-30px',
-                                    top: '200px',
-                                    transform: 'translateY(-50%)',
+                                    right: '5px',
+                                    top: '150px',
                                     zIndex: 100,
-                                    background: 'var(--surface-color)',
-                                    backdropFilter: 'blur(15px)',
-                                    border: '1px solid var(--border-color)',
-                                    color: 'var(--text-color)',
-                                    width: isMobile ? '44px' : '60px',
-                                    height: isMobile ? '44px' : '60px',
+                                    background: 'var(--accent-color)',
+                                    color: 'var(--accent-contrast)',
+                                    width: '32px',
+                                    height: '32px',
                                     borderRadius: '50%',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s ease',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                                    pointerEvents: 'none'
                                 }}
                             >
-                                <ChevronLeft size={isMobile ? 20 : 24} />
-                            </button>
-
-                            <button
-                                onClick={nextProject}
-                                className="clickable"
-                                style={{
-                                    position: 'absolute',
-                                    right: isMobile ? '10px' : '-30px',
-                                    top: '200px',
-                                    transform: 'translateY(-50%)',
-                                    zIndex: 100,
-                                    background: 'var(--surface-color)',
-                                    backdropFilter: 'blur(15px)',
-                                    border: '1px solid var(--border-color)',
-                                    color: 'var(--text-color)',
-                                    width: isMobile ? '44px' : '60px',
-                                    height: isMobile ? '44px' : '60px',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s ease',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                                }}
-                            >
-                                <ChevronRight size={isMobile ? 20 : 24} />
-                            </button>
-                        </>
-                    </div>
-
-                    {/* Pagination Dots */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '40px' }}>
-                        {projects.map((_, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => scrollToProject(idx)}
-                                className="clickable"
-                                style={{
-                                    width: currentProjectIndex === idx ? '24px' : '8px',
-                                    height: '8px',
-                                    borderRadius: '100px',
-                                    background: currentProjectIndex === idx ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s ease'
-                                }}
-                            />
-                        ))}
+                                <ChevronRight size={20} />
+                            </motion.div>
+                        )}
                     </div>
                 </div>
             </section>

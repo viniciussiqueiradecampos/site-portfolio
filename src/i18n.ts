@@ -36,6 +36,10 @@ const resources = {
             "footer": {
                 "touch": "GET IN TOUCH",
                 "rights": "© 2026, Vinicius Campos ⏤ All rights reserved"
+            },
+            "common": {
+                "read_all": "READ ALL",
+                "read_less": "READ LESS"
             }
         }
     }

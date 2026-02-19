@@ -2,270 +2,274 @@ import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import Matter from 'matter-js';
 import { motion } from 'framer-motion';
 import {
-    ChevronLeft, ChevronRight, ArrowDown,
-    Search, Rocket, Lightbulb, Code, Target, Heart, Star, Coffee,
-    Palette, Music, Camera, Gamepad2, Brain, Globe, Laptop, Zap,
-    Terminal, Layout, Cpu, Database, Smartphone, Map, PenTool, MessageCircle,
-    Activity, Wifi, Wrench, Brush, Cloud, Book, Mail, Phone, MapPin,
-    Users, Check, Layers, Monitor, Tablet, Watch, Headphones, Video,
-    ShoppingBag, CreditCard, Wallet, Calendar, Bell, Lock, Unlock, Key,
-    Eye, EyeOff, Filter, Sliders, Navigation, ExternalLink,
-    Play, Pause, Square, Triangle, Smile, Flame, Sun, Moon, Wind,
-    Trophy, Medal
+    ChevronLeft, ChevronRight,
+    Layers, Layout, Palette, PenTool,
+    Code2, Monitor, Brush
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
-import { aboutAPI, contentAPI, projectsAPI, type AboutHobby, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
+import { aboutAPI, contentAPI, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
 import { trackPageView } from '../lib/analytics';
 import { useTranslation } from 'react-i18next';
 import { parseTranslatable } from '../lib/i18n-utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SELECTABLE_ICONS: Record<string, any> = {
-    'Search': Search, 'Rocket': Rocket, 'Lightbulb': Lightbulb, 'Code': Code,
-    'Target': Target, 'Heart': Heart, 'Star': Star, 'Coffee': Coffee,
-    'Palette': Palette, 'Music': Music, 'Camera': Camera, 'Gamepad2': Gamepad2,
-    'Brain': Brain, 'Globe': Globe, 'Laptop': Laptop, 'Zap': Zap,
-    'Terminal': Terminal, 'Layout': Layout, 'Cpu': Cpu, 'Database': Database,
-    'Smartphone': Smartphone, 'Map': Map, 'PenTool': PenTool, 'MessageCircle': MessageCircle,
-    'Activity': Activity, 'Wifi': Wifi, 'Wrench': Wrench, 'Brush': Brush, 'Cloud': Cloud, 'Book': Book,
-    'Mail': Mail, 'Phone': Phone, 'MapPin': MapPin, 'Users': Users, 'Check': Check, 'Layers': Layers,
-    'Monitor': Monitor, 'Tablet': Tablet, 'Watch': Watch, 'Headphones': Headphones, 'Video': Video,
-    'ShoppingBag': ShoppingBag, 'CreditCard': CreditCard, 'Wallet': Wallet, 'Calendar': Calendar,
-    'Bell': Bell, 'Lock': Lock, 'Unlock': Unlock, 'Key': Key, 'Eye': Eye, 'EyeOff': EyeOff,
-    'Filter': Filter, 'Sliders': Sliders, 'Navigation': Navigation, 'ExternalLink': ExternalLink,
-    'Play': Play, 'Pause': Pause, 'Square': Square, 'Triangle': Triangle,
-    'Smile': Smile, 'Flame': Flame, 'Sun': Sun, 'Moon': Moon, 'Wind': Wind, 'Trophy': Trophy,
-    'Medal': Medal
-};
-
-
-/*
-const ScrollyMemory = ({ m, i, progress, start, end, isMobile }: { m: AboutMemory, i: number, progress: any, start: number, end: number, isMobile: boolean }) => {
-    const x = useTransform(progress, [start, end], ["120%", "-120%"]);
-    const rotate = i % 2 === 0 ? -3 : 3;
-
-    return (
-        <motion.div
-            style={{
-                position: 'absolute',
-                left: x,
-                top: `${15 + (i % 3) * 25}%`,
-                zIndex: 100, // Always on top
-                flexShrink: 0,
-                width: isMobile ? '280px' : (m.width || '450px'),
-                aspectRatio: m.aspect_ratio || '1/1',
-                background: '#000',
-                borderRadius: '32px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                overflow: 'hidden',
-                rotate,
-                boxShadow: '0 50px 100px rgba(0,0,0,0.5)',
-                pointerEvents: 'auto'
-            }}
-        >
-            <img src={m.image_url} alt="Memory" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </motion.div>
-    );
-};
-*/
-
 // Physics Tags Component (Com Matter.js para Simulação Real 2D)
-const PhysicsTags = ({ tags, isMobile }: { tags: string[], isMobile: boolean }) => {
+const PhysicsTags = ({ isMobile }: { isMobile: boolean }) => {
+    const FIXED_TAGS = [
+        "DIGITAL DESIGNER", "UI DESIGNER", "WORDPRESS",
+        "DESIGN SYSTEM", "FIGMA ADVANCED", "BRAZIL",
+        "PORTUGAL"
+    ];
+
     const sceneRef = useRef<HTMLDivElement>(null);
     const engineRef = useRef(Matter.Engine.create());
-    const [bodies, setBodies] = useState<{ body: Matter.Body, tag: string, isDark: boolean }[]>([]);
+    const containersRef = useRef<(HTMLDivElement | null)[]>([]);
+    const bodiesRef = useRef<{ body: Matter.Body, type: string, label?: string, icon?: any }[]>([]);
     const requestRef = useRef<number>(null);
 
     useEffect(() => {
-        if (!sceneRef.current || !tags.length) return;
+        if (!sceneRef.current) return;
 
         const engine = engineRef.current;
         const world = engine.world;
 
-        // Configurações de gravidade
-        engine.gravity.y = 1.2; // Same responsive gravity for mobile and desktop
+        // Limpar mundo anterior para evitar duplicatas em hot-reload
+        Matter.World.clear(world, false);
+        Matter.Engine.clear(engine);
 
-        const rect = sceneRef.current.getBoundingClientRect();
-        const width = rect.width || window.innerWidth;
-        const height = isMobile ? 320 : 450;
+        // 1. Configurar Gravidade e Precisão do Motor
+        engine.gravity.y = 1.8;
+        engine.positionIterations = 30; // MAXIMA PRECISAO
+        engine.velocityIterations = 30; // MAXIMA PRECISAO
+        engine.enableSleeping = false;
 
-        // Paredes e Chão
-        const ground = Matter.Bodies.rectangle(width / 2, height + 50, width * 2, 100, { isStatic: true });
-        const leftWall = Matter.Bodies.rectangle(-20, height / 2, 40, height * 2, { isStatic: true });
-        const rightWall = Matter.Bodies.rectangle(width + 20, height / 2, 40, height * 2, { isStatic: true });
+        // Variáveis de limites
+        let ground: Matter.Body;
+        let leftWall: Matter.Body;
+        let rightWall: Matter.Body;
+        let ceiling: Matter.Body;
 
-        Matter.World.add(world, [ground, leftWall, rightWall]);
+        const updateBoundaries = () => {
+            if (!sceneRef.current) return;
+            const width = sceneRef.current.clientWidth;
+            const height = sceneRef.current.clientHeight;
 
-        // Criar corpos para as tags
-        const newBodies = tags.map((tag, i) => {
-            const isDark = i % 2 === 0;
-            // Estimar largura baseada no texto
-            const tagWidth = isMobile ? (tag.length * 8 + 30) : (tag.length * 10 + 60);
-            const tagHeight = isMobile ? 35 : 50;
+            // Remover limites antigos se existirem
+            if (ground) Matter.World.remove(world, [ground, leftWall, rightWall, ceiling]);
+
+            // 2. Criar Chão (Boundaries)
+            ground = Matter.Bodies.rectangle(width / 2, height + 250, width, 500, {
+                isStatic: true,
+                friction: 1,
+                restitution: 0.2,
+                label: 'Ground'
+            });
+
+            // 3. Paredes Laterais
+            leftWall = Matter.Bodies.rectangle(-500, height / 2, 1000, height * 2, { isStatic: true, friction: 0, restitution: 0.5, label: 'LeftWall' });
+            rightWall = Matter.Bodies.rectangle(width + 500, height / 2, 1000, height * 2, { isStatic: true, friction: 0, restitution: 0.5, label: 'RightWall' });
+
+            // Teto
+            ceiling = Matter.Bodies.rectangle(width / 2, -500, width, 100, { isStatic: true });
+
+            Matter.World.add(world, [ground, leftWall, rightWall, ceiling]);
+        };
+
+        // Inicializar limites
+        updateBoundaries();
+
+        // Listener de Resize para Responsividade
+        const handleResize = () => {
+            updateBoundaries();
+            // Opcional: Acordar corpos para se reacomodarem
+            bodiesRef.current.forEach(b => Matter.Body.setStatic(b.body as Matter.Body, false));
+        };
+        window.addEventListener('resize', handleResize);
+
+
+
+        // Criar Tags
+        const width = sceneRef.current.getBoundingClientRect().width;
+        const items: { body: Matter.Body, type: string, label?: string, icon?: any }[] = [];
+
+        FIXED_TAGS.forEach((tag, i) => {
+            // Visual Height: Font 24px + Padding (20px * 2) = 64px ~ 70px safe
+            // Mobile: Font 16px + Padding (10px * 2) = 36px ~ 50px safe
+            const tagHeight = isMobile ? 50 : 70;
+
+            // Width Calculation: Approx char width (24px font -> ~14px) * length + padding (80px)
+            const charWidth = isMobile ? 10 : 16;
+            const extraPadding = isMobile ? 60 : 100;
+            const tagWidth = (tag.length * charWidth) + extraPadding;
+
+            // Spawn grid
+            const col = i % 3;
+            const row = Math.floor(i / 3);
+            const startX = (width / 4) * (col + 1);
+            const startY = -50 - (row * 80);
 
             const body = Matter.Bodies.rectangle(
-                Math.random() * (width - 100) + 50,
-                -Math.random() * 400, // Começar fora da tela
+                startX + (Math.random() * 20),
+                startY,
                 tagWidth,
                 tagHeight,
                 {
-                    chamfer: { radius: isMobile ? 15 : 20 },
-                    restitution: 0.4,
-                    friction: 0.1,
-                    angle: (Math.random() - 0.5) * 0.4
+                    chamfer: { radius: isMobile ? 25 : 35 },
+                    restitution: 0.2, // SÓLIDO
+                    friction: 0.5,    // ESTÁVEL
+                    frictionAir: 0.001,
+                    density: 0.01,
+                    slop: 0, // Zero tolerância para sobreposição
+                    angle: (Math.random() - 0.5) * 0.1
                 }
             );
-            return { body, tag, isDark };
+            items.push({ body, type: 'tag', label: tag });
         });
 
-        setBodies(newBodies);
-        Matter.World.add(world, newBodies.map(b => b.body));
+        const designIcons = [
+            { icon: <Layers size={isMobile ? 24 : 36} />, type: 'design-icon' },
+            { icon: <Layout size={isMobile ? 24 : 36} />, type: 'design-icon' },
+            { icon: <Palette size={isMobile ? 24 : 36} />, type: 'design-icon' },
+            { icon: <PenTool size={isMobile ? 24 : 36} />, type: 'design-icon' },
+            { icon: <Code2 size={isMobile ? 24 : 36} />, type: 'design-icon' },
+            { icon: <Monitor size={isMobile ? 24 : 36} />, type: 'design-icon' },
+            { icon: <Brush size={isMobile ? 24 : 36} />, type: 'design-icon' }
+        ];
 
-        // Interação com Mouse e Touch
+        designIcons.forEach((di, i) => {
+            const radius = isMobile ? 25 : 35; // 70px diameter desktop
+
+            // Spawn icons interspersed or after tags
+            const startX = (width / (designIcons.length + 1)) * (i + 1);
+            const startY = -200 - (i * 80);
+
+            const body = Matter.Bodies.circle(
+                startX,
+                startY,
+                radius,
+                {
+                    restitution: 0.2,
+                    friction: 0.5,
+                    frictionAir: 0.001,
+                    density: 0.01,
+                    slop: 0 // Zero tolerância
+                }
+            );
+            items.push({ body, type: 'icon', icon: di.icon });
+        });
+
+        bodiesRef.current = items;
+        Matter.World.add(world, items.map(i => i.body));
+
+        // Mouse Control
         const mouse = Matter.Mouse.create(sceneRef.current);
-
-        // Essencial para mobile dar certo com Matter.js
-        mouse.element.removeEventListener("mousewheel", (mouse as any).mousewheel);
-        mouse.element.removeEventListener("DOMMouseScroll", (mouse as any).mousewheel);
-
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
-                stiffness: 0.1,
+                stiffness: 0.2, // Firme o suficiente para pegar os objetos pesados/grandes
                 render: { visible: false }
             }
         });
-
         Matter.World.add(world, mouseConstraint);
 
-        // Update loop
+        // Fix scroll issue with Matter.js inputs
+        mouseConstraint.mouse.element.removeEventListener("mousewheel", (mouseConstraint.mouse as any).mousewheel);
+        mouseConstraint.mouse.element.removeEventListener("DOMMouseScroll", (mouseConstraint.mouse as any).mousewheel);
+
+        // Render Loop
         const update = () => {
             Matter.Engine.update(engine, 1000 / 60);
-            setBodies(prev => [...prev]);
+
+            bodiesRef.current.forEach((b: any, idx: number) => {
+                const el = containersRef.current[idx];
+                if (el && b.body) {
+                    const { x, y } = b.body.position;
+                    const angle = b.body.angle;
+                    // Otimização: translate3d + Centralização
+                    el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) rotate(${angle}rad)`;
+                }
+            });
             requestRef.current = requestAnimationFrame(update);
         };
         requestRef.current = requestAnimationFrame(update);
 
         return () => {
+            window.removeEventListener('resize', handleResize);
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
             Matter.World.clear(world, false);
             Matter.Engine.clear(engine);
         };
-    }, [tags, isMobile]);
-
-    if (!tags || tags.length === 0) return null;
+    }, [isMobile]);
 
     return (
-        <div style={{ width: '100%', marginBottom: '0px', paddingBottom: '0px', overflow: 'hidden', position: 'relative' }}>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <p style={{ fontSize: '10px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '2px', textTransform: 'uppercase' }}>Grab and toss elements to play</p>
-            </div>
+        <div ref={sceneRef} style={{
+            height: '100%',
+            width: '100%',
+            position: 'relative',
+            cursor: 'grab',
+            touchAction: 'none',
+            overflow: 'visible',
+            zIndex: 100
+        }}>
+            {bodiesRef.current.map((item: any, i: number) => {
+                const isTag = item.type === 'tag';
+                const isIcon = item.type === 'icon';
+                const isDark = i % 2 === 0;
 
-            <div ref={sceneRef} style={{
-                height: isMobile ? '320px' : '450px',
-                width: '100%',
-                background: 'transparent',
-                position: 'relative',
-                cursor: 'grab',
-                touchAction: 'none' // Crucial para não scrollar enquanto brinca no mobile
-            }}>
-                {bodies.map((b, i) => (
+                return (
                     <div
-                        key={`${b.tag}-${i}`}
+                        key={i}
+                        ref={el => { containersRef.current[i] = el; }}
                         style={{
                             position: 'absolute',
-                            left: b.body.position.x,
-                            top: b.body.position.y,
-                            transform: `translate(-50%, -50%) rotate(${b.body.angle}rad)`,
-                            padding: isMobile ? '8px 16px' : '15px 30px',
-                            background: b.isDark ? '#000' : '#fff',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '100px',
-                            fontSize: isMobile ? '11px' : '14px',
+                            left: 0,
+                            top: 0,
+                            transform: 'translate(-50%, -50%)',
+                            background: isTag ? (isDark ? 'var(--surface-color)' : 'var(--bg-color)') : 'var(--accent-color)',
+                            border: isTag ? '1px solid var(--border-color)' : 'none',
+                            borderRadius: isTag ? (isMobile ? '25px' : '35px') : '50%',
+                            padding: isTag ? (isMobile ? '10px 24px' : '20px 40px') : '0',
+                            width: isTag ? 'auto' : (isMobile ? '50px' : '70px'),
+                            height: isTag ? 'auto' : (isMobile ? '50px' : '70px'),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: isMobile ? '16px' : '24px',
                             fontWeight: 900,
                             textTransform: 'uppercase',
-                            color: b.isDark ? '#fff' : '#000',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                            color: isTag ? 'var(--text-color)' : 'var(--accent-contrast)',
                             userSelect: 'none',
                             whiteSpace: 'nowrap',
-                            letterSpacing: '1px',
-                            pointerEvents: 'none', // Matter.js cuida do mouse constraint no container
-                            zIndex: 10
+                            zIndex: 110,
+                            pointerEvents: 'none'
                         }}
                     >
-                        {b.tag}
+                        {isTag && item.label}
+                        {isIcon && (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {item.icon}
+                            </div>
+                        )}
                     </div>
-                ))}
-            </div>
+                );
+            })}
         </div>
-    );
-};
-
-// Typewriter Component for the Hero
-const TypewriterGreeting = ({ languages }: { languages: string[] }) => {
-    const [index, setIndex] = useState(0);
-    const [subIndex, setSubIndex] = useState(0);
-    const [reverse, setReverse] = useState(false);
-    const [blink, setBlink] = useState(true);
-
-    // Typewriter effect
-    useEffect(() => {
-        if (subIndex === languages[index].length + 1 && !reverse) {
-            setTimeout(() => setReverse(true), 2000); // Wait before erasing
-            return;
-        }
-
-        if (subIndex === 0 && reverse) {
-            setReverse(false);
-            setIndex((prev) => (prev + 1) % languages.length);
-            return;
-        }
-
-        const timeout = setTimeout(() => {
-            setSubIndex((prev) => prev + (reverse ? -1 : 1));
-        }, reverse ? 40 : 100);
-
-        return () => clearTimeout(timeout);
-    }, [subIndex, index, reverse, languages]);
-
-    // Cursor blink
-    useEffect(() => {
-        const timeout2 = setTimeout(() => {
-            setBlink((prev) => !prev);
-        }, 500);
-        return () => clearTimeout(timeout2);
-    }, [blink]);
-
-    return (
-        <span style={{ position: 'relative', fontFamily: index >= 12 ? '"Noto Sans JP", sans-serif' : 'inherit' }}>
-            {`${languages[index].substring(0, subIndex)}`}
-            <span style={{ opacity: blink ? 1 : 0, color: 'var(--accent-color)' }}>|</span>
-        </span>
     );
 };
 
 export default function About() {
     const { t, i18n } = useTranslation();
-    const languages = [
-        "Hello", "Olá", "Hola", "Dia dhuit", "Ciao", "Bonjour",
-        "Konnichiwa", "Namaste", "Salaam", "Guten Tag", "Nǐ hǎo", "Aloha",
-        "こんにちは", "你好" // Japanese and Chinese
-    ];
-    const [isMobile, setIsMobile] = useState(false); // Default to desktop for safer hydration
-    const [uniqueTags, setUniqueTags] = useState<string[]>([]);
+    const [isMobile, setIsMobile] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    const [profilePhoto, setProfilePhoto] = useState("");
-    const [revealImage, setRevealImage] = useState("");
     const [nameTitle, setNameTitle] = useState("");
     const [subtitle, setSubtitle] = useState("");
     const [bioText, setBioText] = useState<string[]>([]);
-    const [memories, setMemories] = useState<AboutMemory[]>([]);
-    const [hobbies, setHobbies] = useState<AboutHobby[]>([]);
     const [testimonials, setTestimonials] = useState<AboutTestimonial[]>([]);
+    const [memories, setMemories] = useState<AboutMemory[]>([]);
     const [spotifyUrl, setSpotifyUrl] = useState("");
     const [testimonialIndex, setTestimonialIndex] = useState(0);
     const [pageVisible, setPageVisible] = useState(true);
@@ -274,57 +278,42 @@ export default function About() {
     const memoriesPinRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Initial check and Listener
     useEffect(() => {
-        console.log("About Page Loaded - v2.2 (Restored)");
         const checkMobile = () => {
             const mobile = window.innerWidth < 768;
             setIsMobile(mobile);
-            console.log("Is Mobile:", mobile, "Width:", window.innerWidth);
         };
 
         checkMobile();
         window.addEventListener('resize', checkMobile);
         trackPageView('/about');
+        document.title = `${t('nav.about')} | Vinicius Campos`;
         window.scrollTo(0, 0);
-        return () => {
-            window.removeEventListener('resize', checkMobile);
-        };
+        return () => window.removeEventListener('resize', checkMobile);
     }, [i18n.language]);
 
     useEffect(() => {
         const loadData = async () => {
             const lang = i18n.language;
             try {
-                const [pPhoto, pReveal, pTitle, pSub, pBio, pSpotify, pVisible, hobbiesData, testimonialsData, memoriesData, projectsData] = await Promise.all([
+                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, pSpotify] = await Promise.all([
                     contentAPI.getByKey('about.profile_photo'),
                     contentAPI.getByKey('about.reveal_image'),
                     contentAPI.getByKey('about.name_title'),
                     contentAPI.getByKey('about.subtitle'),
                     contentAPI.getByKey('about.bio_text'),
-                    contentAPI.getByKey('about.spotify_embed_url'),
                     contentAPI.getByKey('about.visible'),
-                    aboutAPI.getHobbies(),
                     aboutAPI.getTestimonials(),
                     aboutAPI.getMemories(),
-                    projectsAPI.getAll()
+                    contentAPI.getByKey('about.spotify_embed_url')
                 ]);
 
-                if (projectsData) {
-                    const allTags = projectsData.flatMap(p => p.tags || []);
-                    const unique = Array.from(new Set(allTags)).filter(Boolean);
-                    setUniqueTags(unique);
-                }
-
-                if (pPhoto) setProfilePhoto(pPhoto.value);
-                if (pReveal) setRevealImage(pReveal.value);
                 if (pTitle) setNameTitle(parseTranslatable(pTitle.value, lang));
                 if (pSub) setSubtitle(parseTranslatable(pSub.value, lang));
                 if (pBio) setBioText([parseTranslatable(pBio.value, lang)]);
-                if (pSpotify) setSpotifyUrl(pSpotify.value);
                 if (pVisible) setPageVisible(pVisible.value === 'true');
+                if (pSpotify) setSpotifyUrl(pSpotify.value);
 
-                setHobbies(hobbiesData.map(h => ({ ...h, text: parseTranslatable(h.text, lang) })));
                 setTestimonials(testimonialsData.map(t => ({
                     ...t,
                     author_name: parseTranslatable(t.author_name, lang),
@@ -343,41 +332,11 @@ export default function About() {
         function raf(time: number) { lenis.raf(time); requestAnimationFrame(raf); }
         requestAnimationFrame(raf);
 
-        const ctx = gsap.context(() => {
-            // Steps animation removed as the section is currently not in the JSX
-            // preventing console errors
-        }, containerRef);
-
-        /*
-                const memoriesPin = memoriesPinRef.current;
-                if (memoriesPin) {
-                    ScrollTrigger.create({
-                        trigger: memoriesPin,
-                        start: "top top",
-                        end: () => `+=${Math.max(2500, memories.length * 800)}`,
-                        pin: true,
-                        scrub: 1,
-                        anticipatePin: 1,
-                        invalidateOnRefresh: true,
-                        pinSpacing: true
-                    });
-                }
-        */
-
         return () => {
             lenis.destroy();
-            ctx.revert();
             ScrollTrigger.getAll().forEach(t => t.kill());
         };
-    }, [isLoading, isMobile, memories.length]);
-
-    // bioProgress scroll hook removed as it was used for memories
-    /*
-    const { scrollYProgress: bioProgress } = useScroll({
-        target: memoriesPinRef,
-        offset: ["start start", "end end"]
-    });
-    */
+    }, [isLoading, isMobile]);
 
     if (!pageVisible) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Page is hidden</div>;
     if (isLoading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
@@ -385,98 +344,81 @@ export default function About() {
     return (
         <div ref={containerRef} style={{ background: 'var(--bg-color)', minHeight: '100vh', overflowX: 'hidden' }}>
 
-
-
-            {/* 1. HERO SECTION WITH CLEAN REVEAL */}
+            {/* 1. HERO SECTION WITH PHYSICS TAGS & LARGE NAME */}
             <section
                 ref={heroRef}
                 style={{
                     height: '100vh',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    justifyContent: 'flex-end',
                     position: 'relative',
                     overflow: 'hidden',
-                    backgroundImage: revealImage ? `url(${revealImage})` : `url(${profilePhoto})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
+                    background: 'var(--bg-color)',
+                    paddingBottom: 0
                 }}
             >
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1 }} />
-
                 <div style={{
-                    position: 'relative',
-                    zIndex: 2,
-                    pointerEvents: 'none',
-                    width: '100%',
-                    padding: isMobile ? '0 20px' : '0 10%',
-                    paddingTop: isMobile ? 'calc(var(--header-height) + 20px)' : 'var(--header-height)', // More space for header on mobile
-                    paddingBottom: isMobile ? '80px' : 0, // Space for the arrow
-                    textAlign: 'center',
+                    position: 'absolute',
+                    top: 'var(--header-height, 80px)',
+                    left: 0,
+                    right: 0,
+                    bottom: isMobile ? '52vw' : '12.8vw', // Precise floor for the 2-line large title
+                    zIndex: 50,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: '100%'
+                    overflow: 'visible'
+                }}>
+                    <PhysicsTags isMobile={isMobile} />
+                </div>
+
+                <div style={{
+                    position: 'relative',
+                    zIndex: 1,
+                    width: '100%',
+                    pointerEvents: 'none',
+                    lineHeight: 0.9,
+                    overflow: 'visible',
+                    paddingBottom: 0
                 }}>
                     <h1
                         style={{
-                            fontSize: 'clamp(32px, 10vw, 120px)', // Slightly smaller for better fit
                             fontWeight: 950,
                             fontFamily: 'var(--font-display)',
                             margin: 0,
-                            lineHeight: 1,
-                            color: '#fff',
+                            padding: isMobile ? '0' : '0 25px',
+                            color: 'var(--text-color)',
                             textTransform: 'uppercase',
-                            letterSpacing: '-2px',
-                            maxWidth: '100%'
+                            letterSpacing: '-0.06em',
+                            width: isMobile ? '100vw' : '100%',
+                            textAlign: 'center',
+                            whiteSpace: isMobile ? 'normal' : 'nowrap',
+                            lineHeight: 0.8,
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            MozUserSelect: 'none',
+                            msUserSelect: 'none',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            fontSize: isMobile ? '1px' : '15vw'
                         }}
                     >
-                        <TypewriterGreeting languages={languages} />
+                        {isMobile ? (
+                            <>
+                                <span style={{ fontSize: '29vw', display: 'block', width: '100%', lineHeight: 0.7 }}>VINNY</span>
+                                <span style={{ fontSize: '24vw', display: 'block', width: '100%', lineHeight: 0.7 }}>CAMPOS</span>
+                            </>
+                        ) : (
+                            nameTitle || 'VINNY CAMPOS'
+                        )}
                     </h1>
-                    {/* Clean Reveal (Full quality, no opacity filter) */}
-
-
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        style={{ marginTop: '30px' }}
-                    >
-                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', letterSpacing: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
-                            {t('about.hero_subtitle', 'Learn a bit more about me!')}
-                        </p>
-                    </motion.div>
                 </div>
-
-                <a
-                    href="#about-bio-section"
-                    className="scroll-indicator"
-                    style={{
-                        position: 'absolute',
-                        bottom: '40px',
-                        left: '0',
-                        right: '0',
-                        margin: '0 auto',
-                        width: 'fit-content',
-                        zIndex: 2,
-                        cursor: 'pointer',
-                        padding: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textDecoration: 'none'
-                    }}
-                >
-                    <ArrowDown size={32} color="var(--accent-color)" />
-                </a>
             </section>
 
-
-
-            {/* 2. PINNED BIO + MEMORIES OVERLAY */}
+            {/* 2. PINNED BIO */}
             <div id="about-bio-section" ref={memoriesPinRef} style={{
                 background: 'var(--bg-color)',
                 minHeight: isMobile ? 'auto' : 'calc(100vh - var(--header-height))',
@@ -485,219 +427,97 @@ export default function About() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingTop: isMobile ? '60px' : '0',
-                scrollMarginTop: 'var(--header-height)'
+                scrollMarginTop: 'var(--header-height)',
+                paddingBottom: '150px'
             }}>
                 <div className="container" style={{
                     maxWidth: '1214px',
                     margin: '0 auto',
                     padding: isMobile ? '60px 5% 40px' : '0 5%',
                     display: 'flex',
-                    flexDirection: isMobile ? 'column' : 'row',
-                    gap: isMobile ? '30px' : '40px',
-                    alignItems: 'center',
+                    flexDirection: 'column',
+                    gap: isMobile ? '30px' : '60px',
+                    alignItems: 'flex-start',
                     justifyContent: 'center',
                     width: '100%',
                     minHeight: isMobile ? 'auto' : '100vh',
                     position: 'relative',
                     zIndex: 5
                 }}>
-                    {/* Portrait Photo (Smaller - max 450px) */}
-                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '400px', flexShrink: 0, position: 'relative', zIndex: 10 }}>
-                        <motion.div
-                            initial={{ opacity: 0, x: -50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 1 }}
-                            style={{
-                                width: '100%',
-                                maxHeight: isMobile ? '50vh' : '65vh',
-                                aspectRatio: '545/699',
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
-                                border: '1px solid rgba(255,255,255,0.05)',
-                                margin: '0 auto'
-                            }}
-                        >
-                            <img src={profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Profile" />
-                        </motion.div>
-                    </div>
-
-                    {/* Content Column (Right - 580px) */}
-                    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : '580px', display: 'flex', flexDirection: 'column', gap: isMobile ? '30px' : '40px', textAlign: 'left', position: 'relative', zIndex: 20 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <h2 style={{
-                                fontSize: 'clamp(40px, 5vw, 60px)',
-                                fontWeight: 900,
-                                lineHeight: 1,
-                                margin: 0,
-                                color: 'var(--accent-color)',
-                                letterSpacing: '-2px',
-                                textTransform: 'uppercase',
-                                fontFamily: 'var(--font-display)'
-                            }}>
-                                {nameTitle.split(' ').map((n, i) => <div key={i}>{n}</div>)}
-                            </h2>
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: isMobile ? '30px' : '60px', textAlign: 'left', position: 'relative', zIndex: 20 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ height: '40px' }} />
                             <p style={{
-                                fontSize: '19.5px',
+                                fontSize: 'clamp(22px, 3.5vw, 32px)',
                                 color: 'var(--text-color)',
-                                fontWeight: 700,
-                                letterSpacing: '-1.17px',
-                                margin: 0
+                                fontWeight: 600,
+                                lineHeight: 1.3,
+                                margin: 0,
+                                maxWidth: '900px'
                             }}>
-                                {subtitle}
+                                {subtitle || t('about.bio_intro', "I am a Brazilian Designer based in Portugal, with international experience in Ireland.")}
                             </p>
                         </div>
 
-                        <div className="bio-scroll-container hide-scrollbar-except-this"
-                            data-lenis-prevent
-                            style={{
-                                fontSize: '19.5px',
-                                lineHeight: 1.43,
-                                fontWeight: 400,
-                                color: 'var(--text-color)',
-                                textAlign: 'left',
-                                wordBreak: 'break-word',
-                                overflowWrap: 'break-word',
-                                maxWidth: '100%',
-                                maxHeight: isMobile ? 'none' : '40vh',
-                                overflowY: isMobile ? 'visible' : 'auto',
-                                paddingRight: '20px',
-                                whiteSpace: 'pre-wrap',
-                                scrollbarWidth: 'thin',
-                                scrollbarColor: 'var(--accent-color) transparent',
-                                pointerEvents: 'auto' // Ensure it's interactive
-                            }}>
-                            {bioText.join('')}
+                        <div style={{
+                            fontSize: 'clamp(16px, 1.8vw, 20px)',
+                            lineHeight: 1.6,
+                            fontWeight: 450,
+                            color: 'var(--text-muted)',
+                            textAlign: 'left',
+                            maxWidth: '100%',
+                            columnCount: isMobile ? 1 : 2,
+                            columnGap: isMobile ? '80px' : '80px',
+                            columnFill: 'balance',
+                            display: 'block'
+                        }}>
+                            {bioText.length > 0 ? (
+                                bioText[0].split('\n\n').map((p, idx) => (
+                                    <p key={idx} style={{
+                                        marginBottom: '20px',
+                                        display: 'block'
+                                    }}>
+                                        {p}
+                                    </p>
+                                ))
+                            ) : (
+                                <p>{t('about.loading_bio', 'Carregando biografia...')}</p>
+                            )}
                         </div>
 
-                        {/* Scroll Indicator Removed */}
-                    </div>
-                </div>
-
-                {/* Memories Overlay Disabled */}
-                {/* 
-                {memories.length > 0 && !isMobile && (
-                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100 }}>
-                        {memories.map((m, i) => {
-                            const availableStart = 0.1; // Start almost immediately
-                            const availableEnd = 0.9;
-                            const range = availableEnd - availableStart;
-                            const startM = availableStart + (i * (range / Math.max(1, memories.length)));
-                            const duration = 0.2;
-                            const endM = startM + duration;
-                            return <ScrollyMemory key={m.id || i} m={m} i={i} progress={bioProgress} start={startM} end={endM} isMobile={false} />;
-                        })}
-                    </div>
-                )}
-                */}
-            </div>
-
-            {/* Mobile Memories List Disabled */}
-            {/* 
-            {
-                memories.length > 0 && isMobile && (
-                    <div className="container" style={{ padding: '0 5% 60px', overflowX: 'auto' }}>
-                        <div style={{ display: 'flex', gap: '20px' }} className="hide-scrollbar">
-                            {memories.map((m, i) => (
-                                <div key={m.id || i} style={{ flexShrink: 0, width: '280px', background: '#000', padding: '0', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-                                    <img src={m.image_url} alt="Memory" style={{ width: '100%', display: 'block' }} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )
-            }
-            */}
-
-
-            {/* 4. HOBBIES & INTERESTS - BENTO DESIGN */}
-            <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginTop: '200px', marginBottom: '150px' }}>
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "0px 0px 200px 0px" }}
-                    transition={{ duration: 0.6 }}
-                >
-                    <span style={{ fontSize: '12px', letterSpacing: '4px', color: 'var(--accent-color)', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>{t('about.personal_label', 'Personal')}</span>
-                    <h3 style={{ fontSize: 'clamp(30px, 4vw, 50px)', fontWeight: 950, marginBottom: '60px', textTransform: 'uppercase', letterSpacing: '-2px' }} dangerouslySetInnerHTML={{ __html: t('about.hobbies_title', 'Hobbies &<br />Interests') }}></h3>
-                </motion.div>
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
-                    gap: '20px',
-                    overflow: 'hidden' // Restore original overflow behavior
-                }}>
-                    {hobbies.map((hobby, i) => {
-                        const Icon = SELECTABLE_ICONS[hobby.icon_name as keyof typeof SELECTABLE_ICONS] || MessageCircle;
-                        const globalAccent = 'var(--accent-color)';
-
-                        // All items: White Background, Accent Color Icon
-                        const finalIconBg = '#fff';
-                        const finalIconColor = globalAccent;
-
-                        return (
-                            <motion.div
-                                key={hobby.id}
-                                whileHover={{ scale: 1.02 }}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.05 }}
+                        <div style={{ marginTop: '40px' }}>
+                            <a
+                                href="/cv"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="clickable"
                                 style={{
-                                    background: 'var(--surface-color)',
-                                    borderRadius: '24px',
-                                    padding: '30px',
-                                    border: '1px solid var(--border-color)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '20px',
-                                    position: 'relative',
-                                    overflow: 'hidden'
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    padding: '16px 36px',
+                                    background: 'var(--accent-color)',
+                                    color: 'var(--accent-contrast)',
+                                    borderRadius: '100px',
+                                    fontSize: '14px',
+                                    fontWeight: 900,
+                                    textDecoration: 'none',
+                                    letterSpacing: '2px',
+                                    textTransform: 'uppercase',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
                                 }}
                             >
-                                <div style={{
-                                    width: '80px',
-                                    height: '80px',
-                                    borderRadius: '24px',
-                                    background: finalIconBg,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: finalIconColor,
-                                    boxShadow: '0 8px 16px rgba(0,0,0,0.06)'
-                                }}>
-                                    {hobby.icon_svg ? (
-                                        <div
-                                            className="custom-hobby-icon"
-                                            style={{
-                                                width: '40px',
-                                                height: '40px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: 'var(--accent-color)', // Force accent color for the wrapper
-                                                fill: 'currentColor',
-                                                stroke: 'currentColor'
-                                            }}
-                                            dangerouslySetInnerHTML={{ __html: hobby.icon_svg }}
-                                        />
-                                    ) : (
-                                        <Icon size={40} />
-                                    )}
-                                </div>
-                                <div>
-                                    <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-color)', margin: '0 0 8px' }}>{hobby.text}</h4>
-                                    <div style={{ width: '40px', height: '2px', background: globalAccent, borderRadius: '2px' }} />
-                                </div>
-                            </motion.div>
-                        );
-                    })}
+                                {t('about.view_cv', 'VIEW FULL CV')}
+                                <span style={{ fontSize: '18px' }}>→</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* 5. TESTIMONIALS - FIGMA STACKED GRID */}
+
+            {/* 5. TESTIMONIALS */}
             <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginBottom: '150px', position: 'relative' }}>
                 <motion.div
                     style={{ marginBottom: '60px', position: 'relative', zIndex: 20 }}
@@ -750,94 +570,169 @@ export default function About() {
                     </div>
                 </motion.div>
 
-                <div style={{ position: 'relative', minHeight: '400px' }}>
-                    {/* Controls moved to the title row above */}
-
-                    <div className="testimonials-grid" style={{
-                        display: 'grid',
-                        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                        gap: '30px'
-                    }}>
-                        {(testimonials && testimonials.length > 0) ? (
-                            testimonials.slice(testimonialIndex, testimonialIndex + (isMobile ? 1 : 2)).map((item, idx) => (
-                                <motion.div
-                                    key={item.id || idx}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.6, delay: idx * 0.1 }}
-                                    className="testimonial-card"
-                                    style={{
-                                        padding: isMobile ? '30px' : '40px',
-                                        background: 'var(--surface-color)',
-                                        borderRadius: '32px',
-                                        border: `1px solid var(--border-color)`,
-                                        boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        minHeight: isMobile ? 'auto' : '350px' // Remove forced height on mobile
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-                                        <div style={{
-                                            width: '44px',
-                                            height: '44px',
-                                            borderRadius: '50%',
-                                            overflow: 'hidden',
-                                            border: `1px solid var(--border-color)`,
-                                            background: 'var(--bg-color)'
-                                        }}>
-                                            {item.author_image && (
-                                                <img src={item.author_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={item.author_name} />
-                                            )}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-color)' }}>{item.author_name}</div>
-                                            <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>{item.author_role}</div>
-                                        </div>
-                                    </div>
-
-                                    <p style={{
-                                        fontSize: isMobile ? '15px' : '17px',
-                                        lineHeight: 1.6,
-                                        color: 'var(--text-color)',
-                                        margin: '0',
-                                        background: 'rgba(255,255,255,0.02)', // Slightly lighter for contrast
-                                        padding: isMobile ? '20px' : '30px',
-                                        borderRadius: '24px',
-                                        border: `1px solid var(--border-color)`,
-                                        fontWeight: 500,
-                                        flex: 1,
-                                        overflowWrap: 'break-word',
-                                        wordBreak: 'break-word',
-                                        width: '100%' // Ensure no cutting
+                <div className="testimonials-grid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                    gap: '30px'
+                }}>
+                    {(testimonials && testimonials.length > 0) ? (
+                        testimonials.slice(testimonialIndex, testimonialIndex + (isMobile ? 1 : 2)).map((item, idx) => (
+                            <motion.div
+                                key={item.id || idx}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6, delay: idx * 0.1 }}
+                                className="testimonial-card"
+                                style={{
+                                    padding: isMobile ? '30px' : '40px',
+                                    background: 'var(--surface-color)',
+                                    borderRadius: '32px',
+                                    border: '1px solid var(--border-color)',
+                                    boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    minHeight: isMobile ? 'auto' : '350px'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                                    <div style={{
+                                        width: '44px',
+                                        height: '44px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
+                                        border: '1px solid var(--border-color)',
+                                        background: 'var(--bg-color)'
                                     }}>
-                                        "{item.quote}"
-                                    </p>
-                                </motion.div>
-                            ))
-                        ) : (
-                            <div style={{ color: 'var(--text-muted)' }}>No testimonials yet.</div>
-                        )}
-                    </div>
+                                        {item.author_image && (
+                                            <img src={item.author_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={item.author_name} />
+                                        )}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-color)' }}>{item.author_name}</div>
+                                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>{item.author_role}</div>
+                                    </div>
+                                </div>
+
+                                <p style={{
+                                    fontSize: isMobile ? '15px' : '17px',
+                                    lineHeight: 1.6,
+                                    color: 'var(--text-color)',
+                                    margin: '0',
+                                    background: 'rgba(255,255,255,0.02)',
+                                    padding: isMobile ? '20px' : '30px',
+                                    borderRadius: '24px',
+                                    border: '1px solid var(--border-color)',
+                                    fontWeight: 400,
+                                    flex: 1,
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word',
+                                    width: '100%'
+                                }}>
+                                    "{item.quote}"
+                                </p>
+                            </motion.div>
+                        ))
+                    ) : null}
                 </div>
             </div>
 
-            {/* 6. SPOTIFY */}
-            {
-                spotifyUrl && (
-                    <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', marginBottom: '120px', textAlign: 'center' }}>
-                        <h3 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 900, marginBottom: '40px', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Inspiration</h3>
-                        <div style={{ maxWidth: '700px', margin: '0 auto', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.5)', border: '1px solid #111', background: '#050505' }}>
-                            <iframe style={{ borderRadius: '12px' }} src={spotifyUrl} width="100%" height="152" frameBorder="0" allowFullScreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" />
-                        </div>
+            {/* 6. CURRENT INSPIRATION & MEMORIES */}
+            <section style={{
+                padding: isMobile ? '80px 0' : '150px 0',
+                background: 'var(--bg-color)',
+                position: 'relative',
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+            }}>
+                <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', position: 'relative', zIndex: 10 }}>
+                    <div style={{ textAlign: 'center', marginBottom: '100px' }}>
+                        <h2 style={{
+                            fontSize: 'clamp(40px, 8vw, 100px)',
+                            fontWeight: 900,
+                            letterSpacing: '-4px',
+                            textTransform: 'uppercase',
+                            fontFamily: 'var(--font-display)',
+                            margin: 0,
+                            lineHeight: 0.9,
+                            color: 'var(--text-color)'
+                        }}>
+                            {t('about.inspiration_title', 'Current Inspiration')}
+                        </h2>
                     </div>
-                )
-            }
 
-            <PhysicsTags tags={uniqueTags} isMobile={isMobile} />
+                    {/* Spotify Embed Centered */}
+                    {spotifyUrl && (
+                        <div style={{
+                            maxWidth: '700px',
+                            margin: '0 auto',
+                            position: 'relative',
+                            zIndex: 20
+                        }}>
+                            <div style={{ borderRadius: '24px', overflow: 'hidden', border: 'none', background: 'transparent' }}>
+                                <iframe
+                                    src={spotifyUrl}
+                                    width="100%"
+                                    height="152"
+                                    frameBorder="0"
+                                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                    loading="lazy"
+                                    style={{ border: 'none' }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Floating Memories (Parallax Background) */}
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                    {memories.map((mem, idx) => {
+                        const delay = idx * 0.2;
+                        return (
+                            <motion.div
+                                key={mem.id || idx}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                whileInView={{ opacity: 0.4, scale: 1 }}
+                                viewport={{ once: false }}
+                                animate={{
+                                    y: [0, -20, 0],
+                                }}
+                                transition={{
+                                    y: {
+                                        duration: 5 + Math.random() * 5,
+                                        repeat: Infinity,
+                                        ease: "linear"
+                                    },
+                                    opacity: { duration: 1, delay },
+                                    scale: { duration: 1, delay },
+                                    default: { duration: 1, delay }
+                                }}
+                                style={{
+                                    position: 'absolute',
+                                    left: mem.position_x || `${Math.random() * 80 + 10}%`,
+                                    top: mem.position_y || `${Math.random() * 80 + 10}%`,
+                                    width: mem.width || '250px',
+                                    zIndex: 5,
+                                    borderRadius: '16px',
+                                    overflow: 'hidden',
+                                    border: '1px solid rgba(255,255,255,0.05)',
+                                    aspectRatio: mem.aspect_ratio || '4/3',
+                                    filter: 'grayscale(100%) contrast(1.1)',
+                                }}
+                            >
+                                <img
+                                    src={mem.image_url}
+                                    alt=""
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            </section>
         </div>
     );
 }
-
-// Force deploy trigger v2.2

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Linkedin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import Lenis from '@studio-freight/lenis';
 import { contentAPI } from '../lib/supabase';
 
 // FontAwesome WhatsApp Brand Icon
@@ -13,84 +14,134 @@ const WhatsappIcon = ({ size = 20, color = 'currentColor' }: { size?: number, co
 );
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+    const { pathname } = useLocation();
+    const lenisRef = useRef<Lenis | null>(null);
+
+    // Lenis Smooth Scroll
+    useEffect(() => {
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            orientation: 'vertical',
+            gestureOrientation: 'vertical',
+            smoothWheel: true,
+            wheelMultiplier: 1,
+            touchMultiplier: 2,
+            infinite: false,
+        });
+
+        lenisRef.current = lenis;
+
+        function raf(time: number) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+
+        requestAnimationFrame(raf);
+
+        return () => {
+            lenis.destroy();
+            lenisRef.current = null;
+        };
+    }, []);
+
+    // Reset scroll on route change
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        if (lenisRef.current) {
+            lenisRef.current.scrollTo(0, { immediate: true });
+        }
+    }, [pathname]);
 
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         if (typeof window !== 'undefined') {
-            return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+            return (localStorage.getItem('theme') as 'dark' | 'light') || 'light';
         }
-        return 'dark';
+        return 'light';
     });
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
-    const [branding, setBranding] = useState({
-        logoText1: 'VINICIUS',
-        logoText2: 'CAMPOS',
-        accentColor: '#F2A73D',
-        bgColor: '#050505',
-        lightAccentColor: '#C87A1A',
-        lightBgColor: '#FFFFFF',
-        navHome: true,
-        navCV: true,
-        navPortfolio: true,
-        navGetInTouch: true,
-        navBlog: true,
-        navNewsletter: false,
-        navAbout: true,
-        logoImageUrl: '',
-        navOrder: ['navHome', 'navCV', 'navPortfolio', 'navAbout', 'navBlog', 'navGetInTouch'],
-        socialEmail: '',
-        socialPhone: '',
-        socialLinkedin: ''
+    const timeoutRef = useRef<any>(null);
+    const [branding, setBranding] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('site_branding');
+            if (cached) return JSON.parse(cached);
+        }
+        return {
+            logoText1: 'VINICIUS',
+            logoText2: 'CAMPOS',
+            accentColor: '#F2A73D',
+            bgColor: '#050505',
+            lightAccentColor: '#4A2F12',
+            lightBgColor: '#FFFFFF',
+            navHome: true,
+            navCV: true,
+            navPortfolio: true,
+            navGetInTouch: true,
+            navBlog: true,
+            navNewsletter: false,
+            navAbout: true,
+            logoImageUrl: '',
+            navOrder: ['navHome', 'navCV', 'navPortfolio', 'navAbout', 'navBlog', 'navGetInTouch'],
+            socialEmail: '',
+            socialPhone: '',
+            socialLinkedin: ''
+        };
     });
 
     useEffect(() => {
-        console.log("Layout Loaded v2.3 - Cache Buster");
+        console.log("Layout Loaded v2.5 - Performance Optimized");
         loadBranding();
     }, []);
 
     const loadBranding = async () => {
-        const l1 = await contentAPI.getByKey('general.logo_text1');
-        const l2 = await contentAPI.getByKey('general.logo_text2');
-        const ac = await contentAPI.getByKey('general.accent_color');
-        const bg = await contentAPI.getByKey('general.bg_color');
-        const lac = await contentAPI.getByKey('general.light_accent_color');
-        const lbg = await contentAPI.getByKey('general.light_bg_color');
-        const nh = await contentAPI.getByKey('nav.home');
-        const nc = await contentAPI.getByKey('nav.cv');
-        const np = await contentAPI.getByKey('nav.portfolio');
-        const ng = await contentAPI.getByKey('nav.get_in_touch');
-        const nb = await contentAPI.getByKey('nav.blog');
-        const na = await contentAPI.getByKey('nav.about');
-        const no = await contentAPI.getByKey('nav.order');
+        const [l1, l2, ac, bg, lac, lbg, nh, nc, np, ng, nb, na, no, sEmail, sPhone, sLinkedin, logoImg, news] = await Promise.all([
+            contentAPI.getByKey('general.logo_text1'),
+            contentAPI.getByKey('general.logo_text2'),
+            contentAPI.getByKey('general.accent_color'),
+            contentAPI.getByKey('general.bg_color'),
+            contentAPI.getByKey('general.light_accent_color'),
+            contentAPI.getByKey('general.light_bg_color'),
+            contentAPI.getByKey('nav.home'),
+            contentAPI.getByKey('nav.cv'),
+            contentAPI.getByKey('nav.portfolio'),
+            contentAPI.getByKey('nav.get_in_touch'),
+            contentAPI.getByKey('nav.blog'),
+            contentAPI.getByKey('nav.about'),
+            contentAPI.getByKey('nav.order'),
+            contentAPI.getByKey('social.footer_email'),
+            contentAPI.getByKey('social.phone'),
+            contentAPI.getByKey('social.linkedin'),
+            contentAPI.getByKey('general.logo_image_url'),
+            contentAPI.getByKey('nav.newsletter')
+        ]);
 
-        // Fetch using the footer keys
-        const sEmail = await contentAPI.getByKey('social.footer_email');
-        const sPhone = await contentAPI.getByKey('social.phone');
-        const sLinkedin = await contentAPI.getByKey('social.linkedin');
-
-        setBranding({
+        const newBranding = {
             logoText1: l1?.value || 'VINICIUS',
             logoText2: l2?.value || 'CAMPOS',
             accentColor: ac?.value || '#F2A73D',
             bgColor: bg?.value || '#050505',
-            lightAccentColor: lac?.value || '#C87A1A',
+            lightAccentColor: lac?.value || '#4A2F12',
             lightBgColor: lbg?.value || '#FFFFFF',
             navHome: nh?.value !== 'false',
             navCV: nc?.value !== 'false',
             navPortfolio: np?.value !== 'false',
             navGetInTouch: ng?.value !== 'false',
             navBlog: nb?.value === 'true',
-            navNewsletter: (await contentAPI.getByKey('nav.newsletter'))?.value === 'true',
+            navNewsletter: news?.value === 'true',
             navAbout: na?.value === 'true',
-            logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || '',
+            logoImageUrl: logoImg?.value || '',
             navOrder: (no?.value || 'navHome,navCV,navPortfolio,navAbout,navBlog,navGetInTouch').split(','),
             socialEmail: sEmail?.value || '',
             socialPhone: sPhone?.value || '',
             socialLinkedin: sLinkedin?.value || ''
-        });
+        };
+
+        setBranding(newBranding);
+        localStorage.setItem('site_branding', JSON.stringify(newBranding));
     };
 
     useEffect(() => {
@@ -105,9 +156,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         } else {
             root.style.setProperty('--accent-color', branding.lightAccentColor);
             root.style.setProperty('--bg-color', branding.lightBgColor);
-            root.style.setProperty('--text-color', '#0a0a0a');
-            root.style.setProperty('--border-color', 'rgba(0, 0, 0, 0.1)');
-            root.style.setProperty('--header-bg', 'rgba(255, 255, 255, 0.85)');
+            root.style.setProperty('--text-color', '#000000'); // Pure black for max contrast
+            root.style.setProperty('--border-color', 'rgba(0, 0, 0, 0.2)');
+            root.style.setProperty('--header-bg', 'rgba(255, 255, 255, 0.95)');
             root.setAttribute('data-theme', 'light');
         }
     }, [theme, branding]);
@@ -127,64 +178,102 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     };
 
     const renderDesktopNav = () => {
-        return (
-            <ul style={{ display: 'flex', gap: '40px', listStyle: 'none', margin: 0, padding: 0, height: '100%' }}>
-                {branding.navHome && (
-                    <li>
-                        <NavLink
-                            to="/"
-                            onClick={(e) => { if (window.location.pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}
-                            className={({ isActive }) => `clickable menu-link ${isActive && window.location.pathname === '/' ? 'active' : ''}`}
-                        >
-                            {t('nav.home')}
-                        </NavLink>
-                    </li>
-                )}
-                <li className="nav-dropdown" onMouseLeave={() => setIsDropdownOpen(false)}>
-                    <span
-                        className="clickable menu-link"
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+        const items = [];
+
+        if (branding.navHome) {
+            items.push(
+                <li key="home">
+                    <NavLink
+                        to="/"
+                        onClick={(e) => { if (window.location.pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}
+                        className={({ isActive }) => `clickable menu-link ${isActive && window.location.pathname === '/' ? 'active' : ''}`}
+                        style={{ textTransform: 'lowercase' }}
                     >
-                        ABOUT ME
-                        <ChevronDown
-                            size={14}
-                            style={{
-                                transition: 'transform 0.3s ease',
-                                transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-                            }}
-                        />
-                    </span>
-                    <ul className={`dropdown-menu ${isDropdownOpen ? 'dropdown-open' : ''}`}>
-                        {branding.navAbout && <li><NavLink to="/about" onClick={() => setIsDropdownOpen(false)}>{t('nav.about')}</NavLink></li>}
-                        {branding.navCV && <li><NavLink to="/cv" onClick={() => setIsDropdownOpen(false)}>{t('nav.cv')}</NavLink></li>}
-                        {branding.navPortfolio && <li><NavLink to="/projects" onClick={() => setIsDropdownOpen(false)}>{t('nav.portfolio')}</NavLink></li>}
-                    </ul>
+                        {t('nav.home')}
+                    </NavLink>
                 </li>
-                {branding.navGetInTouch && (
-                    <li>
-                        <button
-                            className="clickable menu-link"
-                            onClick={() => {
-                                if (window.location.pathname === '/') {
-                                    const s = document.getElementById('contact');
-                                    if (s) s.scrollIntoView({ behavior: 'smooth' });
-                                } else {
-                                    navigate('/#contact');
-                                }
-                            }}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                        >
-                            {t('nav.contact')}
-                        </button>
-                    </li>
-                )}
-                {branding.navBlog && (
-                    <li>
-                        <NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`}>
-                            {t('nav.blog')}
-                        </NavLink>
-                    </li>
+            );
+        }
+
+        items.push(
+            <li
+                key="about"
+                className="nav-dropdown"
+                onMouseEnter={() => {
+                    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                    setIsDropdownOpen(true);
+                }}
+                onMouseLeave={() => {
+                    timeoutRef.current = setTimeout(() => setIsDropdownOpen(false), 300);
+                }}
+            >
+                <span
+                    className="clickable menu-link"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', textTransform: 'lowercase', cursor: 'pointer' }}
+                >
+                    about me
+                    <ChevronDown
+                        size={14}
+                        style={{
+                            transition: 'transform 0.3s ease',
+                            transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                        }}
+                    />
+                </span>
+                <ul
+                    className={`dropdown-menu ${isDropdownOpen ? 'dropdown-open' : ''}`}
+                    onMouseEnter={() => {
+                        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                    }}
+                    onMouseLeave={() => {
+                        timeoutRef.current = setTimeout(() => setIsDropdownOpen(false), 300);
+                    }}
+                >
+                    {branding.navAbout && <li><NavLink to="/about" onClick={() => setIsDropdownOpen(false)} style={{ textTransform: 'lowercase' }}>{t('nav.about')}</NavLink></li>}
+                    {branding.navCV && <li><NavLink to="/cv" onClick={() => setIsDropdownOpen(false)} style={{ textTransform: 'lowercase' }}>{t('nav.cv')}</NavLink></li>}
+                    {branding.navPortfolio && <li><NavLink to="/projects" onClick={() => setIsDropdownOpen(false)} style={{ textTransform: 'lowercase' }}>{t('nav.portfolio')}</NavLink></li>}
+                </ul>
+            </li>
+        );
+
+        if (branding.navGetInTouch) {
+            items.push(
+                <li key="contact">
+                    <button
+                        className="clickable menu-link"
+                        onClick={() => {
+                            if (window.location.pathname === '/') {
+                                const s = document.getElementById('contact');
+                                if (s) s.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                navigate('/#contact');
+                            }
+                        }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'lowercase' }}
+                    >
+                        {t('nav.contact')}
+                    </button>
+                </li>
+            );
+        }
+
+        if (branding.navBlog) {
+            items.push(
+                <li key="blog">
+                    <NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`} style={{ textTransform: 'lowercase' }}>
+                        {t('nav.blog')}
+                    </NavLink>
+                </li>
+            );
+        }
+
+        return (
+            <ul style={{ display: 'flex', gap: '20px', listStyle: 'none', margin: 0, padding: 0, height: '100%', alignItems: 'center' }}>
+                {items.flatMap((item, index) =>
+                    index < items.length - 1
+                        ? [item, <li key={`sep-${index}`} style={{ opacity: 0.2, userSelect: 'none', color: 'var(--text-color)', fontFamily: 'sans-serif', fontSize: '10px', lineHeight: 0, display: 'flex', alignItems: 'center', padding: '0 8px' }}>•</li>]
+                        : [item]
                 )}
             </ul>
         );
@@ -200,6 +289,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
                     <button
                         onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
+                        className="mobile-link"
                         style={{
                             ...style,
                             fontSize: '32px',
@@ -330,17 +420,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     return (
         <>
-            <div className={`noise-overlay ${theme === 'light' ? 'light-mode' : ''}`} />
 
             <header
                 style={{
                     position: 'fixed', top: 0, left: 0, right: 0,
                     height: 'var(--header-height)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', // Use stretch to allow nav items to fill height
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'stretch',
                     zIndex: 1000,
                     padding: '0 5%',
-                    pointerEvents: 'auto',
-                    width: '100%'
+                    pointerEvents: 'auto'
                 }}
             >
                 {/* Header Background Layer - sits between Dropdown and Content */}
@@ -353,12 +441,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     zIndex: 5
                 }} />
 
+
                 <div className="logo clickable" style={{ pointerEvents: 'auto', minWidth: '120px', position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center' }}>
                     <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText1}</span>
-                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText2}</span>
-                        </div>
+                        {branding.logoImageUrl ? (
+                            <img
+                                src={branding.logoImageUrl}
+                                alt="Logo"
+                                style={{
+                                    height: '32px',
+                                    width: 'auto',
+                                    objectFit: 'contain',
+                                    filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none',
+                                    transition: 'filter 0.5s ease'
+                                }}
+                            />
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <span style={{ fontFamily: 'var(--font-logo)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText1}</span>
+                                <span style={{ fontFamily: 'var(--font-logo)', fontSize: '14px', fontWeight: '900', lineHeight: '1.2' }}>{branding.logoText2}</span>
+                            </div>
+                        )}
                     </NavLink>
                 </div>
 
@@ -436,9 +539,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             zIndex: 2000,
                             display: 'flex',
                             flexDirection: 'column',
-                            padding: '60px 40px',
+                            padding: '60px 5%',
                             alignItems: 'flex-end',
-                            textAlign: 'right'
+                            textAlign: 'right',
+                            overflowX: 'hidden'
                         }}
                     >
                         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', marginBottom: '60px' }}>
