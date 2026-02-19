@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-console.log("Portfolio Version: 4.7 - CSP DISABLED TEST");
+console.log("Portfolio Version: 4.8 - Final Video Fix");
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'

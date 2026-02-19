@@ -37,7 +37,11 @@ const ProgressBar = ({ progress }: { progress: number }) => (
     </div>
 );
 
-const isVideoUrl = (url: string) => /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+const isVideoUrl = (url: string) => {
+    if (!url) return false;
+    // Check by extension anywhere in the path (handles Supabase URLs with query params)
+    return /\.(mp4|webm|ogg|mov|avi|m4v)([?#]|$)/i.test(url);
+};
 
 interface ProjectFormProps {
     project: Project;
@@ -778,7 +782,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                     />
 
                                     <label style={{ ...labelStyle, fontSize: '11px' }}>Imagem ou Vídeo</label>
-                                    {highlight.image && (
+                                    {!!highlight.image && (
                                         <div style={{ marginBottom: '8px' }}>
                                             {isVideoUrl(highlight.image) ? (
                                                 <video
@@ -788,10 +792,13 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                                         height: '150px',
                                                         objectFit: 'cover',
                                                         borderRadius: '8px',
+                                                        background: '#111'
                                                     }}
                                                     muted
                                                     loop
                                                     autoPlay
+                                                    playsInline
+                                                    onError={(e) => console.error(`❌ Video load error for highlight[${index}]:`, (e.target as HTMLVideoElement).error)}
                                                 />
                                             ) : (
                                                 <img src={highlight.image} alt={highlight.title} style={{
@@ -801,6 +808,9 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                                     borderRadius: '8px',
                                                 }} />
                                             )}
+                                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', wordBreak: 'break-all' }}>
+                                                {highlight.image}
+                                            </div>
                                         </div>
                                     )}
                                     <input

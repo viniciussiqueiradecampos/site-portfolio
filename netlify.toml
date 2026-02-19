@@ -17,7 +17,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
-    # Content-Security-Policy removed from headers to use meta tag for better control during debugging
+    Content-Security-Policy = "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://tagmanager.google.com https://www.clarity.ms https://mfjczcgqlgwydlmrutmq.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src * data: blob:; connect-src * wss: wss://mfjczcgqlgwydlmrutmq.supabase.co; media-src * blob: data:; frame-src *; object-src 'none'; base-uri 'self'; form-action 'self';"
 
 # Cache static assets
 [[headers]]
