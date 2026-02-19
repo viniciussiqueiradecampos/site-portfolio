@@ -31,10 +31,10 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 const isVideoUrl = (url: string) => {
     if (!url) return false;
     // Standard extensions or explicitly containing 'video' in the path/query
-    return /\.(mp4|webm|ogg|mov|avi|m4v|quicktime)($|\?)/i.test(url) || url.toLowerCase().includes('video_');
+    return /\.(mp4|webm|ogg|mov|avi|m4v|quicktime)([?#]|$)/i.test(url) || url.toLowerCase().includes('video_');
 };
 
-console.log('🚀 ProjectPage component initialized - Build: 2026-02-19-17-25');
+console.log('🚀 ProjectPage component initialized - Build: 2026-02-19-18-55');
 
 const HighlightItem = ({ section, idx, mutedColor }: { section: any, idx: number, mutedColor: string }) => {
     const [isExpanded, setIsExpanded] = useState(false);

@@ -13,7 +13,14 @@ export const storageAPI = {
         onProgress?: (progress: number) => void
     ): Promise<string | null> {
         try {
-            console.log(`📤 Uploading file: ${file.name} (Type: ${file.type}, Size: ${file.size} bytes) to ${folder}`);
+            // Pre-flight size check — 50MB hard limit on client side
+            const MAX_SIZE_MB = 50;
+            if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+                alert(`❌ Arquivo muito grande: ${(file.size / 1024 / 1024).toFixed(1)}MB.\nO limite máximo é ${MAX_SIZE_MB}MB.`);
+                return null;
+            }
+
+            console.log(`📤 Uploading file: ${file.name} (Type: ${file.type}, Size: ${(file.size / 1024 / 1024).toFixed(2)}MB) to ${folder}`);
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
             const filePath = folder ? `${folder}/${fileName}` : fileName;
@@ -35,10 +42,12 @@ export const storageAPI = {
             if (error) {
                 console.error('❌ Supabase Storage Error:', error);
 
-                // Detailed diagnostic for the user
                 let errorMsg = `STORAGE ERROR: ${error.message}`;
-                if (file.size > 5 * 1024 * 1024) {
-                    errorMsg += "\n\nO arquivo é grande (>5MB). Verifique o limite de tamanho do bucket no Supabase.";
+
+                // Supabase bucket size limit
+                if (error.message?.toLowerCase().includes('size') || error.message?.toLowerCase().includes('exceeded')) {
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+                    errorMsg = `❌ Upload bloqueado pelo Supabase\n\nO arquivo "${file.name}" tem ${sizeMB}MB e excedeu o limite configurado no bucket.\n\nSolução:\n1. Acesse supabase.com → Storage → project-images → Configurações\n2. Aumente o "File size limit" para 50MB ou mais\n3. Clique em Save e tente novamente`;
                 }
 
                 alert(errorMsg);
@@ -57,6 +66,7 @@ export const storageAPI = {
             return null;
         }
     },
+
 
     /**
      * Delete an image from Supabase Storage
