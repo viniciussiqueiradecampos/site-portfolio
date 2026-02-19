@@ -362,10 +362,11 @@ export default function AdminDashboard() {
 
             if (result.error) {
                 console.error('❌ Supabase Save Error:', result.error);
-                alert(`Erro ao salvar no banco (Supabase): ${result.error.message}`);
+                alert(`ERRO SUPABASE (${activeTab}): ${result.error.message}\nCódigo: ${result.error.code}\nDetalhes: ${result.error.details}`);
                 setMessage('❌ Falha ao salvar');
             } else {
-                console.log('✅ Projeto salvo com sucesso!', result.data);
+                console.log('✅ Projeto salvo com sucesso! Data:', result.data);
+                alert('Projeto salvo com sucesso no banco de dados!');
                 await loadProjects();
                 setEditingProject(null);
                 setMessage('✅ Salvo com sucesso!');

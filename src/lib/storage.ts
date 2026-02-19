@@ -34,11 +34,7 @@ export const storageAPI = {
 
             if (error) {
                 console.error('❌ Error uploading image:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    statusCode: (error as any).statusCode,
-                    error: (error as any).error
-                });
+                alert(`ERRO NO STORAGE: ${error.message} - ${error.name}`);
                 return null;
             }
 

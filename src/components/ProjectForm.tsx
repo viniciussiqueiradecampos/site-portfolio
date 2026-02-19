@@ -135,8 +135,13 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
             });
 
             if (url) {
-                const newVideos = [...(project.gallery_videos || []), url];
+                console.log('✅ Video upload success:', url);
+                const currentVideos = project.gallery_videos || [];
+                const newVideos = [...currentVideos, url];
                 onChange({ ...project, gallery_videos: newVideos });
+            } else {
+                console.error('❌ Video upload failed URL is null');
+                alert('Falha no upload do vídeo. Verifique se o arquivo não é muito grande ou se há erro de conexão.');
             }
 
             setIsUploading(false);
