@@ -7,9 +7,13 @@ export const storageAPI = {
      * @param folder - Optional folder path (e.g., 'covers', 'gallery')
      * @returns The public URL of the uploaded image
      */
-    async uploadImage(file: File, folder: string = ''): Promise<string | null> {
+    async uploadImage(
+        file: File,
+        folder: string = '',
+        onProgress?: (progress: number) => void
+    ): Promise<string | null> {
         try {
-            console.log(`📤 Uploading image to folder: ${folder}`, file.name);
+            console.log(`📤 Uploading file to folder: ${folder}`, file.name);
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
             const filePath = folder ? `${folder}/${fileName}` : fileName;
@@ -18,8 +22,15 @@ export const storageAPI = {
                 .from('project-images')
                 .upload(filePath, file, {
                     cacheControl: '3600',
-                    upsert: false
-                });
+                    upsert: false,
+                    // If the supabase version supports it
+                    onUploadProgress: (progress: { loaded: number; total: number }) => {
+                        if (onProgress) {
+                            const percent = (progress.loaded / progress.total) * 100;
+                            onProgress(percent);
+                        }
+                    }
+                } as any);
 
             if (error) {
                 console.error('❌ Error uploading image:', error);

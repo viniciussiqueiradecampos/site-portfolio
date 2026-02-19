@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
 import type { Project, ProjectStep, ProjectHighlight } from '../lib/supabase';
 import { storageAPI } from '../lib/storage';
@@ -26,6 +27,16 @@ const labelStyle = {
     letterSpacing: '1px'
 };
 
+const ProgressBar = ({ progress }: { progress: number }) => (
+    <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', margin: '15px 0', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+        <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            style={{ height: '100%', background: 'linear-gradient(90deg, var(--accent-color), #fff)', boxShadow: '0 0 10px var(--accent-color)' }}
+        />
+    </div>
+);
+
 const isVideoUrl = (url: string) => /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
 
 interface ProjectFormProps {
@@ -40,6 +51,8 @@ interface ProjectFormProps {
 export default function ProjectForm({ project, onChange, onSave, onCancel, allTags, saving }: ProjectFormProps) {
     const [tagInput, setTagInput] = useState('');
     const [activeSection, setActiveSection] = useState<'basic' | 'metadata' | 'steps' | 'gallery' | 'highlights' | 'links'>('basic');
+    const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+    const [isUploading, setIsUploading] = useState(false);
 
     const addTag = (tag?: string) => {
         const value = tag || tagInput.trim();
@@ -59,18 +72,48 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
 
     const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
-            const url = await storageAPI.uploadImage(e.target.files[0], 'projects');
+            const file = e.target.files[0];
+            const fileId = 'cover';
+            setIsUploading(true);
+            setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+
+            const url = await storageAPI.uploadImage(file, 'projects', (p) => {
+                setUploadProgress(prev => ({ ...prev, [fileId]: p }));
+            });
+
             if (url) onChange({ ...project, image_url: url });
+
+            setIsUploading(false);
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[fileId];
+                return next;
+            });
         }
     };
 
     const addGalleryImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
-            const url = await storageAPI.uploadImage(e.target.files[0], 'projects');
+            const file = e.target.files[0];
+            const fileId = `gal_${Date.now()}`;
+            setIsUploading(true);
+            setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+
+            const url = await storageAPI.uploadImage(file, 'projects', (p) => {
+                setUploadProgress(prev => ({ ...prev, [fileId]: p }));
+            });
+
             if (url) {
                 const newGallery = [...(project.gallery_images || []), url];
                 onChange({ ...project, gallery_images: newGallery });
             }
+
+            setIsUploading(false);
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[fileId];
+                return next;
+            });
         }
     };
 
@@ -82,11 +125,26 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
 
     const addGalleryVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
-            const url = await storageAPI.uploadImage(e.target.files[0], 'projects');
+            const file = e.target.files[0];
+            const fileId = `vid_${Date.now()}`;
+            setIsUploading(true);
+            setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+
+            const url = await storageAPI.uploadImage(file, 'projects', (progress) => {
+                setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
+            });
+
             if (url) {
                 const newVideos = [...(project.gallery_videos || []), url];
                 onChange({ ...project, gallery_videos: newVideos });
             }
+
+            setIsUploading(false);
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[fileId];
+                return next;
+            });
         }
     };
 
@@ -147,8 +205,22 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
     const uploadHighlightMedia = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             const file = e.target.files[0];
-            const url = await storageAPI.uploadImage(file, 'projects');
+            const fileId = `highlight_${index}_${Date.now()}`;
+            setIsUploading(true);
+            setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+
+            const url = await storageAPI.uploadImage(file, 'projects', (progress) => {
+                setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
+            });
+
             if (url) updateHighlight(index, 'image', url);
+
+            setIsUploading(false);
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[fileId];
+                return next;
+            });
         }
     };
 
@@ -256,6 +328,12 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 }} />
                             )}
                             <input type="file" accept="image/*" onChange={handleCoverUpload} style={modalInputStyle} />
+                            {uploadProgress['cover'] !== undefined && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-color)' }}>UPLOADING COVER: {Math.round(uploadProgress['cover'])}%</span>
+                                    <ProgressBar progress={uploadProgress['cover']} />
+                                </div>
+                            )}
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                                 <label style={labelStyle}>Título do Projeto *</label>
@@ -541,6 +619,12 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                             {/* Gallery images */}
                             <label style={labelStyle}>Imagens da Galeria</label>
                             <input type="file" accept="image/*" onChange={addGalleryImage} style={modalInputStyle} />
+                            {Object.entries(uploadProgress).filter(([k]) => k.startsWith('gal_')).map(([k, v]) => (
+                                <div key={k} style={{ marginBottom: '20px' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-color)' }}>UPLOADING IMAGE: {Math.round(v)}%</span>
+                                    <ProgressBar progress={v} />
+                                </div>
+                            ))}
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', marginTop: '16px' }}>
                                 {project.gallery_images?.map((img, index) => (
@@ -579,6 +663,12 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                             <div style={{ marginTop: '28px' }}>
                                 <label style={labelStyle}>Vídeos da Galeria (Highlights)</label>
                                 <input type="file" accept="video/*" onChange={addGalleryVideo} style={modalInputStyle} />
+                                {Object.entries(uploadProgress).filter(([k]) => k.startsWith('vid_')).map(([k, v]) => (
+                                    <div key={k} style={{ marginBottom: '20px' }}>
+                                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-color)' }}>UPLOADING VIDEO: {Math.round(v)}%</span>
+                                        <ProgressBar progress={v} />
+                                    </div>
+                                ))}
 
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginTop: '16px' }}>
                                     {project.gallery_videos?.map((vid, index) => (
@@ -714,6 +804,12 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                         onChange={(e) => uploadHighlightMedia(index, e)}
                                         style={modalInputStyle}
                                     />
+                                    {Object.entries(uploadProgress).filter(([k]) => k.startsWith(`highlight_${index}_`)).map(([k, v]) => (
+                                        <div key={k} style={{ marginTop: '10px' }}>
+                                            <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent-color)' }}>UPLOADING MEDIA: {Math.round(v)}%</span>
+                                            <ProgressBar progress={v} />
+                                        </div>
+                                    ))}
                                 </div>
                             ))}
 
@@ -794,17 +890,17 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     }}>
                         Cancelar
                     </button>
-                    <button onClick={onSave} disabled={saving} style={{
+                    <button onClick={onSave} disabled={saving || isUploading} style={{
                         padding: '12px 24px',
                         background: 'var(--accent-color)',
                         border: 'none',
                         borderRadius: '8px',
                         color: 'var(--accent-contrast)',
-                        cursor: saving ? 'not-allowed' : 'pointer',
+                        cursor: (saving || isUploading) ? 'not-allowed' : 'pointer',
                         fontWeight: '700',
-                        opacity: saving ? 0.6 : 1
+                        opacity: (saving || isUploading) ? 0.6 : 1
                     }}>
-                        {saving ? 'Salvando...' : 'Salvar Projeto'}
+                        {saving ? 'Salvando...' : isUploading ? 'Aguarde o Upload...' : 'Salvar Projeto'}
                     </button>
                 </div>
             </div>

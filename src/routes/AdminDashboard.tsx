@@ -324,6 +324,7 @@ export default function AdminDashboard() {
         setSaving(true);
         try {
             const dataToSave: any = {
+                ...editingProject,
                 title: editingProject.title || '',
                 slug: editingProject.slug || undefined,
                 short_description: editingProject.short_description || '',
@@ -341,15 +342,17 @@ export default function AdminDashboard() {
                 gallery_images: editingProject.gallery_images || [],
                 gallery_videos: editingProject.gallery_videos || [],
                 live_url: editingProject.live_url || '',
+                live_url_label: editingProject.live_url_label || '',
                 download_url: editingProject.download_url || '',
-                button_text: editingProject.button_text || '',
+                download_url_label: editingProject.download_url_label || '',
                 year: editingProject.year || '',
                 my_role: editingProject.my_role || '',
                 order_index: editingProject.order_index || 0,
                 visible: editingProject.visible !== false
             };
 
-            const id = editingProject.id;
+            console.log('💾 Tentando salvar projeto:', { id, dataToSave });
+
             let result;
             if (id && id !== '' && id !== 'new') {
                 result = await supabase.from('projects').update(dataToSave).eq('id', id);
@@ -358,13 +361,14 @@ export default function AdminDashboard() {
             }
 
             if (result.error) {
-                console.error('❌ Supabase Error:', result.error);
-                alert(`DB Error: ${result.error.message}`);
-                setMessage('❌ Fail');
+                console.error('❌ Supabase Save Error:', result.error);
+                alert(`Erro ao salvar no banco (Supabase): ${result.error.message}`);
+                setMessage('❌ Falha ao salvar');
             } else {
+                console.log('✅ Projeto salvo com sucesso!', result.data);
                 await loadProjects();
                 setEditingProject(null);
-                setMessage('✅ Saved!');
+                setMessage('✅ Salvo com sucesso!');
             }
         } catch (err: any) {
             alert('Save Error: ' + err.message);
@@ -1005,7 +1009,7 @@ export default function AdminDashboard() {
                                     <h3 style={{ margin: 0 }}>Portfolio Projects</h3>
                                     <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '1px' }}>{projects.length} ITEMS TOTAL</span>
                                 </div>
-                                <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], order_index: projects.length, visible: true, gallery_images: [], gallery_videos: [] } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
+                                <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], order_index: projects.length, visible: true, gallery_images: [], gallery_videos: [], live_url: '', live_url_label: '', download_url: '', download_url_label: '', project_steps: [], highlights: [] } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                 {projects.map((p, idx) => (
