@@ -351,11 +351,14 @@ export default function AdminDashboard() {
             };
 
             const pid = editingProject.id;
-            console.log('💾 Tentando salvar projeto:', { id: pid, data: dataToSave });
+            console.log('💾 [v4.5] SALVANDO PROJETO:', { id: pid, title: editingProject.title });
+            console.log('📽️ Highlights:', JSON.stringify(editingProject.highlights, null, 2));
+            console.log('🎞️ Gallery Videos:', editingProject.gallery_videos);
+            console.log('📦 Objeto Final:', JSON.stringify(dataToSave, null, 2));
 
             let result;
             if (pid && pid !== '' && pid !== 'new') {
-                result = await supabase.from('projects').update(dataToSave).eq('id', pid);
+                result = await supabase.from('projects').update(dataToSave).eq('id', pid).select();
             } else {
                 result = await supabase.from('projects').insert([dataToSave]).select();
             }
@@ -371,8 +374,8 @@ export default function AdminDashboard() {
                 alert(errorMsg);
                 setMessage('❌ Falha ao salvar');
             } else {
-                console.log('✅ Projeto salvo com sucesso! Data:', result.data);
-                alert('Projeto salvo com sucesso no banco de dados!');
+                console.log('✅ Projeto salvo com sucesso! Retorno:', result.data);
+                alert('[v4.5] Projeto salvo com sucesso no banco de dados!');
                 await loadProjects();
                 setEditingProject(null);
                 setMessage('✅ Salvo com sucesso!');

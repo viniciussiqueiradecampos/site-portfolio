@@ -34,7 +34,7 @@ const isVideoUrl = (url: string) => {
     return /\.(mp4|webm|ogg|mov|avi|m4v|quicktime)($|\?)/i.test(url) || url.toLowerCase().includes('video_');
 };
 
-console.log('🚀 ProjectPage component initialized - Build: 2026-02-19-15-55');
+console.log('🚀 ProjectPage component initialized - Build: 2026-02-19-16-45');
 
 const HighlightItem = ({ section, idx, mutedColor }: { section: any, idx: number, mutedColor: string }) => {
     const [isExpanded, setIsExpanded] = useState(false);
