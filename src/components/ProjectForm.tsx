@@ -80,6 +80,22 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
         onChange({ ...project, gallery_images: newGallery });
     };
 
+    const addGalleryVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.[0]) {
+            const url = await storageAPI.uploadImage(e.target.files[0], 'projects');
+            if (url) {
+                const newVideos = [...(project.gallery_videos || []), url];
+                onChange({ ...project, gallery_videos: newVideos });
+            }
+        }
+    };
+
+    const removeGalleryVideo = (index: number) => {
+        const newVideos = [...(project.gallery_videos || [])];
+        newVideos.splice(index, 1);
+        onChange({ ...project, gallery_videos: newVideos });
+    };
+
     const addProjectStep = () => {
         const steps = project.project_steps || [];
         if (steps.length >= 4) {
@@ -522,6 +538,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {/* GALLERY SECTION */}
                     {activeSection === 'gallery' && (
                         <div>
+                            {/* Gallery images */}
                             <label style={labelStyle}>Imagens da Galeria</label>
                             <input type="file" accept="image/*" onChange={addGalleryImage} style={modalInputStyle} />
 
@@ -557,8 +574,56 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Gallery videos */}
+                            <div style={{ marginTop: '28px' }}>
+                                <label style={labelStyle}>Vídeos da Galeria (Highlights)</label>
+                                <input type="file" accept="video/*" onChange={addGalleryVideo} style={modalInputStyle} />
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginTop: '16px' }}>
+                                    {project.gallery_videos?.map((vid, index) => (
+                                        <div key={index} style={{ position: 'relative' }}>
+                                            <video src={vid} muted style={{
+                                                width: '100%',
+                                                height: '120px',
+                                                objectFit: 'cover',
+                                                borderRadius: '8px',
+                                                background: '#000'
+                                            }} />
+                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', wordBreak: 'break-all', padding: '0 2px' }}>
+                                                {vid.split('/').pop()?.split('?')[0]}
+                                            </div>
+                                            <button
+                                                onClick={() => removeGalleryVideo(index)}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '8px',
+                                                    right: '8px',
+                                                    background: 'rgba(0,0,0,0.8)',
+                                                    border: 'none',
+                                                    borderRadius: '50%',
+                                                    width: '28px',
+                                                    height: '28px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: '#fff',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                {(!project.gallery_videos || project.gallery_videos.length === 0) && (
+                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Nenhum vídeo. Faça upload para exibir vídeo nos highlights.</p>
+                                )}
+                            </div>
                         </div>
                     )}
+
+
 
                     {/* HIGHLIGHTS SECTION */}
                     {activeSection === 'highlights' && (
@@ -743,6 +808,6 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

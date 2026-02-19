@@ -339,6 +339,7 @@ export default function AdminDashboard() {
                 project_steps: editingProject.project_steps || [],
                 highlights: editingProject.highlights || [],
                 gallery_images: editingProject.gallery_images || [],
+                gallery_videos: editingProject.gallery_videos || [],
                 live_url: editingProject.live_url || '',
                 download_url: editingProject.download_url || '',
                 button_text: editingProject.button_text || '',

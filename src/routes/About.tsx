@@ -9,7 +9,7 @@ import {
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
-import { aboutAPI, contentAPI, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
+import { aboutAPI, contentAPI, type AboutTestimonial, type AboutMemory, type AboutHobby } from '../lib/supabase';
 import { trackPageView } from '../lib/analytics';
 import { useTranslation } from 'react-i18next';
 import { parseTranslatable } from '../lib/i18n-utils';
@@ -17,12 +17,7 @@ import { parseTranslatable } from '../lib/i18n-utils';
 gsap.registerPlugin(ScrollTrigger);
 
 // Physics Tags Component (Com Matter.js para Simulação Real 2D)
-const PhysicsTags = ({ isMobile }: { isMobile: boolean }) => {
-    const FIXED_TAGS = [
-        "DIGITAL DESIGNER", "UI DESIGNER", "WORDPRESS",
-        "DESIGN SYSTEM", "FIGMA ADVANCED", "BRAZIL",
-        "PORTUGAL"
-    ];
+const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) => {
 
     const sceneRef = useRef<HTMLDivElement>(null);
     const engineRef = useRef(Matter.Engine.create());
@@ -95,7 +90,10 @@ const PhysicsTags = ({ isMobile }: { isMobile: boolean }) => {
         const width = sceneRef.current.getBoundingClientRect().width;
         const items: { body: Matter.Body, type: string, label?: string, icon?: any }[] = [];
 
-        FIXED_TAGS.forEach((tag, i) => {
+        // Use tags from DB, fallback to defaults if empty
+        const activeTags = tags.length > 0 ? tags : ["DIGITAL DESIGNER", "UI DESIGNER", "DESIGN SYSTEM", "FIGMA ADVANCED", "WORDPRESS"];
+
+        activeTags.forEach((tag, i) => {
             // Visual Height: Font 24px + Padding (20px * 2) = 64px ~ 70px safe
             // Mobile: Font 16px + Padding (10px * 2) = 36px ~ 50px safe
             const tagHeight = isMobile ? 50 : 70;
@@ -202,7 +200,7 @@ const PhysicsTags = ({ isMobile }: { isMobile: boolean }) => {
             Matter.World.clear(world, false);
             Matter.Engine.clear(engine);
         };
-    }, [isMobile]);
+    }, [isMobile, tags]);
 
     return (
         <div ref={sceneRef} style={{
@@ -270,6 +268,7 @@ export default function About() {
     const [bioText, setBioText] = useState<string[]>([]);
     const [testimonials, setTestimonials] = useState<AboutTestimonial[]>([]);
     const [memories, setMemories] = useState<AboutMemory[]>([]);
+    const [hobbies, setHobbies] = useState<AboutHobby[]>([]);
     const [spotifyUrl, setSpotifyUrl] = useState("");
     const [testimonialIndex, setTestimonialIndex] = useState(0);
     const [pageVisible, setPageVisible] = useState(true);
@@ -296,7 +295,7 @@ export default function About() {
         const loadData = async () => {
             const lang = i18n.language;
             try {
-                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, pSpotify] = await Promise.all([
+                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, hobbiesData, pSpotify] = await Promise.all([
                     contentAPI.getByKey('about.profile_photo'),
                     contentAPI.getByKey('about.reveal_image'),
                     contentAPI.getByKey('about.name_title'),
@@ -305,6 +304,7 @@ export default function About() {
                     contentAPI.getByKey('about.visible'),
                     aboutAPI.getTestimonials(),
                     aboutAPI.getMemories(),
+                    aboutAPI.getHobbies(),
                     contentAPI.getByKey('about.spotify_embed_url')
                 ]);
 
@@ -321,6 +321,7 @@ export default function About() {
                     quote: parseTranslatable(t.quote, lang)
                 })));
                 setMemories(memoriesData);
+                setHobbies(hobbiesData);
             } catch (e) { console.error(e); } finally { setIsLoading(false); }
         };
         loadData();
@@ -371,7 +372,7 @@ export default function About() {
                     justifyContent: 'center',
                     overflow: 'visible'
                 }}>
-                    <PhysicsTags isMobile={isMobile} />
+                    <PhysicsTags isMobile={isMobile} tags={hobbies.map(h => h.text)} />
                 </div>
 
                 <div style={{
