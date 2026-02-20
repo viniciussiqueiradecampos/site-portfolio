@@ -17,7 +17,7 @@ import {
 } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import {
-    LogOut, Trash2, Settings, LayoutDashboard, FolderKanban, FileText, BarChart3, User, Globe, Download,
+    LogOut, Trash2, Settings, BarChart3, User, Globe, Download,
     Target, Activity, X, Image as ImageIcon, Briefcase, GraduationCap, Award, Star, Heart, Menu, ArrowUp, ArrowDown, BookOpen,
     Lightbulb, Rocket, Coffee, Palette, Music, Camera, Gamepad2, Brain, Zap,
     Terminal, Layout, Cpu, Database, Smartphone, Search, Map, PenTool, MessageCircle, FileCode,
@@ -118,10 +118,7 @@ export default function AdminDashboard() {
 
     // About Page State
     const [aboutProfile, setAboutProfile] = useState({ photo: '', reveal_image: '', title: '', subtitle: '', bio: '', spotify: '', visible: true });
-    const [aboutSteps, setAboutSteps] = useState<AboutStep[]>([]);
-    const [aboutHobbies, setAboutHobbies] = useState<AboutHobby[]>([]);
     const [aboutTestimonials, setAboutTestimonials] = useState<AboutTestimonial[]>([]);
-    const [aboutMemories, setAboutMemories] = useState<AboutMemory[]>([]);
     const [editingStep, setEditingStep] = useState<AboutStep | null>(null);
     const [editingHobby, setEditingHobby] = useState<AboutHobby | null>(null);
     const [editingTestimonial, setEditingTestimonial] = useState<AboutTestimonial | null>(null);
@@ -284,17 +281,11 @@ export default function AdminDashboard() {
             visible: getV('about.visible') === 'true'
         });
 
-        const [steps, hobbies, testimonials, memories] = await Promise.all([
-            aboutAPI.getSteps(),
-            aboutAPI.getHobbies(),
-            aboutAPI.getTestimonials(),
-            aboutAPI.getMemories()
+        const [testimonials] = await Promise.all([
+            aboutAPI.getTestimonials()
         ]);
 
-        setAboutSteps(steps);
-        setAboutHobbies(hobbies);
         setAboutTestimonials(testimonials);
-        setAboutMemories(memories);
     };
 
     const addBlogTag = (tag?: string) => {
@@ -536,15 +527,7 @@ export default function AdminDashboard() {
         setSaving(false); setTimeout(() => setMessage(''), 3000);
     };
 
-    const deleteAboutStep = async (id: string) => {
-        if (!confirm('Delete step?')) return;
-        setSaving(true);
-        if (await aboutAPI.deleteStep(id)) {
-            setMessage('✅ Deleted');
-            loadAbout();
-        }
-        setSaving(false); setTimeout(() => setMessage(''), 3000);
-    };
+
 
     const saveAboutHobby = async (hobby: Partial<AboutHobby>) => {
         setSaving(true);
@@ -557,15 +540,7 @@ export default function AdminDashboard() {
         setSaving(false); setTimeout(() => setMessage(''), 3000);
     };
 
-    const deleteAboutHobby = async (id: string) => {
-        if (!confirm('Delete hobby?')) return;
-        setSaving(true);
-        if (await aboutAPI.deleteHobby(id)) {
-            setMessage('✅ Deleted');
-            loadAbout();
-        }
-        setSaving(false); setTimeout(() => setMessage(''), 3000);
-    };
+
 
     const saveAboutTestimonial = async (test: Partial<AboutTestimonial>) => {
         setSaving(true);
@@ -621,15 +596,7 @@ export default function AdminDashboard() {
         setSaving(false); setTimeout(() => setMessage(''), 3000);
     };
 
-    const deleteAboutMemory = async (id: string) => {
-        if (!confirm('Delete memory?')) return;
-        setSaving(true);
-        if (await aboutAPI.deleteMemory(id)) {
-            setMessage('✅ Deleted');
-            loadAbout();
-        }
-        setSaving(false); setTimeout(() => setMessage(''), 3000);
-    };
+
 
     const handleAboutImageUpload = async (file: File, type: 'profile' | 'memory' | 'testimonial') => {
         const url = await storageAPI.uploadImage(file, 'about');
@@ -1023,7 +990,7 @@ export default function AdminDashboard() {
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '10px' }}>
                                                     <button onClick={() => setEditingCV(s)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
-                                                    <button onClick={() => { if (confirm('Delete?')) cvAPI.delete(s.id).then(loadCV) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                    <button onClick={() => { if (confirm('Delete?')) cvAPI.delete(s.id).then(() => loadCV()) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                 </div>
                                             </div>
                                         ))}
@@ -1062,7 +1029,7 @@ export default function AdminDashboard() {
                                                     <span style={{ fontSize: '14px', fontWeight: '600' }}>{p.title}</span>
                                                     <div style={{ display: 'flex', gap: '8px' }}>
                                                         <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
-                                                        <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                        <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(() => loadProjects()) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1093,7 +1060,7 @@ export default function AdminDashboard() {
                                                         <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-muted)' }}>{p.title}</span>
                                                         <div style={{ display: 'flex', gap: '8px' }}>
                                                             <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
-                                                            <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                            <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(() => loadProjects()) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                         </div>
                                                     </div>
                                                 </div>
