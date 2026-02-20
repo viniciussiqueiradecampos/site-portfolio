@@ -271,23 +271,25 @@ export default function About() {
         const loadData = async () => {
             const lang = i18n.language;
             try {
-                const [, , pTitle, pSub, pBio, pVisible, testimonialsData, memoriesData, pSpotify] = await Promise.all([
-                    contentAPI.getByKey('about.profile_photo'),
-                    contentAPI.getByKey('about.reveal_image'),
-                    contentAPI.getByKey('about.name_title'),
-                    contentAPI.getByKey('about.subtitle'),
-                    contentAPI.getByKey('about.bio_text'),
-                    contentAPI.getByKey('about.visible'),
+                const [allContent, testimonialsData, memoriesData] = await Promise.all([
+                    contentAPI.getAll(),
                     aboutAPI.getTestimonials(),
-                    aboutAPI.getMemories(),
-                    contentAPI.getByKey('about.spotify_embed_url')
+                    aboutAPI.getMemories()
                 ]);
 
-                if (pTitle) setNameTitle(parseTranslatable(pTitle.value, lang));
-                if (pSub) setSubtitle(parseTranslatable(pSub.value, lang));
-                if (pBio) setBioText([parseTranslatable(pBio.value, lang)]);
-                if (pVisible) setPageVisible(pVisible.value === 'true');
-                if (pSpotify) setSpotifyUrl(pSpotify.value);
+                const getV = (key: string) => allContent.find(c => c.key === key)?.value;
+
+                const pTitle = getV('about.name_title');
+                const pSub = getV('about.subtitle');
+                const pBio = getV('about.bio_text');
+                const pVisible = getV('about.visible');
+                const pSpotify = getV('about.spotify_embed_url');
+
+                if (pTitle) setNameTitle(parseTranslatable(pTitle, lang));
+                if (pSub) setSubtitle(parseTranslatable(pSub, lang));
+                if (pBio) setBioText([parseTranslatable(pBio, lang)]);
+                if (pVisible) setPageVisible(pVisible === 'true');
+                if (pSpotify) setSpotifyUrl(pSpotify);
 
                 setTestimonials(testimonialsData.map(t => ({
                     ...t,
@@ -626,13 +628,13 @@ export default function About() {
                 <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5%', position: 'relative', zIndex: 10 }}>
                     <div style={{ textAlign: 'center', marginBottom: '100px' }}>
                         <h2 style={{
-                            fontSize: 'clamp(40px, 8vw, 100px)',
+                            fontSize: isMobile ? 'clamp(32px, 10vw, 48px)' : 'clamp(40px, 8vw, 100px)',
                             fontWeight: 900,
-                            letterSpacing: '-4px',
+                            letterSpacing: isMobile ? '-1px' : '-4px',
                             textTransform: 'uppercase',
                             fontFamily: 'var(--font-display)',
                             margin: 0,
-                            lineHeight: 0.9,
+                            lineHeight: 1.1,
                             color: 'var(--text-color)'
                         }}>
                             {t('about.inspiration_title', 'Current Inspiration')}

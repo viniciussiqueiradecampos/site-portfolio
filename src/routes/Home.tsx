@@ -69,7 +69,7 @@ export default function Home() {
     useEffect(() => {
         trackPageView('/');
         loadData();
-        document.title = "Vinicius Campos | Product Designer & Web Developer";
+        document.title = "Vinicius Campos | Graphic and Digital Designer Senior";
     }, [i18n.language]);
 
     // Handle hash scroll after projects (layout) are loaded
