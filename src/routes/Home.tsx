@@ -87,28 +87,33 @@ export default function Home() {
 
     const loadData = async () => {
         const lang = i18n.language;
-        // Load Content
-        const tTitle = await contentAPI.getByKey('hero.title');
-        if (tTitle) setHeroTitle(parseTranslatable(tTitle.value, lang));
 
-        const tDesc = await contentAPI.getByKey('hero.description');
-        if (tDesc) setHeroDesc(parseTranslatable(tDesc.value, lang));
+        // Fetch all projects and content in parallel
+        const [allContent, projs] = await Promise.all([
+            contentAPI.getAll(),
+            projectsAPI.getAll()
+        ]);
 
-        const tStory = await contentAPI.getByKey('storytelling.main');
-        if (tStory) setStoryText(parseTranslatable(tStory.value, lang));
+        // Helper to find value by key in the fetched content array
+        const getV = (key: string) => allContent.find(c => c.key === key)?.value;
 
-        const tPitchDesc = await contentAPI.getByKey('storytelling.description');
-        const tPitchBtnText = await contentAPI.getByKey('storytelling.button_text');
-        const tPitchBtnLink = await contentAPI.getByKey('storytelling.button_link');
+        // Apply content
+        const title = getV('hero.title');
+        if (title) setHeroTitle(parseTranslatable(title, lang));
+
+        const desc = getV('hero.description');
+        if (desc) setHeroDesc(parseTranslatable(desc, lang));
+
+        const story = getV('storytelling.main');
+        if (story) setStoryText(parseTranslatable(story, lang));
 
         setPitchData({
-            description: parseTranslatable(tPitchDesc?.value || '', lang),
-            btnText: parseTranslatable(tPitchBtnText?.value || "LET'S WORK TOGETHER", lang),
-            btnLink: tPitchBtnLink?.value || "#contact"
+            description: parseTranslatable(getV('storytelling.description') || '', lang),
+            btnText: parseTranslatable(getV('storytelling.button_text') || "LET'S WORK TOGETHER", lang),
+            btnLink: getV('storytelling.button_link') || "#contact"
         });
 
-        // Load Projects - Limited to 5 for Home
-        const projs = await projectsAPI.getAll();
+        // Load Projects - Limited to Home display
         setProjects(projs.slice(0, 8).map(p => ({
             ...p,
             title: parseTranslatable(p.title, lang),
@@ -118,19 +123,15 @@ export default function Home() {
         })));
 
         // Load Socials & Footer
-        const ln = await contentAPI.getByKey('social.linkedin');
-        const ig = await contentAPI.getByKey('social.instagram');
-        const em = await contentAPI.getByKey('social.footer_email');
-        const ph = await contentAPI.getByKey('social.phone');
-        const ft = await contentAPI.getByKey('general.footer_text');
-
         setSocials({
-            linkedin: ln?.value || '#',
-            instagram: ig?.value || '#',
-            footerEmail: em?.value || 'vinisiqueiradecampos@gmail.com',
-            phone: ph?.value || '+351 920 196 634'
+            linkedin: getV('social.linkedin') || '#',
+            instagram: getV('social.instagram') || '#',
+            footerEmail: getV('social.footer_email') || 'vinisiqueiradecampos@gmail.com',
+            phone: getV('social.phone') || '+351 920 196 634'
         });
-        if (ft) setFooterText(parseTranslatable(ft.value, lang));
+
+        const ft = getV('general.footer_text');
+        if (ft) setFooterText(parseTranslatable(ft, lang));
     };
 
     // Hero Section Scroll Progress

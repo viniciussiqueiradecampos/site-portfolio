@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Search as SearchIcon } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import type { Project, ProjectStep, ProjectHighlight } from '../lib/supabase';
 import { storageAPI } from '../lib/storage';
 
@@ -57,6 +58,24 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
     const [activeSection, setActiveSection] = useState<'basic' | 'metadata' | 'steps' | 'gallery' | 'highlights' | 'links'>('basic');
     const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
     const [isUploading, setIsUploading] = useState(false);
+    const [iconPickerTarget, setIconPickerTarget] = useState<'live' | 'download' | null>(null);
+    const [iconSearch, setIconSearch] = useState('');
+
+    const COMMON_ICONS = [
+        'ExternalLink', 'Globe', 'Link', 'ArrowUpRight', 'Play', 'Download',
+        'FileText', 'Figma', 'Github', 'Dribbble', 'Linkedin', 'Instagram',
+        'Youtube', 'Twitter', 'Chrome', 'Monitor', 'Smartphone', 'Tablet',
+        'Star', 'Heart', 'Bookmark', 'Eye', 'Share2', 'Send', 'Mail',
+        'Rocket', 'Zap', 'Target', 'Award', 'Trophy', 'Coffee', 'Code',
+        'Layers', 'Package', 'Box', 'Archive', 'Folder', 'File', 'Image',
+        'Video', 'Music', 'Mic', 'Camera', 'Cpu', 'Database', 'Server',
+        'ShoppingCart', 'ShoppingBag', 'Tag', 'Ticket', 'CreditCard',
+        'Map', 'MapPin', 'Navigation', 'Compass', 'Globe2', 'Wifi',
+    ];
+
+    const filteredIcons = COMMON_ICONS.filter(name =>
+        name.toLowerCase().includes(iconSearch.toLowerCase())
+    );
 
     const addTag = (tag?: string) => {
         const value = tag || tagInput.trim();
@@ -234,11 +253,11 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
     };
 
     const sections = [
-        { id: 'basic', label: 'Básico' },
-        { id: 'metadata', label: 'Metadados' },
-        { id: 'steps', label: 'Etapas' },
-        { id: 'gallery', label: 'Galeria' },
-        { id: 'highlights', label: 'Destaques' },
+        { id: 'basic', label: 'Basic' },
+        { id: 'metadata', label: 'Metadata' },
+        { id: 'steps', label: 'Explanation' },
+        { id: 'gallery', label: 'Gallery' },
+        { id: 'highlights', label: 'Results' },
         { id: 'links', label: 'Links' }
     ];
 
@@ -273,7 +292,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     alignItems: 'center'
                 }}>
                     <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800' }}>
-                        {project.id === 'new' ? 'Novo Projeto' : 'Editar Projeto'}
+                        {project.id === 'new' ? 'New Project' : 'Edit Project'}
                     </h2>
                     <button onClick={onCancel} style={{
                         background: 'transparent',
@@ -326,7 +345,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {/* BASIC SECTION */}
                     {activeSection === 'basic' && (
                         <div>
-                            <label style={labelStyle}>Foto de Capa *</label>
+                            <label style={labelStyle}>Cover Photo *</label>
                             {project.image_url && (
                                 <img src={project.image_url} alt="Cover" style={{
                                     width: '100%',
@@ -345,7 +364,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                             )}
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                <label style={labelStyle}>Título do Projeto *</label>
+                                <label style={labelStyle}>Project Title *</label>
                                 <span style={{ fontSize: '11px', color: (project.title?.length || 0) > 60 ? 'red' : 'var(--text-muted)' }}>
                                     {(project.title?.length || 0)}/60
                                 </span>
@@ -357,30 +376,30 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                         onChange({ ...project, title: e.target.value });
                                     }
                                 }}
-                                placeholder="Nome do projeto"
+                                placeholder="Project Name"
                                 style={modalInputStyle}
                                 maxLength={60}
                             />
 
-                            <label style={labelStyle}>Slug (URL amigável)</label>
+                            <label style={labelStyle}>Slug (Friendly URL)</label>
                             <input
                                 value={project.slug || ''}
                                 onChange={(e) => onChange({ ...project, slug: e.target.value })}
-                                placeholder="projeto-exemplo (deixe vazio para gerar automaticamente)"
+                                placeholder="example-project (leave empty for automatic generation)"
                                 style={modalInputStyle}
                             />
 
-                            <label style={labelStyle}>Descrição Curta (Home)</label>
+                            <label style={labelStyle}>Short Description (Home)</label>
                             <textarea
                                 value={project.short_description || ''}
                                 onChange={(e) => onChange({ ...project, short_description: e.target.value })}
-                                placeholder="Texto curto para exibir na home"
+                                placeholder="Short text for Home display"
                                 rows={2}
                                 style={modalInputStyle}
                             />
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                <label style={labelStyle}>Olho / Resumo (Home & Portfolio)</label>
+                                <label style={labelStyle}>Eye-catcher / Summary (Home & Portfolio)</label>
                                 <span style={{ fontSize: '11px', color: (project.summary?.length || 0) > 120 ? 'red' : 'var(--text-muted)' }}>
                                     {(project.summary?.length || 0)}/120
                                 </span>
@@ -392,17 +411,17 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                         onChange({ ...project, summary: e.target.value });
                                     }
                                 }}
-                                placeholder="Texto de destaque que aparece abaixo do título (máx. 2 linhas)"
+                                placeholder="Highlight text appearing below the title (max 2 lines)"
                                 rows={2}
                                 style={modalInputStyle}
                                 maxLength={120}
                             />
 
-                            <label style={labelStyle}>Descrição Completa (Página do Projeto)</label>
+                            <label style={labelStyle}>Full Description (Project Page)</label>
                             <textarea
                                 value={project.description || ''}
                                 onChange={(e) => onChange({ ...project, description: e.target.value })}
-                                placeholder="Descrição detalhada do projeto"
+                                placeholder="Detailed project description"
                                 rows={5}
                                 style={modalInputStyle}
                             />
@@ -431,7 +450,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                     value={tagInput}
                                     onChange={(e) => setTagInput(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && addTag()}
-                                    placeholder="Nova tag"
+                                    placeholder="New tag"
                                     style={{ ...modalInputStyle, marginBottom: 0 }}
                                 />
                                 <button onClick={() => addTag()} style={{
@@ -448,7 +467,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                             </div>
                             {allTags.length > 0 && (
                                 <div style={{ marginTop: '12px' }}>
-                                    <small style={{ color: 'var(--text-muted)' }}>Tags existentes:</small>
+                                    <small style={{ color: 'var(--text-muted)' }}>Existing tags:</small>
                                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
                                         {allTags.map(tag => (
                                             <button
@@ -476,7 +495,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {/* METADATA SECTION */}
                     {activeSection === 'metadata' && (
                         <div>
-                            <label style={labelStyle}>Nome do Cliente</label>
+                            <label style={labelStyle}>Client Name</label>
                             <input
                                 value={project.client_name || ''}
                                 onChange={(e) => onChange({ ...project, client_name: e.target.value })}
@@ -484,7 +503,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 style={modalInputStyle}
                             />
 
-                            <label style={labelStyle}>Subtítulo do Cliente</label>
+                            <label style={labelStyle}>Client Subtitle</label>
                             <input
                                 value={project.client_subtitle || ''}
                                 onChange={(e) => onChange({ ...project, client_subtitle: e.target.value })}
@@ -492,15 +511,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 style={modalInputStyle}
                             />
 
-                            <label style={labelStyle}>Título da Página (Value Proposition)</label>
-                            <input
-                                value={project.page_title || ''}
-                                onChange={(e) => onChange({ ...project, page_title: e.target.value })}
-                                placeholder="Aumentando a percepção de valor através do novo design"
-                                style={modalInputStyle}
-                            />
-
-                            <label style={labelStyle}>Local</label>
+                            <label style={labelStyle}>Location</label>
                             <input
                                 value={project.location || ''}
                                 onChange={(e) => onChange({ ...project, location: e.target.value })}
@@ -508,7 +519,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 style={modalInputStyle}
                             />
 
-                            <label style={labelStyle}>Duração</label>
+                            <label style={labelStyle}>Duration</label>
                             <input
                                 value={project.duration || ''}
                                 onChange={(e) => onChange({ ...project, duration: e.target.value })}
@@ -516,7 +527,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 style={modalInputStyle}
                             />
 
-                            <label style={labelStyle}>Ano</label>
+                            <label style={labelStyle}>Year</label>
                             <input
                                 value={project.year || ''}
                                 onChange={(e) => onChange({ ...project, year: e.target.value })}
@@ -538,7 +549,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {activeSection === 'steps' && (
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                <label style={{ ...labelStyle, marginBottom: 0 }}>Etapas do Projeto (Máx. 4)</label>
+                                <label style={{ ...labelStyle, marginBottom: 0 }}>Project Steps (Max 4)</label>
                                 <button
                                     onClick={addProjectStep}
                                     disabled={(project.project_steps?.length || 0) >= 4}
@@ -555,7 +566,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                     }}
                                 >
                                     <Plus size={14} style={{ marginRight: '4px', display: 'inline' }} />
-                                    Adicionar Etapa
+                                    Add Step
                                 </button>
                             </div>
 
@@ -568,7 +579,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                     border: '1px solid var(--border-color)'
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                        <strong>Etapa {index + 1}</strong>
+                                        <strong>Step {index + 1}</strong>
                                         <button onClick={() => removeProjectStep(index)} style={{
                                             background: 'transparent',
                                             border: 'none',
@@ -579,7 +590,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                         </button>
                                     </div>
 
-                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Número</label>
+                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Number</label>
                                     <input
                                         value={step.number}
                                         onChange={(e) => updateProjectStep(index, 'number', e.target.value)}
@@ -587,24 +598,23 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                         style={{ ...modalInputStyle, marginBottom: '8px' }}
                                     />
 
-                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Nome</label>
+                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Name</label>
                                     <input
                                         value={step.name}
                                         onChange={(e) => updateProjectStep(index, 'name', e.target.value)}
-                                        placeholder="DESCOBERTA"
+                                        placeholder="DISCOVERY"
                                         style={{ ...modalInputStyle, marginBottom: '8px' }}
                                     />
 
-                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Descrição</label>
+                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Description</label>
                                     <textarea
                                         value={step.description}
                                         onChange={(e) => updateProjectStep(index, 'description', e.target.value)}
-                                        placeholder="Definição do escopo, objetivos e entendimento do problema."
+                                        placeholder="Definition of scope, goals and problem understanding."
                                         rows={3}
                                         style={{ ...modalInputStyle, marginBottom: '8px' }}
                                     />
 
-                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Tags (separadas por /)</label>
                                     <input
                                         value={step.tags}
                                         onChange={(e) => updateProjectStep(index, 'tags', e.target.value)}
@@ -616,7 +626,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
 
                             {(!project.project_steps || project.project_steps.length === 0) && (
                                 <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>
-                                    Nenhuma etapa adicionada. Clique em "Adicionar Etapa" para começar.
+                                    No steps added. Click "Add Step" to start.
                                 </p>
                             )}
                         </div>
@@ -625,13 +635,13 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {/* GALLERY SECTION */}
                     {activeSection === 'gallery' && (
                         <div>
-                            <label style={labelStyle}>Imagens da Galeria (Upload ou Link)</label>
+                            <label style={labelStyle}>Gallery Images (Upload or Link)</label>
 
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                                 <input
                                     type="text"
                                     id="manual-gallery-image"
-                                    placeholder="URL ou path local (Ex: /img/minha_imagem.jpg)"
+                                    placeholder="URL or local path (Ex: /img/my_image.jpg)"
                                     style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
                                     onKeyPress={(e) => {
                                         if (e.key === 'Enter') {
@@ -707,13 +717,13 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                 ))}
                             </div>
 
-                            <label style={labelStyle}>Vídeos da Galeria (Upload ou Link)</label>
+                            <label style={labelStyle}>Gallery Videos (Upload or Link)</label>
 
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                                 <input
                                     type="text"
                                     id="manual-gallery-video"
-                                    placeholder="URL ou path local (Ex: /videos/meu-video.mp4)"
+                                    placeholder="URL or local path (Ex: /videos/my-video.mp4)"
                                     style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
                                     onKeyPress={(e) => {
                                         if (e.key === 'Enter') {
@@ -816,7 +826,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {activeSection === 'highlights' && (
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                <label style={{ ...labelStyle, marginBottom: 0 }}>Seções Highlight (70/30)</label>
+                                <label style={{ ...labelStyle, marginBottom: 0 }}>Project Results (70/30)</label>
                                 <button onClick={addHighlight} style={{
                                     padding: '8px 16px',
                                     background: 'var(--accent-color)',
@@ -828,7 +838,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                     fontSize: '12px'
                                 }}>
                                     <Plus size={14} style={{ marginRight: '4px', display: 'inline' }} />
-                                    Adicionar Highlight
+                                    Add Result
                                 </button>
                             </div>
 
@@ -841,7 +851,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                     border: '1px solid var(--border-color)'
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                        <strong>Highlight {index + 1} {index % 2 === 0 ? '(Imagem à esquerda)' : '(Imagem à direita)'}</strong>
+                                        <strong>Result {index + 1} {index % 2 === 0 ? '(Image on left)' : '(Image on right)'}</strong>
                                         <button onClick={() => removeHighlight(index)} style={{
                                             background: 'transparent',
                                             border: 'none',
@@ -852,24 +862,24 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                         </button>
                                     </div>
 
-                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Título</label>
+                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Title</label>
                                     <input
                                         value={highlight.title}
                                         onChange={(e) => updateHighlight(index, 'title', e.target.value)}
-                                        placeholder="Navegação Intuitiva"
+                                        placeholder="Intuitive Navigation"
                                         style={{ ...modalInputStyle, marginBottom: '8px' }}
                                     />
 
-                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Texto</label>
+                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Text</label>
                                     <textarea
                                         value={highlight.text}
                                         onChange={(e) => updateHighlight(index, 'text', e.target.value)}
-                                        placeholder="Implementamos um sistema de filtros avançado..."
+                                        placeholder="We implemented an advanced filtering system..."
                                         rows={4}
                                         style={{ ...modalInputStyle, marginBottom: '8px' }}
                                     />
 
-                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Imagem ou Vídeo</label>
+                                    <label style={{ ...labelStyle, fontSize: '11px' }}>Image or Video</label>
                                     {!!highlight.image && (
                                         <div style={{ marginBottom: '8px' }}>
                                             {isVideoUrl(highlight.image) ? (
@@ -915,7 +925,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                             type="text"
                                             value={highlight.image}
                                             onChange={(e) => updateHighlight(index, 'image', e.target.value)}
-                                            placeholder="URL direta ou arquivo (Ex: /videos/file.mp4)"
+                                            placeholder="Direct URL or file (Ex: /videos/file.mp4)"
                                             style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
                                         />
                                     </div>
@@ -937,7 +947,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
 
                             {(!project.highlights || project.highlights.length === 0) && (
                                 <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>
-                                    Nenhum highlight adicionado. Clique em "Adicionar Highlight" para começar.
+                                    No results added. Click "Add Result" to start.
                                 </p>
                             )}
                         </div>
@@ -946,35 +956,140 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                     {/* LINKS SECTION */}
                     {activeSection === 'links' && (
                         <div>
-                            <label style={labelStyle}>Link do Site (Live URL)</label>
-                            <input
-                                value={project.live_url || ''}
-                                onChange={(e) => onChange({ ...project, live_url: e.target.value })}
-                                placeholder="https://exemplo.com"
-                                style={modalInputStyle}
-                            />
+                            {/* Icon Picker Modal */}
+                            {iconPickerTarget && (
+                                <div style={{
+                                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+                                    zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+                                }} onClick={() => setIconPickerTarget(null)}>
+                                    <div style={{
+                                        background: 'var(--surface-color)', borderRadius: '16px', padding: '24px',
+                                        maxWidth: '560px', width: '100%', maxHeight: '70vh', overflow: 'hidden',
+                                        display: 'flex', flexDirection: 'column'
+                                    }} onClick={e => e.stopPropagation()}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '800' }}>Select Icon (Lucide)</h4>
+                                            <button onClick={() => setIconPickerTarget(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', background: 'var(--bg-color)', borderRadius: '8px', padding: '8px 12px', border: '1px solid var(--border-color)' }}>
+                                            <SearchIcon size={16} color="var(--text-muted)" />
+                                            <input
+                                                autoFocus
+                                                value={iconSearch}
+                                                onChange={e => setIconSearch(e.target.value)}
+                                                placeholder="Search icon... (ex: globe, link, play)"
+                                                style={{ border: 'none', background: 'transparent', flex: 1, fontSize: '14px', color: 'var(--text-color)', outline: 'none' }}
+                                            />
+                                        </div>
+                                        <div style={{ overflow: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '8px' }}>
+                                            {filteredIcons.map(iconName => {
+                                                const IconComp = (LucideIcons as any)[iconName];
+                                                if (!IconComp) return null;
+                                                const currentVal = iconPickerTarget === 'live'
+                                                    ? (project as any).live_url_icon
+                                                    : (project as any).download_url_icon;
+                                                const isSelected = currentVal === iconName;
+                                                return (
+                                                    <button
+                                                        key={iconName}
+                                                        onClick={() => {
+                                                            if (iconPickerTarget === 'live') {
+                                                                onChange({ ...project, live_url_icon: iconName } as any);
+                                                            } else {
+                                                                onChange({ ...project, download_url_icon: iconName } as any);
+                                                            }
+                                                            setIconPickerTarget(null);
+                                                            setIconSearch('');
+                                                        }}
+                                                        style={{
+                                                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                                                            padding: '10px 6px', border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                                                            borderRadius: '10px', background: isSelected ? 'var(--accent-color)' : 'var(--bg-color)',
+                                                            color: isSelected ? '#fff' : 'var(--text-color)', cursor: 'pointer', fontSize: '10px',
+                                                            fontWeight: '600', textAlign: 'center', transition: 'all 0.15s'
+                                                        }}
+                                                    >
+                                                        <IconComp size={20} />
+                                                        <span style={{ wordBreak: 'break-all', lineHeight: 1.2 }}>{iconName}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
-                            <label style={labelStyle}>Rótulo do Botão Site (Ex: Ver Site ao Vivo)</label>
+                            <label style={labelStyle}>Live Site Link (Live URL)</label>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                                <input
+                                    value={project.live_url || ''}
+                                    onChange={(e) => onChange({ ...project, live_url: e.target.value })}
+                                    placeholder="https://example.com"
+                                    style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
+                                />
+                                <button
+                                    onClick={() => { setIconPickerTarget('live'); setIconSearch(''); }}
+                                    title="Select icon"
+                                    style={{
+                                        padding: '0 14px', background: 'var(--bg-color)', border: '1px solid var(--border-color)',
+                                        borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                                        color: 'var(--text-color)', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {(project as any).live_url_icon && (() => {
+                                        const IC = (LucideIcons as any)[(project as any).live_url_icon];
+                                        return IC ? <IC size={16} /> : null;
+                                    })()}
+                                    {!(project as any).live_url_icon && <LucideIcons.Smile size={16} />}
+                                    Icon
+                                </button>
+                            </div>
+                            <div style={{ marginBottom: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Icon selected: <strong>{(project as any).live_url_icon || 'none'}</strong>
+                            </div>
+
+                            <label style={labelStyle}>Live Site Button Label (Ex: Visit Live Site)</label>
                             <input
                                 value={project.live_url_label || ''}
                                 onChange={(e) => onChange({ ...project, live_url_label: e.target.value })}
-                                placeholder="Ver Site ao Vivo"
+                                placeholder="Visit Live Site"
                                 style={modalInputStyle}
                             />
 
-                            <label style={labelStyle}>Link para Download (Case Study)</label>
-                            <input
-                                value={project.download_url || ''}
-                                onChange={(e) => onChange({ ...project, download_url: e.target.value })}
-                                placeholder="https://exemplo.com/case-study.pdf"
-                                style={modalInputStyle}
-                            />
+                            <label style={labelStyle}>Download Link (Case Study)</label>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                                <input
+                                    value={project.download_url || ''}
+                                    onChange={(e) => onChange({ ...project, download_url: e.target.value })}
+                                    placeholder="https://example.com/case-study.pdf"
+                                    style={{ ...modalInputStyle, marginBottom: 0, flex: 1 }}
+                                />
+                                <button
+                                    onClick={() => { setIconPickerTarget('download'); setIconSearch(''); }}
+                                    title="Select icon"
+                                    style={{
+                                        padding: '0 14px', background: 'var(--bg-color)', border: '1px solid var(--border-color)',
+                                        borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                                        color: 'var(--text-color)', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {(project as any).download_url_icon && (() => {
+                                        const IC = (LucideIcons as any)[(project as any).download_url_icon];
+                                        return IC ? <IC size={16} /> : null;
+                                    })()}
+                                    {!(project as any).download_url_icon && <LucideIcons.Smile size={16} />}
+                                    Icon
+                                </button>
+                            </div>
+                            <div style={{ marginBottom: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Icon selected: <strong>{(project as any).download_url_icon || 'none'}</strong>
+                            </div>
 
-                            <label style={labelStyle}>Rótulo do Botão Download (Ex: Baixar PDF)</label>
+                            <label style={labelStyle}>Download Button Label (Ex: Download PDF)</label>
                             <input
                                 value={project.download_url_label || ''}
                                 onChange={(e) => onChange({ ...project, download_url_label: e.target.value })}
-                                placeholder="Baixar Case Study"
+                                placeholder="Download Case Study"
                                 style={modalInputStyle}
                             />
 
@@ -986,7 +1101,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                                         onChange={(e) => onChange({ ...project, visible: e.target.checked })}
                                         style={{ marginRight: '10px' }}
                                     />
-                                    <strong>Projeto Visível no Portfolio</strong>
+                                    <strong>Project Visible in Portfolio</strong>
                                 </label>
                             </div>
                         </div>
@@ -1010,7 +1125,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                         cursor: 'pointer',
                         fontWeight: '700'
                     }}>
-                        Cancelar
+                        Cancel
                     </button>
                     <button onClick={onSave} disabled={saving || isUploading} style={{
                         padding: '12px 24px',
@@ -1022,7 +1137,7 @@ export default function ProjectForm({ project, onChange, onSave, onCancel, allTa
                         fontWeight: '700',
                         opacity: (saving || isUploading) ? 0.6 : 1
                     }}>
-                        {saving ? 'Salvando...' : isUploading ? 'Aguarde o Upload...' : 'Salvar Projeto'}
+                        {saving ? 'Saving...' : isUploading ? 'Wait for Upload...' : 'Save Project'}
                     </button>
                 </div>
             </div>

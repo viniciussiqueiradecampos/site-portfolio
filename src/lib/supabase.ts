@@ -256,6 +256,18 @@ export const contentAPI = {
         return data || [];
     },
 
+    async getAll(): Promise<Content[]> {
+        const { data, error } = await supabase
+            .from('content')
+            .select('*');
+
+        if (error) {
+            console.error('Error fetching all content:', error);
+            return [];
+        }
+        return data || [];
+    },
+
     async update(key: string, value: string, category: string = 'general'): Promise<{ ok: boolean, msg?: string }> {
         const { error } = await supabase
             .from('content')
@@ -745,52 +757,53 @@ export const analyticsAPI = {
     },
 
     async getStats(days?: number): Promise<any> {
-        // Base filters
-        const getBaseQuery = () => {
-            let q = supabase.from('analytics_logs').select('*', { count: 'exact' });
+        // Base filter helper
+        const applyDateFilter = (query: any) => {
             if (days && days > 0) {
                 const cutoff = new Date();
-                cutoff.setDate(cutoff.getDate() - days);
-                q = q.gte('created_at', cutoff.toISOString());
+                cutoff.setDate(cutoff.getDate() - (days - 1));
+                cutoff.setHours(0, 0, 0, 0);
+                return query.gte('created_at', cutoff.toISOString());
             }
-            return q;
+            return query;
         };
 
-        // 1. Get data for charts (limited to 5000)
-        const { data: logs, error } = await getBaseQuery()
+        // 1. Get accurate counts for the main metrics using head:true (fast)
+        const [viewsCount, downloadsCount, clicksCount] = await Promise.all([
+            applyDateFilter(supabase.from('analytics_logs').select('*', { count: 'exact', head: true }).eq('event_type', 'page_view')),
+            applyDateFilter(supabase.from('analytics_logs').select('*', { count: 'exact', head: true }).eq('event_type', 'cv_download')),
+            applyDateFilter(supabase.from('analytics_logs').select('*', { count: 'exact', head: true }).eq('event_type', 'project_click'))
+        ]);
+
+        // 2. Get data for charts (higher limit for more comprehensive charts)
+        const limitCount = days ? 5000 : 10000;
+        const { data: logs, error } = await applyDateFilter(supabase.from('analytics_logs').select('*'))
             .order('created_at', { ascending: false })
-            .limit(5000);
+            .limit(limitCount);
 
         if (error) {
-            console.error('Error fetching analytics stats:', error);
-            return { pageViews: 0, cvDownloads: 0, projectClicks: 0, sources: [], pages: [], history: [] };
+            console.error('Error fetching analytics logs:', error);
+            return {
+                pageViews: viewsCount.count || 0,
+                cvDownloads: downloadsCount.count || 0,
+                projectClicks: clicksCount.count || 0,
+                sources: [], pages: [], history: []
+            };
         }
 
-        // 2. We need specific counts for each type. 
-        // If logs.length < totalLogsCount, some data might be truncated in the chart, but we want accurate totals.
-        // For efficiency, if logs.length covers all data (count <= 5000), we use local filtering.
-        // Otherwise, we'd need separate count queries, but for now let's use what we have and increase the limit.
-
-        const views = logs?.filter(l => l.event_type === 'page_view') || [];
-        const downloads = logs?.filter(l => l.event_type === 'cv_download') || [];
-        const clicks = logs?.filter(l => l.event_type === 'project_click') || [];
+        // 3. Process the logs for charts
+        const views = logs?.filter((l: AnalyticsLog) => l.event_type === 'page_view') || [];
 
         // Page breakdown
         const pageCounts: Record<string, number> = {};
-        views.forEach(v => {
+        views.forEach((v: AnalyticsLog) => {
             const p = v.page_path || '/';
             pageCounts[p] = (pageCounts[p] || 0) + 1;
         });
 
-        // History by day
-        const dayCounts: Record<string, number> = {};
-        views.forEach(v => {
-            const date = new Date(v.created_at).toISOString().split('T')[0];
-            dayCounts[date] = (dayCounts[date] || 0) + 1;
-        });
-
+        // Source breakdown
         const parseHostname = (urlStr?: string) => {
-            if (!urlStr || urlStr === '' || urlStr === 'Direct') return 'Direct / Unknown';
+            if (!urlStr || urlStr === '' || urlStr === 'Direct' || !urlStr.includes('.')) return 'Direct / Unknown';
             try {
                 if (!urlStr.startsWith('http')) return urlStr;
                 return new URL(urlStr).hostname;
@@ -799,20 +812,49 @@ export const analyticsAPI = {
             }
         };
 
-        // Source breakdown
         const sourceCounts: Record<string, number> = {};
-        logs?.forEach(l => {
+        logs?.forEach((l: AnalyticsLog) => {
             const s = parseHostname(l.referrer);
             sourceCounts[s] = (sourceCounts[s] || 0) + 1;
         });
 
+        // History by day - with Filling for missing days to force chart update
+        const dayCounts: Record<string, number> = {};
+        views.forEach((v: AnalyticsLog) => {
+            try {
+                const date = new Date(v.created_at).toISOString().split('T')[0];
+                dayCounts[date] = (dayCounts[date] || 0) + 1;
+            } catch (e) { /* ignore */ }
+        });
+
+        const history: { date: string, count: number }[] = [];
+        if (days && days > 0) {
+            // Generate full range for 7d or 30d
+            for (let i = 0; i < days; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                history.push({
+                    date: dateStr,
+                    count: dayCounts[dateStr] || 0
+                });
+            }
+            history.sort((a, b) => a.date.localeCompare(b.date));
+        } else {
+            // For "All Time", use what we have
+            Object.entries(dayCounts).forEach(([date, count]) => {
+                history.push({ date, count });
+            });
+            history.sort((a, b) => a.date.localeCompare(b.date));
+        }
+
         return {
-            pageViews: views.length,
-            cvDownloads: downloads.length,
-            projectClicks: clicks.length,
+            pageViews: viewsCount.count || 0,
+            cvDownloads: downloadsCount.count || 0,
+            projectClicks: clicksCount.count || 0,
             pages: Object.entries(pageCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
             sources: Object.entries(sourceCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
-            history: Object.entries(dayCounts).map(([date, count]) => ({ date, count })).sort((a, b) => a.date.localeCompare(b.date))
+            history
         };
     }
 };

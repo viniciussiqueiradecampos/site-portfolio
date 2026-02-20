@@ -98,46 +98,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }, []);
 
     const loadBranding = async () => {
-        const [l1, l2, ac, bg, lac, lbg, nh, nc, np, ng, nb, na, no, sEmail, sPhone, sLinkedin, logoImg, news] = await Promise.all([
-            contentAPI.getByKey('general.logo_text1'),
-            contentAPI.getByKey('general.logo_text2'),
-            contentAPI.getByKey('general.accent_color'),
-            contentAPI.getByKey('general.bg_color'),
-            contentAPI.getByKey('general.light_accent_color'),
-            contentAPI.getByKey('general.light_bg_color'),
-            contentAPI.getByKey('nav.home'),
-            contentAPI.getByKey('nav.cv'),
-            contentAPI.getByKey('nav.portfolio'),
-            contentAPI.getByKey('nav.get_in_touch'),
-            contentAPI.getByKey('nav.blog'),
-            contentAPI.getByKey('nav.about'),
-            contentAPI.getByKey('nav.order'),
-            contentAPI.getByKey('social.footer_email'),
-            contentAPI.getByKey('social.phone'),
-            contentAPI.getByKey('social.linkedin'),
-            contentAPI.getByKey('general.logo_image_url'),
-            contentAPI.getByKey('nav.newsletter')
-        ]);
+        const allContent = await contentAPI.getAll();
+
+        const getV = (key: string) => allContent.find(c => c.key === key)?.value;
 
         const newBranding = {
-            logoText1: l1?.value || 'VINICIUS',
-            logoText2: l2?.value || 'CAMPOS',
-            accentColor: ac?.value || '#F2A73D',
-            bgColor: bg?.value || '#050505',
-            lightAccentColor: lac?.value || '#4A2F12',
-            lightBgColor: lbg?.value || '#FFFFFF',
-            navHome: nh?.value !== 'false',
-            navCV: nc?.value !== 'false',
-            navPortfolio: np?.value !== 'false',
-            navGetInTouch: ng?.value !== 'false',
-            navBlog: nb?.value === 'true',
-            navNewsletter: news?.value === 'true',
-            navAbout: na?.value === 'true',
-            logoImageUrl: logoImg?.value || '',
-            navOrder: (no?.value || 'navHome,navCV,navPortfolio,navAbout,navBlog,navGetInTouch').split(','),
-            socialEmail: sEmail?.value || '',
-            socialPhone: sPhone?.value || '',
-            socialLinkedin: sLinkedin?.value || ''
+            logoText1: getV('general.logo_text1') || 'VINICIUS',
+            logoText2: getV('general.logo_text2') || 'CAMPOS',
+            accentColor: getV('general.accent_color') || '#F2A73D',
+            bgColor: getV('general.bg_color') || '#050505',
+            lightAccentColor: getV('general.light_accent_color') || '#4A2F12',
+            lightBgColor: getV('general.light_bg_color') || '#FFFFFF',
+            navHome: getV('nav.home') !== 'false',
+            navCV: getV('nav.cv') !== 'false',
+            navPortfolio: getV('nav.portfolio') !== 'false',
+            navGetInTouch: getV('nav.get_in_touch') !== 'false',
+            navBlog: getV('nav.blog') === 'true',
+            navNewsletter: getV('nav.newsletter') === 'true',
+            navAbout: getV('nav.about') === 'true',
+            logoImageUrl: getV('general.logo_image_url') || '',
+            navOrder: (getV('nav.order') || 'navHome,navCV,navPortfolio,navAbout,navBlog,navGetInTouch').split(','),
+            socialEmail: getV('social.footer_email') || '',
+            socialPhone: getV('social.phone') || '',
+            socialLinkedin: getV('social.linkedin') || ''
         };
 
         setBranding(newBranding);

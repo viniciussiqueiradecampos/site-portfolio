@@ -26,7 +26,7 @@ import {
     Wallet, Calendar, Bell, Lock, Unlock, Key, Eye, EyeOff, Filter, Sliders, Navigation,
     ExternalLink, Share, Play, Pause, ChevronLeft, ChevronRight,
     Square, Triangle, Smile, Flame, Sun, Moon, Wind, Trophy, Medal, Box, Anchor, Compass,
-    Feather, Pen, Pencil, Columns, Grid, List, Plus
+    Feather, Pen, Pencil, Columns, Grid, List, Plus, House, ImageMinus, IdCard, Languages
 } from 'lucide-react';
 
 const ICON_COMPONENTS: Record<string, any> = {
@@ -163,15 +163,16 @@ export default function AdminDashboard() {
 
     const loadAllData = async () => {
         setSaving(true);
+        const allContent = await contentAPI.getAll();
+
         await Promise.all([
-            loadContent(),
+            loadContent(allContent),
             loadProjects(),
-            loadCV(),
-            loadSettings(),
+            loadCV(allContent),
+            loadSettings(allContent),
             loadStats(),
-            loadBlog(),
-            loadAllBlogTags(),
-            loadAbout()
+            loadBlog(true), // Now also loads blog tags
+            loadAbout(allContent)
         ]);
         setSaving(false);
     };
@@ -182,20 +183,16 @@ export default function AdminDashboard() {
         if (data) setStats(data);
     };
 
-    const loadContent = async () => {
-        const title = await contentAPI.getByKey('hero.title');
-        const desc = await contentAPI.getByKey('hero.description');
-        const story = await contentAPI.getByKey('storytelling.main');
-        const pDesc = await contentAPI.getByKey('storytelling.description');
-        const pBtnT = await contentAPI.getByKey('storytelling.button_text');
-        const pBtnL = await contentAPI.getByKey('storytelling.button_link');
+    const loadContent = async (providedContent?: any[]) => {
+        const allContent = providedContent || await contentAPI.getAll();
+        const getV = (key: string) => allContent.find(c => c.key === key)?.value;
 
-        if (title) setHeroTitle(title.value);
-        if (desc) setHeroDesc(desc.value);
-        if (story) setStoryText(story.value);
-        if (pDesc) setPitchDesc(pDesc.value);
-        if (pBtnT) setPitchBtnText(pBtnT.value);
-        if (pBtnL) setPitchBtnLink(pBtnL.value);
+        setHeroTitle(getV('hero.title') || '');
+        setHeroDesc(getV('hero.description') || '');
+        setStoryText(getV('storytelling.main') || '');
+        setPitchDesc(getV('storytelling.description') || '');
+        setPitchBtnText(getV('storytelling.button_text') || '');
+        setPitchBtnLink(getV('storytelling.button_link') || '');
     };
 
     const loadProjects = async () => {
@@ -221,82 +218,83 @@ export default function AdminDashboard() {
         }
     };
 
-    const loadCV = async () => {
+    const loadCV = async (providedContent?: any[]) => {
+        const allContent = providedContent || await contentAPI.getAll();
+        const getV = (key: string) => allContent.find(c => c.key === key)?.value;
+
         const { data, error } = await supabase.from('cv_sections').select('*').order('order_index', { ascending: true });
         if (!error && data) setCvSections(data);
 
-        const name = await contentAPI.getByKey('cv.name');
-        const bio = await contentAPI.getByKey('cv.bio');
-        const pdf = await contentAPI.getByKey('cv.pdf_url');
         setCvProfile({
-            name: name?.value || '',
-            bio: bio?.value || '',
-            pdf_url: pdf?.value || ''
+            name: getV('cv.name') || '',
+            bio: getV('cv.bio') || '',
+            pdf_url: getV('cv.pdf_url') || ''
         });
     };
 
-    const loadSettings = async () => {
+    const loadSettings = async (providedContent?: any[]) => {
+        const allContent = providedContent || await contentAPI.getAll();
+        const getV = (key: string) => allContent.find(c => c.key === key)?.value;
+
         setBranding({
-            logoText1: (await contentAPI.getByKey('general.logo_text1'))?.value || 'VINICIUS',
-            logoText2: (await contentAPI.getByKey('general.logo_text2'))?.value || 'CAMPOS',
-            accentColor: (await contentAPI.getByKey('general.accent_color'))?.value || '#F2A73D',
-            bgColor: (await contentAPI.getByKey('general.bg_color'))?.value || '#050505',
-            lightAccentColor: (await contentAPI.getByKey('general.light_accent_color'))?.value || '#C87A1A',
-            lightBgColor: (await contentAPI.getByKey('general.light_bg_color'))?.value || '#FFFFFF',
-            linkedin: (await contentAPI.getByKey('social.linkedin'))?.value || '',
-            instagram: (await contentAPI.getByKey('social.instagram'))?.value || '',
-            footerEmail: (await contentAPI.getByKey('social.footer_email'))?.value || '',
-            phone: (await contentAPI.getByKey('social.phone'))?.value || '',
-            footerText: (await contentAPI.getByKey('general.footer_text'))?.value || '',
-            navHome: (await contentAPI.getByKey('nav.home'))?.value !== 'false',
-            navCV: (await contentAPI.getByKey('nav.cv'))?.value !== 'false',
-            navPortfolio: (await contentAPI.getByKey('nav.portfolio'))?.value !== 'false',
-            navGetInTouch: (await contentAPI.getByKey('nav.get_in_touch'))?.value !== 'false',
-            navBlog: (await contentAPI.getByKey('nav.blog'))?.value === 'true',
-            navNewsletter: (await contentAPI.getByKey('nav.newsletter'))?.value === 'true',
-            navAbout: (await contentAPI.getByKey('nav.about'))?.value === 'true',
-            logoImageUrl: (await contentAPI.getByKey('general.logo_image_url'))?.value || '',
-            navOrder: ((await contentAPI.getByKey('nav.order'))?.value || 'navHome,navCV,navPortfolio,navAbout,navBlog,navGetInTouch').split(',')
+            logoText1: getV('general.logo_text1') || 'VINICIUS',
+            logoText2: getV('general.logo_text2') || 'CAMPOS',
+            accentColor: getV('general.accent_color') || '#F2A73D',
+            bgColor: getV('general.bg_color') || '#050505',
+            lightAccentColor: getV('general.light_accent_color') || '#C87A1A',
+            lightBgColor: getV('general.light_bg_color') || '#FFFFFF',
+            linkedin: getV('social.linkedin') || '',
+            instagram: getV('social.instagram') || '',
+            footerEmail: getV('social.footer_email') || '',
+            phone: getV('social.phone') || '',
+            footerText: getV('general.footer_text') || '',
+            navHome: getV('nav.home') !== 'false',
+            navCV: getV('nav.cv') !== 'false',
+            navPortfolio: getV('nav.portfolio') !== 'false',
+            navGetInTouch: getV('nav.get_in_touch') !== 'false',
+            navBlog: getV('nav.blog') === 'true',
+            navNewsletter: getV('nav.newsletter') === 'true',
+            navAbout: getV('nav.about') === 'true',
+            logoImageUrl: getV('general.logo_image_url') || '',
+            navOrder: (getV('nav.order') || 'navHome,navCV,navPortfolio,navAbout,navBlog,navGetInTouch').split(',')
         });
     };
 
-    const loadBlog = async () => {
+    const loadBlog = async (includeTags = false) => {
         const data = await blogAPI.getAll();
         setPosts(data);
+        if (includeTags) {
+            const tags = new Set<string>();
+            data.forEach(p => p.tags?.forEach((t: string) => tags.add(t.toUpperCase())));
+            setAllBlogTags(Array.from(tags).sort());
+        }
     };
 
-    const loadAllBlogTags = async () => {
-        const data = await blogAPI.getAll();
-        const tags = new Set<string>();
-        data.forEach(p => p.tags?.forEach((t: string) => tags.add(t.toUpperCase())));
-        setAllBlogTags(Array.from(tags).sort());
-    };
-
-    const loadAbout = async () => {
-        const [photo, reveal, title, subtitle, bio, spotify, visible] = await Promise.all([
-            contentAPI.getByKey('about.profile_photo'),
-            contentAPI.getByKey('about.reveal_image'),
-            contentAPI.getByKey('about.name_title'),
-            contentAPI.getByKey('about.subtitle'),
-            contentAPI.getByKey('about.bio_text'),
-            contentAPI.getByKey('about.spotify_embed_url'),
-            contentAPI.getByKey('about.visible')
-        ]);
+    const loadAbout = async (providedContent?: any[]) => {
+        const allContent = providedContent || await contentAPI.getAll();
+        const getV = (key: string) => allContent.find(c => c.key === key)?.value;
 
         setAboutProfile({
-            photo: photo?.value || '',
-            reveal_image: reveal?.value || '',
-            title: title?.value || '',
-            subtitle: subtitle?.value || '',
-            bio: bio?.value || '',
-            spotify: spotify?.value || '',
-            visible: visible?.value === 'true'
+            photo: getV('about.profile_photo') || '',
+            reveal_image: getV('about.reveal_image') || '',
+            title: getV('about.name_title') || '',
+            subtitle: getV('about.subtitle') || '',
+            bio: getV('about.bio_text') || '',
+            spotify: getV('about.spotify_embed_url') || '',
+            visible: getV('about.visible') === 'true'
         });
 
-        setAboutSteps(await aboutAPI.getSteps());
-        setAboutHobbies(await aboutAPI.getHobbies());
-        setAboutTestimonials(await aboutAPI.getTestimonials());
-        setAboutMemories(await aboutAPI.getMemories());
+        const [steps, hobbies, testimonials, memories] = await Promise.all([
+            aboutAPI.getSteps(),
+            aboutAPI.getHobbies(),
+            aboutAPI.getTestimonials(),
+            aboutAPI.getMemories()
+        ]);
+
+        setAboutSteps(steps);
+        setAboutHobbies(hobbies);
+        setAboutTestimonials(testimonials);
+        setAboutMemories(memories);
     };
 
     const addBlogTag = (tag?: string) => {
@@ -657,34 +655,26 @@ export default function AdminDashboard() {
                 bottom: 0,
                 height: '100vh',
                 zIndex: 1000,
-                transition: 'width 0.3s ease, left 0.3s ease'
+                transition: 'width 0.3s ease, left 0.3s ease',
+                overflow: 'visible'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: isSidebarCollapsed ? 'center' : 'space-between', marginBottom: '40px', padding: isSidebarCollapsed ? '0' : '0 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
                         <div style={{
-                            minWidth: '40px',
-                            height: '40px',
-                            background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)',
-                            borderRadius: '10px',
-                            color: '#000',
+                            minWidth: isSidebarCollapsed ? '32px' : '44px',
+                            height: isSidebarCollapsed ? '32px' : '44px',
+                            background: 'transparent',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            overflow: 'hidden',
-                            border: branding.logoImageUrl ? '1px solid #1a1a1a' : 'none'
+                            overflow: 'hidden'
                         }}>
                             {branding.logoImageUrl ? (
                                 <img src={branding.logoImageUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             ) : (
-                                <Target size={20} />
+                                <Target size={20} color="var(--accent-color)" />
                             )}
                         </div>
-                        {!isSidebarCollapsed && (
-                            <div style={{ whiteSpace: 'nowrap', fontFamily: 'var(--font-body)' }}>
-                                <div style={{ fontWeight: '700', fontSize: '15px' }}>{branding.logoText1}</div>
-                                <div style={{ fontWeight: '700', fontSize: '15px', marginTop: '-4px' }}>{branding.logoText2}</div>
-                            </div>
-                        )}
                     </div>
                     {!isDesktop && (
                         <button onClick={() => setIsMobileNavOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -696,12 +686,11 @@ export default function AdminDashboard() {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[
                         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-                        { id: 'content', label: 'Home Page', icon: LayoutDashboard },
-                        { id: 'projects', label: 'Portfolio', icon: FolderKanban },
-                        { id: 'cv', label: 'Curriculum', icon: FileText },
-                        { id: 'blog', label: 'Blog', icon: BookOpen },
+                        { id: 'content', label: 'HOME', icon: House },
                         { id: 'about', label: 'About', icon: User },
-                        { id: 'settings', label: 'Settings', icon: Settings },
+                        { id: 'cv', label: 'Curriculum', icon: IdCard },
+                        { id: 'projects', label: 'Portfolio', icon: ImageMinus },
+                        { id: 'blog', label: 'Blog', icon: BookOpen },
                     ].map(item => {
                         const isActive = activeTab === item.id;
                         return (
@@ -749,44 +738,35 @@ export default function AdminDashboard() {
                     })}
                 </div>
 
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {isDesktop && (
-                        <button
-                            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
-                                gap: '12px',
-                                padding: '12px',
-                                background: 'rgba(255,255,255,0.03)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '10px',
-                                color: 'var(--text-muted)',
-                                cursor: 'pointer',
-                                width: '100%'
-                            }}
-                        >
-                            {isSidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-                            {!isSidebarCollapsed && <span style={{ fontSize: '11px', fontWeight: 'bold' }}>COLLAPSE MENU</span>}
-                        </button>
-                    )}
-                    <button onClick={handleLogout} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
-                        gap: '12px',
-                        padding: '12px',
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#ff4444',
-                        cursor: 'pointer',
-                        width: '100%'
-                    }}>
-                        <LogOut size={20} />
-                        {!isSidebarCollapsed && <span style={{ fontSize: '11px', fontWeight: 'bold' }}>SIGN OUT</span>}
+
+                {/* Collapse toggle — floats at the edge between sidebar and content */}
+                {isDesktop && (
+                    <button
+                        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        title={isSidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
+                        style={{
+                            position: 'absolute',
+                            top: '50%',
+                            right: '-14px',
+                            transform: 'translateY(-50%)',
+                            width: '28px',
+                            height: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--surface-color)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '50%',
+                            color: 'var(--text-muted)',
+                            cursor: 'pointer',
+                            zIndex: 1001,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                     </button>
-                </div>
+                )}
             </div>
 
             <div style={{
@@ -804,6 +784,34 @@ export default function AdminDashboard() {
                             </button>
                         )}
                         <h2 style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '2px', fontFamily: 'var(--font-body)' }}>{activeTab} Workspace</h2>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                            onClick={() => setActiveTab('settings' as any)}
+                            title="Settings"
+                            style={{
+                                width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: activeTab === 'settings' ? 'var(--accent-color)' : 'var(--bg-color)',
+                                border: '1px solid var(--border-color)', borderRadius: '10px',
+                                color: activeTab === 'settings' ? '#fff' : 'var(--text-muted)',
+                                cursor: 'pointer', transition: 'all 0.2s'
+                            }}
+                        >
+                            <Settings size={18} />
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            title="Sign Out"
+                            style={{
+                                width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: 'rgba(255,68,68,0.08)',
+                                border: '1px solid rgba(255,68,68,0.2)', borderRadius: '10px',
+                                color: '#ff4444',
+                                cursor: 'pointer', transition: 'all 0.2s'
+                            }}
+                        >
+                            <LogOut size={18} />
+                        </button>
                     </div>
                 </header>
 
@@ -939,7 +947,7 @@ export default function AdminDashboard() {
                                     { id: 'education', label: 'Education', icon: GraduationCap },
                                     { id: 'skills', label: 'Skills', icon: Star },
                                     { id: 'certification', label: 'Certifications', icon: Award },
-                                    { id: 'hobbies', label: 'Hobbies', icon: Heart },
+                                    { id: 'hobbies', label: 'Languages', icon: Languages },
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
@@ -997,8 +1005,8 @@ export default function AdminDashboard() {
                             ) : (
                                 <div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                                        <h3 style={{ textTransform: 'capitalize' }}>{cvSubTab} List</h3>
-                                        <button onClick={() => setEditingCV({ id: 'new', section_type: cvSubTab, title: '', subtitle: '', date_range: '', description: '', order_index: cvSections.length, visible: true } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '10px 20px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ ADD {cvSubTab.toUpperCase()}</button>
+                                        <h3 style={{ textTransform: 'capitalize' }}>{cvSubTab === 'hobbies' ? 'Languages' : cvSubTab} List</h3>
+                                        <button onClick={() => setEditingCV({ id: 'new', section_type: cvSubTab, title: '', subtitle: '', date_range: '', description: '', order_index: cvSections.length, visible: true } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '10px 20px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ ADD {cvSubTab === 'hobbies' ? 'LANGUAGES' : cvSubTab.toUpperCase()}</button>
                                     </div>
                                     <div style={{ display: 'grid', gap: '15px' }}>
                                         {filteredCV.map((s, idx) => (
@@ -1034,24 +1042,65 @@ export default function AdminDashboard() {
                                 </div>
                                 <button onClick={() => setEditingProject({ id: 'new', title: '', description: '', image_url: '', tags: [], order_index: projects.length, visible: true, gallery_images: [], gallery_videos: [], live_url: '', live_url_label: '', download_url: '', download_url_label: '', project_steps: [], highlights: [] } as any)} style={{ background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), padding: '12px 24px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>+ NEW PROJECT</button>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                                {projects.map((p, idx) => (
-                                    <div key={p.id} style={{ background: 'var(--surface-color)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-                                        <div style={{ height: '180px', background: `url(${p.image_url}) center/cover`, position: 'relative' }}>
-                                            <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '5px' }}>
-                                                <button disabled={idx === 0 || saving} onClick={() => reorderProject(idx, 'up')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowUp size={14} /></button>
-                                                <button disabled={idx === projects.length - 1 || saving} onClick={() => reorderProject(idx, 'down')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowDown size={14} /></button>
+                            <div style={{ display: 'grid', gap: '40px' }}>
+                                {/* PUBLISHED SECTION */}
+                                <div>
+                                    <h4 style={{ ...labelStyle, color: 'var(--accent-color)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#44ff44' }}></div>
+                                        PUBLISHED PROJECTS ({projects.filter(p => p.visible !== false).length})
+                                    </h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                                        {projects.map((p, idx) => p.visible !== false && (
+                                            <div key={p.id} style={{ background: 'var(--surface-color)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden', opacity: 1 }}>
+                                                <div style={{ height: '180px', background: `url(${p.image_url}) center/cover`, position: 'relative' }}>
+                                                    <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '5px' }}>
+                                                        <button disabled={idx === 0 || saving} onClick={() => reorderProject(idx, 'up')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowUp size={14} /></button>
+                                                        <button disabled={idx === projects.length - 1 || saving} onClick={() => reorderProject(idx, 'down')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowDown size={14} /></button>
+                                                    </div>
+                                                </div>
+                                                <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{p.title}</span>
+                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                        <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                        <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '14px', fontWeight: '600' }}>{p.title}</span>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
-                                                <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
-                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* DRAFTS SECTION */}
+                                {projects.some(p => p.visible === false) && (
+                                    <div>
+                                        <h4 style={{ ...labelStyle, color: 'var(--text-muted)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffaa00' }}></div>
+                                            DRAFTS / HIDDEN ({projects.filter(p => p.visible === false).length})
+                                        </h4>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                                            {projects.map((p, idx) => p.visible === false && (
+                                                <div key={p.id} style={{ background: 'var(--surface-color)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden', opacity: 0.7 }}>
+                                                    <div style={{ height: '180px', background: `url(${p.image_url}) center/cover`, position: 'relative' }}>
+                                                        <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '5px' }}>
+                                                            <button disabled={idx === 0 || saving} onClick={() => reorderProject(idx, 'up')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowUp size={14} /></button>
+                                                            <button disabled={idx === projects.length - 1 || saving} onClick={() => reorderProject(idx, 'down')} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}><ArrowDown size={14} /></button>
+                                                        </div>
+                                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <span style={{ color: '#fff', fontSize: '10px', fontWeight: '900', background: 'rgba(0,0,0,0.8)', padding: '4px 8px', borderRadius: '4px', letterSpacing: '1px' }}>HIDDEN</span>
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-muted)' }}>{p.title}</span>
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button onClick={() => setEditingProject(p)} style={{ background: 'transparent', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}><Settings size={18} /></button>
+                                                            <button onClick={() => { if (confirm('Delete?')) projectsAPI.delete(p.id).then(loadProjects) }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}
@@ -1063,12 +1112,18 @@ export default function AdminDashboard() {
                                     Hero Experience
                                 </h3>
                                 <div style={{ display: 'grid', gap: '24px' }}>
-                                    <input placeholder="Marquee Title" value={getTranslationParts(heroTitle)[editLang]} onChange={e => {
-                                        const p = getTranslationParts(heroTitle); p[editLang] = e.target.value; setHeroTitle(formatTranslatable(p.en, p.pt));
-                                    }} style={modalInputStyle} />
-                                    <textarea placeholder="Small Description" value={getTranslationParts(heroDesc)[editLang]} onChange={e => {
-                                        const p = getTranslationParts(heroDesc); p[editLang] = e.target.value; setHeroDesc(formatTranslatable(p.en, p.pt));
-                                    }} rows={2} style={modalInputStyle} />
+                                    <div>
+                                        <label style={labelStyle}>Marquee Main Title</label>
+                                        <input placeholder="Marquee Title" value={getTranslationParts(heroTitle)[editLang]} onChange={e => {
+                                            const p = getTranslationParts(heroTitle); p[editLang] = e.target.value; setHeroTitle(formatTranslatable(p.en, p.pt));
+                                        }} style={modalInputStyle} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Intro Description</label>
+                                        <textarea placeholder="Small Description" value={getTranslationParts(heroDesc)[editLang]} onChange={e => {
+                                            const p = getTranslationParts(heroDesc); p[editLang] = e.target.value; setHeroDesc(formatTranslatable(p.en, p.pt));
+                                        }} rows={2} style={modalInputStyle} />
+                                    </div>
                                 </div>
                             </div>
 
@@ -1077,17 +1132,29 @@ export default function AdminDashboard() {
                                     Storytelling
                                 </h3>
                                 <div style={{ display: 'grid', gap: '24px' }}>
-                                    <textarea placeholder="Main Big Text" value={getTranslationParts(storyText)[editLang]} onChange={e => {
-                                        const p = getTranslationParts(storyText); p[editLang] = e.target.value; setStoryText(formatTranslatable(p.en, p.pt));
-                                    }} rows={4} style={modalInputStyle} />
-                                    <textarea placeholder="Pitch Description" value={getTranslationParts(pitchDesc)[editLang]} onChange={e => {
-                                        const p = getTranslationParts(pitchDesc); p[editLang] = e.target.value; setPitchDesc(formatTranslatable(p.en, p.pt));
-                                    }} rows={4} style={modalInputStyle} />
+                                    <div>
+                                        <label style={labelStyle}>Main Storytelling Text (Big Headlines)</label>
+                                        <textarea placeholder="Main Big Text" value={getTranslationParts(storyText)[editLang]} onChange={e => {
+                                            const p = getTranslationParts(storyText); p[editLang] = e.target.value; setStoryText(formatTranslatable(p.en, p.pt));
+                                        }} rows={4} style={modalInputStyle} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Pitch Description (Detailed paragraph)</label>
+                                        <textarea placeholder="Pitch Description" value={getTranslationParts(pitchDesc)[editLang]} onChange={e => {
+                                            const p = getTranslationParts(pitchDesc); p[editLang] = e.target.value; setPitchDesc(formatTranslatable(p.en, p.pt));
+                                        }} rows={4} style={modalInputStyle} />
+                                    </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                        <input placeholder="CTA Button Text" value={getTranslationParts(pitchBtnText)[editLang]} onChange={e => {
-                                            const p = getTranslationParts(pitchBtnText); p[editLang] = e.target.value; setPitchBtnText(formatTranslatable(p.en, p.pt));
-                                        }} style={modalInputStyle} />
-                                        <input placeholder="CTA Button Link" value={pitchBtnLink} onChange={e => setPitchBtnLink(e.target.value)} style={modalInputStyle} />
+                                        <div>
+                                            <label style={labelStyle}>CTA Button Text</label>
+                                            <input placeholder="CTA Button Text" value={getTranslationParts(pitchBtnText)[editLang]} onChange={e => {
+                                                const p = getTranslationParts(pitchBtnText); p[editLang] = e.target.value; setPitchBtnText(formatTranslatable(p.en, p.pt));
+                                            }} style={modalInputStyle} />
+                                        </div>
+                                        <div>
+                                            <label style={labelStyle}>CTA Button Link</label>
+                                            <input placeholder="CTA Button Link" value={pitchBtnLink} onChange={e => setPitchBtnLink(e.target.value)} style={modalInputStyle} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1134,140 +1201,25 @@ export default function AdminDashboard() {
                             {/* Profile Section */}
                             <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ marginBottom: '24px', fontSize: '18px', color: 'var(--accent-color)' }}>About Identity</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? '220px 1fr' : '1fr', gap: '32px' }}>
-                                    <div>
-                                        <label style={labelStyle}>Profile Photo</label>
-                                        <div style={{ width: '100%', aspectRatio: '3/4', background: 'var(--surface-color)', borderRadius: '16px', overflow: 'hidden', marginBottom: '16px', border: '1px solid var(--border-color)' }}>
-                                            {aboutProfile.photo ? (
-                                                <img src={aboutProfile.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (
-                                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={40} color="var(--text-muted)" /></div>
-                                            )}
-                                        </div>
-                                        <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer', padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), borderRadius: '10px', fontWeight: '900', fontSize: '12px' }}>
-                                            UPLOAD NEW
-                                            <input type="file" hidden onChange={e => {
-                                                if (e.target.files?.[0]) {
-                                                    setMessage('⌛ Uploading...');
-                                                    handleAboutImageUpload(e.target.files[0], 'profile');
-                                                }
-                                            }} />
-                                        </label>
-
-                                        <label style={labelStyle}>Torch Reveal Image (Homepage Only)</label>
-                                        <div style={{ width: '100%', height: '100px', background: 'var(--surface-color)', borderRadius: '16px', overflow: 'hidden', marginBottom: '16px', border: '1px solid var(--border-color)' }}>
-                                            {aboutProfile.reveal_image ? (
-                                                <img src={aboutProfile.reveal_image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (
-                                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={30} color="var(--text-muted)" /></div>
-                                            )}
-                                        </div>
-                                        <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer', padding: '12px 24px', background: 'var(--bg-color)', color: 'var(--text-color)', borderRadius: '10px', fontWeight: '900', border: '1px solid var(--border-color)', fontSize: '11px' }}>
-                                            UPLOAD REVEAL IMAGE
-                                            <input type="file" hidden onChange={e => {
-                                                if (e.target.files?.[0]) {
-                                                    setMessage('⌛ Uploading...');
-                                                    handleAboutImageUpload(e.target.files[0], 'reveal' as any);
-                                                }
-                                            }} />
-                                        </label>
-                                    </div>
-                                    <div style={{ display: 'grid', gap: '16px' }}>
-                                        <div>
-                                            <label style={labelStyle}>Main Title (Full Name)</label>
-                                            <input style={modalInputStyle} value={aboutProfile.title} onChange={e => setAboutProfile({ ...aboutProfile, title: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>Subtitle (e.g. or just vinny...)</label>
-                                            <input style={modalInputStyle} value={aboutProfile.subtitle} onChange={e => setAboutProfile({ ...aboutProfile, subtitle: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>Bio Text (Scrollytelling)</label>
-                                            <textarea style={{ ...modalInputStyle, height: '140px' }} value={aboutProfile.bio} onChange={e => setAboutProfile({ ...aboutProfile, bio: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label style={labelStyle}>Spotify Playlist URL</label>
-                                            <input placeholder="https://open.spotify.com/playlist/..." style={modalInputStyle} value={aboutProfile.spotify} onChange={e => setAboutProfile({ ...aboutProfile, spotify: e.target.value })} />
-                                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Automatically converts to embed format.</span>
-                                        </div>
-                                        <button onClick={saveAboutProfile} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}>{saving ? 'SAVING...' : 'SAVE ALL IDENTITY CHANGES'}</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Memories Section */}
-                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                    <h3 style={{ fontSize: '18px' }}>Memories (Floating Images)</h3>
-                                    <button onClick={() => setEditingMemory({ id: '', image_url: '', position_x: '50%', width: '250px', aspect_ratio: '1/1', speed: 1.0 } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD MEMORY</button>
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
-                                    {aboutMemories.map(m => (
-                                        <div key={m.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                                            <img src={m.image_url} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
-                                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>X: {m.position_x} | W: {m.width}</div>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingMemory(m)} style={{ flex: 1, padding: '8px 16px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
-                                                <button onClick={() => deleteAboutMemory(m.id)} style={{ padding: '8px', background: 'rgba(255,0,0,0.1)', border: 'none', borderRadius: '6px', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Steps Section */}
-                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                    <h3 style={{ fontSize: '18px' }}>How Do I Work? (Steps)</h3>
-                                    <button onClick={() => setEditingStep({ id: '', step_number: '01', title: '', description: '', icon_name: 'Search' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD STEP</button>
-                                </div>
                                 <div style={{ display: 'grid', gap: '16px' }}>
-                                    {aboutSteps.map(s => (
-                                        <div key={s.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                            <div style={{ color: 'var(--accent-color)', fontWeight: '900' }}>#{s.step_number}</div>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: '700' }}>{s.title}</div>
-                                                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{s.description}</div>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingStep(s)} style={{ padding: '8px 16px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
-                                                <button onClick={() => deleteAboutStep(s.id)} style={{ color: '#ff4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Hobbies Section */}
-                            <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                    <h3 style={{ fontSize: '18px' }}>Hobbies & Interests</h3>
-                                    <button onClick={() => setEditingHobby({ id: '', text: '', color: '#ffffff', position_x: '50%', position_y: '50%' } as any)} style={{ padding: '12px 24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', fontSize: '12px' }}>ADD HOBBY</button>
-                                </div>
-                                <div style={{ marginBottom: '24px' }}>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>Visual Preview:</div>
-                                    <div style={{ height: '300px', background: 'var(--surface-color)', borderRadius: '16px', position: 'relative', border: '1px solid var(--border-color)' }}>
-                                        {aboutHobbies.map(h => (
-                                            <div key={h.id} style={{ position: 'absolute', left: h.position_x, top: h.position_y, transform: 'translate(-50%, -50%)', background: 'var(--surface-color)', color: 'var(--text-color)', padding: '8px 16px', borderRadius: '20px 20px 20px 2px', borderLeft: `4px solid ${h.color}`, fontSize: '12px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-                                                {h.text}
-                                            </div>
-                                        ))}
+                                    <div>
+                                        <label style={labelStyle}>Main Title (Full Name)</label>
+                                        <input style={modalInputStyle} value={aboutProfile.title} onChange={e => setAboutProfile({ ...aboutProfile, title: e.target.value })} />
                                     </div>
-                                </div>
-                                <div style={{ display: 'grid', gap: '12px' }}>
-                                    {aboutHobbies.map(h => (
-                                        <div key={h.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                            <div style={{ width: '4px', height: '40px', background: h.color, borderRadius: '2px' }}></div>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: '700', fontSize: '14px' }}>{h.text}</div>
-                                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Position: {h.position_x} × {h.position_y}</div>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button onClick={() => setEditingHobby(h)} style={{ padding: '8px 16px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>EDIT</button>
-                                                <button onClick={() => deleteAboutHobby(h.id)} style={{ padding: '8px', background: 'rgba(255,0,0,0.1)', border: 'none', borderRadius: '8px', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                    <div>
+                                        <label style={labelStyle}>Subtitle (e.g. or just vinny...)</label>
+                                        <input style={modalInputStyle} value={aboutProfile.subtitle} onChange={e => setAboutProfile({ ...aboutProfile, subtitle: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Bio Text (Scrollytelling)</label>
+                                        <textarea style={{ ...modalInputStyle, height: '140px' }} value={aboutProfile.bio} onChange={e => setAboutProfile({ ...aboutProfile, bio: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={labelStyle}>Spotify Playlist URL</label>
+                                        <input placeholder="https://open.spotify.com/playlist/..." style={modalInputStyle} value={aboutProfile.spotify} onChange={e => setAboutProfile({ ...aboutProfile, spotify: e.target.value })} />
+                                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Automatically converts to embed format.</span>
+                                    </div>
+                                    <button onClick={saveAboutProfile} disabled={saving} style={{ padding: '20px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '16px', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}>{saving ? 'SAVING...' : 'SAVE ALL IDENTITY CHANGES'}</button>
                                 </div>
                             </div>
 
@@ -1306,7 +1258,7 @@ export default function AdminDashboard() {
                             <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '32px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Visual Identity</h3>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '32px' }}>
-                                    <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ width: '80px', height: '80px', background: branding.logoImageUrl ? 'transparent' : 'var(--accent-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                                         {branding.logoImageUrl ? <img src={branding.logoImageUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Target size={32} />}
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1339,24 +1291,44 @@ export default function AdminDashboard() {
                                     <input value={branding.logoText1} onChange={e => setBranding({ ...branding, logoText1: e.target.value })} style={modalInputStyle} />
                                     <input value={branding.logoText2} onChange={e => setBranding({ ...branding, logoText2: e.target.value })} style={modalInputStyle} />
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '32px' }}>
-                                    <div>
-                                        <label style={labelStyle}>BG Color</label>
-                                        <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '32px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                                        <label style={{ ...labelStyle, marginBottom: 0 }}>BG COLOR</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{branding.bgColor.toUpperCase()}</span>
+                                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: branding.bgColor, border: '2px solid var(--border-color)', position: 'relative', overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                                <input type="color" value={branding.bgColor} onChange={e => setBranding({ ...branding, bgColor: e.target.value })} style={{ position: 'absolute', inset: -5, width: '150%', height: '150%', opacity: 0, cursor: 'pointer' }} />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label style={labelStyle}>Accent Color</label>
-                                        <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                                        <label style={{ ...labelStyle, marginBottom: 0 }}>ACCENT COLOR</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{branding.accentColor.toUpperCase()}</span>
+                                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: branding.accentColor, border: '2px solid var(--border-color)', position: 'relative', overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                                <input type="color" value={branding.accentColor} onChange={e => setBranding({ ...branding, accentColor: e.target.value })} style={{ position: 'absolute', inset: -5, width: '150%', height: '150%', opacity: 0, cursor: 'pointer' }} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '24px' }}>
-                                    <div>
-                                        <label style={labelStyle}>Light BG Color</label>
-                                        <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                                        <label style={{ ...labelStyle, marginBottom: 0 }}>LIGHT BG COLOR</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{branding.lightBgColor.toUpperCase()}</span>
+                                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: branding.lightBgColor, border: '2px solid var(--border-color)', position: 'relative', overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                                <input type="color" value={branding.lightBgColor} onChange={e => setBranding({ ...branding, lightBgColor: e.target.value })} style={{ position: 'absolute', inset: -5, width: '150%', height: '150%', opacity: 0, cursor: 'pointer' }} />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label style={labelStyle}>Light Accent Color</label>
-                                        <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ width: '100%', height: '40px' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                                        <label style={{ ...labelStyle, marginBottom: 0 }}>LIGHT ACCENT COLOR</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{branding.lightAccentColor.toUpperCase()}</span>
+                                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: branding.lightAccentColor, border: '2px solid var(--border-color)', position: 'relative', overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                                <input type="color" value={branding.lightAccentColor} onChange={e => setBranding({ ...branding, lightAccentColor: e.target.value })} style={{ position: 'absolute', inset: -5, width: '150%', height: '150%', opacity: 0, cursor: 'pointer' }} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1368,65 +1340,7 @@ export default function AdminDashboard() {
                                 <input placeholder="Phone" value={branding.phone} onChange={e => setBranding({ ...branding, phone: e.target.value })} style={modalInputStyle} />
                             </div>
                             <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
-                                <h3 style={{ marginBottom: '32px', color: 'var(--accent-color)' }}>Navigation Toggles</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
-                                    {[
-                                        { id: 'navHome', label: 'Home' },
-                                        { id: 'navCV', label: 'CV' },
-                                        { id: 'navPortfolio', label: 'Portfolio' },
-                                        { id: 'navBlog', label: 'Blog' },
-                                        { id: 'navNewsletter', label: 'Newsletter' },
-                                        { id: 'navGetInTouch', label: 'Get In Touch' },
-                                    ].map(toggle => (
-                                        <label key={toggle.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                            <input type="checkbox" checked={(branding as any)[toggle.id]} onChange={e => setBranding({ ...branding, [toggle.id]: e.target.checked })} style={{ width: '18px', height: '18px' }} />
-                                            {toggle.label}
-                                        </label>
-                                    ))}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-color)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                                        <input type="checkbox" checked={branding.navAbout} onChange={e => {
-                                            const val = e.target.checked;
-                                            setBranding({ ...branding, navAbout: val });
-                                            setAboutProfile({ ...aboutProfile, visible: val });
-                                        }} style={{ width: '18px', height: '18px' }} />
-                                        <span style={{ fontSize: '13px', fontWeight: 'bold' }}>ABOUT PAGE VISIBLE</span>
-                                    </div>
-                                </div>
 
-                                <div style={{ background: 'var(--surface-color)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border-color)', marginTop: '40px' }}>
-                                    <h3 style={{ marginBottom: '24px', color: 'var(--accent-color)', fontSize: '16px' }}>Order Menu Items</h3>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        {branding.navOrder.map((item: string, idx: number) => (
-                                            <div key={item} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-color)', padding: '12px 20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                                                <span style={{ fontWeight: 'bold', fontSize: '13px', textTransform: 'uppercase' }}>{item.replace('nav', '')}</span>
-                                                <div style={{ display: 'flex', gap: '10px' }}>
-                                                    <button
-                                                        disabled={idx === 0}
-                                                        onClick={() => {
-                                                            const newOrder = [...branding.navOrder];
-                                                            [newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]];
-                                                            setBranding({ ...branding, navOrder: newOrder });
-                                                        }}
-                                                        style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}
-                                                    >
-                                                        <ArrowUp size={14} />
-                                                    </button>
-                                                    <button
-                                                        disabled={idx === branding.navOrder.length - 1}
-                                                        onClick={() => {
-                                                            const newOrder = [...branding.navOrder];
-                                                            [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
-                                                            setBranding({ ...branding, navOrder: newOrder });
-                                                        }}
-                                                        style={{ background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-color)', padding: '5px', borderRadius: '6px', cursor: 'pointer' }}
-                                                    >
-                                                        <ArrowDown size={14} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
                                 <button onClick={saveSettings} style={{ padding: '24px', background: 'var(--accent-color)', color: getContrastColor(branding.accentColor), border: 'none', borderRadius: '16px', fontWeight: '900' }}>SAVE CONFIGURATION</button>
                             </div>
                         </div>
@@ -1519,16 +1433,46 @@ export default function AdminDashboard() {
             {
                 editingCV && (
                     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                        <div style={{ background: '#0a0a0a', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #222', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-                                <h3 style={{ textTransform: 'capitalize' }}>Edit {editingCV.section_type}</h3>
-                                <button onClick={() => setEditingCV(null)} style={{ background: 'transparent', border: 'none', color: '#fff' }}><X size={20} /></button>
+                        <div style={{ background: '#000', width: '100%', maxWidth: '600px', borderRadius: '24px', border: '1px solid #333', padding: '40px', maxHeight: '95vh', overflowY: 'auto' }} className="hide-scrollbar">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', alignItems: 'center' }}>
+                                <h3 style={{ textTransform: 'uppercase', margin: 0, color: 'var(--accent-color)', fontSize: '20px', fontWeight: '900', letterSpacing: '1px' }}>Edit {editingCV.section_type}</h3>
+                                <button onClick={() => setEditingCV(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
-                            <input placeholder="Title" value={editingCV.title} onChange={e => setEditingCV({ ...editingCV, title: e.target.value })} style={modalInputStyle} />
-                            <input placeholder="Subtitle / Org" value={editingCV.subtitle || ''} onChange={e => setEditingCV({ ...editingCV, subtitle: e.target.value })} style={modalInputStyle} />
-                            <input placeholder="Dates" value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={modalInputStyle} />
-                            <textarea placeholder="Details" value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={4} style={modalInputStyle} />
-                            <button onClick={saveCVSection} disabled={saving} style={{ padding: '16px', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '12px', fontWeight: 'bold', width: '100%' }}>SAVE {editingCV.section_type.toUpperCase()}</button>
+
+                            <div style={{ display: 'grid', gap: '20px' }}>
+                                <div>
+                                    <label style={{ ...labelStyle, color: '#fff' }}>Title</label>
+                                    <input placeholder="Ex: Senior UI Designer" value={editingCV.title} onChange={e => setEditingCV({ ...editingCV, title: e.target.value })} style={{ ...modalInputStyle, color: '#fff', background: '#111' }} />
+                                </div>
+                                <div>
+                                    <label style={{ ...labelStyle, color: '#fff' }}>Subtitle / Organization</label>
+                                    <input placeholder="Ex: Google" value={editingCV.subtitle || ''} onChange={e => setEditingCV({ ...editingCV, subtitle: e.target.value })} style={{ ...modalInputStyle, color: '#fff', background: '#111' }} />
+                                </div>
+                                <div>
+                                    <label style={{ ...labelStyle, color: '#fff' }}>Date Range</label>
+                                    <input placeholder="Ex: Jan 2020 - Present" value={editingCV.date_range || ''} onChange={e => setEditingCV({ ...editingCV, date_range: e.target.value })} style={{ ...modalInputStyle, color: '#fff', background: '#111' }} />
+                                </div>
+                                <div>
+                                    <label style={{ ...labelStyle, color: '#fff' }}>Description / Details</label>
+                                    <textarea placeholder="List your key achievements..." value={editingCV.description || ''} onChange={e => setEditingCV({ ...editingCV, description: e.target.value })} rows={6} style={{ ...modalInputStyle, color: '#fff', background: '#111', height: 'auto' }} />
+                                </div>
+
+                                <button onClick={saveCVSection} disabled={saving} style={{
+                                    padding: '20px',
+                                    background: 'var(--accent-color)',
+                                    color: getContrastColor(branding.accentColor),
+                                    border: 'none',
+                                    borderRadius: '16px',
+                                    fontWeight: '900',
+                                    width: '100%',
+                                    marginTop: '10px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    letterSpacing: '1px'
+                                }}>
+                                    {saving ? 'SAVING...' : `SAVE ${editingCV.section_type.toUpperCase()}`}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )

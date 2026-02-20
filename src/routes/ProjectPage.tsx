@@ -610,45 +610,44 @@ export default function ProjectPage() {
         }
 
         setLoading(true);
-        console.log('🔍 Fetching project with slug:', slug);
-        const data = await projectsAPI.getBySlug(slug);
-        console.log('📊 Raw Project Data from Supabase:', data);
+        try {
+            // Fetch main project
+            const data = await projectsAPI.getBySlug(slug);
+            if (!data) {
+                navigate('/projects');
+                return;
+            }
 
-        if (!data) {
-            console.warn('⚠️ Project not found for slug:', slug);
-            navigate('/projects');
-            return;
-        }
-
-        console.log('📽️ Gallery Images:', data.gallery_images);
-        console.log('📽️ Gallery Videos:', data.gallery_videos);
-
-        const lang = i18n.language;
-        setProject({
-            ...data,
-            title: parseTranslatable(data.title, lang),
-            description: parseTranslatable(data.description || '', lang),
-            summary: parseTranslatable(data.summary || '', lang),
-            short_description: parseTranslatable(data.short_description || '', lang),
-            page_title: parseTranslatable(data.page_title || '', lang),
-            client_name: parseTranslatable(data.client_name || '', lang),
-            client_subtitle: parseTranslatable(data.client_subtitle || '', lang),
-            my_role: parseTranslatable(data.my_role || '', lang),
-        });
-
-        // Load random next project
-        const allProjects = await projectsAPI.getAll();
-        const otherProjects = allProjects.filter(p => p.id !== data.id);
-        if (otherProjects.length > 0) {
-            const randomNext = otherProjects[Math.floor(Math.random() * otherProjects.length)];
-            setNextProject({
-                ...randomNext,
-                title: parseTranslatable(randomNext.title, lang)
+            const lang = i18n.language;
+            setProject({
+                ...data,
+                title: parseTranslatable(data.title, lang),
+                description: parseTranslatable(data.description || '', lang),
+                summary: parseTranslatable(data.summary || '', lang),
+                short_description: parseTranslatable(data.short_description || '', lang),
+                page_title: parseTranslatable(data.page_title || '', lang),
+                client_name: parseTranslatable(data.client_name || '', lang),
+                client_subtitle: parseTranslatable(data.client_subtitle || '', lang),
+                my_role: parseTranslatable(data.my_role || '', lang),
             });
-            document.title = `${data.title} | Vinicius Campos`;
-        }
+            document.title = `${parseTranslatable(data.title, lang)} | Vinicius Campos`;
 
-        setLoading(false);
+            // Load next project separately (non-blocking for UI if we want, but here we keep it simple)
+            const allProjects = await projectsAPI.getAll();
+            const otherProjects = allProjects.filter(p => p.id !== data.id);
+            if (otherProjects.length > 0) {
+                const randomNext = otherProjects[Math.floor(Math.random() * otherProjects.length)];
+                setNextProject({
+                    ...randomNext,
+                    title: parseTranslatable(randomNext.title, lang)
+                });
+            }
+        } catch (error) {
+            console.error('Error loading project:', error);
+            navigate('/projects');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading) {
@@ -661,7 +660,7 @@ export default function ProjectPage() {
                 backgroundColor: 'var(--bg-color)',
                 paddingTop: 'var(--header-height)'
             }}>
-                <p style={{ color: 'var(--text-muted)' }}>Carregando...</p>
+                <p style={{ color: 'var(--text-muted)' }}>Loading...</p>
             </div>
         );
     }

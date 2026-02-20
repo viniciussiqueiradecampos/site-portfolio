@@ -23,13 +23,16 @@ export default function CV() {
     }, []);
 
     const loadData = async () => {
-        const data = await cvAPI.getAll();
-        const cvLink = await contentAPI.getByKey('cv.pdf_url');
-        const summary = await contentAPI.getByKey('cv.bio');
+        const [data, allContent] = await Promise.all([
+            cvAPI.getAll(),
+            contentAPI.getAll()
+        ]);
+
+        const getV = (key: string) => allContent.find(c => c.key === key)?.value;
 
         setSections(data);
-        if (cvLink) setCvPdfLink(cvLink.value);
-        if (summary) setProfileSummary(summary.value);
+        setCvPdfLink(getV('cv.pdf_url') || '');
+        setProfileSummary(getV('cv.bio') || '');
         setLoading(false);
     };
 
@@ -117,7 +120,7 @@ export default function CV() {
                         {/* HOBBIES */}
                         {hobbies.length > 0 && (
                             <div style={{ marginTop: '80px' }}>
-                                <h3 style={{ fontSize: '24px', marginBottom: '20px' }}>HOBBIES</h3>
+                                <h3 style={{ fontSize: '24px', marginBottom: '20px' }}>LANGUAGES</h3>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                     {hobbies.map(hobby => (
                                         <span key={hobby.id} style={{
