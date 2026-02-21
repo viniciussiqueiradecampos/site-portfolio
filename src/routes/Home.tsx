@@ -45,7 +45,7 @@ export default function Home() {
 
     // Data State
     const [heroTitle, setHeroTitle] = useState('figma • UI DESIGN • AI • WEB DESIGN');
-    const [heroDesc, setHeroDesc] = useState('Loading description...');
+    const [heroDesc, setHeroDesc] = useState(' ');
     const [storyText, setStoryText] = useState('Experience designing products for ambitious companies');
     const [pitchData, setPitchData] = useState({
         description: '',
