@@ -180,276 +180,280 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
 
     if (!images || images.length === 0) return null;
 
-    if (images.length > 2) {
-        // Triple the images to ensure no gaps on wide screens and smooth looping
-        const displayImages = [...images, ...images, ...images];
-
-        return (
-            <div
-                style={{
-                    width: '100%',
-                    height: 'auto',
-                    overflowX: 'hidden',
-                    overflowY: 'visible',
-                    position: 'relative',
-                    padding: '30px 0'
-                }}
-            >
-                <motion.div
-                    animate={{ x: ["0%", "-33.333%"] }}
-                    transition={{
-                        x: {
-                            repeat: Infinity,
-                            repeatType: "loop",
-                            duration: images.length * 30, // Faster as requested
-                            ease: "linear",
-                        },
-                    }}
-                    style={{
-                        display: 'flex',
-                        gap: '40px',
-                        width: 'max-content',
-                        padding: '0 20px',
-                        alignItems: 'center',
-                        willChange: 'transform'
-                    }}
-                >
-                    {displayImages.map((img, i) => {
-                        const isVideo = isVideoUrl(img);
-                        return (
-                            <div
-                                key={i}
-                                style={{
-                                    flex: '0 0 auto',
-                                    height: 'clamp(300px, 50vh, 600px)',
-                                    borderRadius: '12px',
-                                    overflow: 'hidden',
-                                    position: 'relative',
-                                    background: 'transparent',
-                                    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.06)'
-                                }}
-                            >
-                                {isVideo ? (
-                                    <video
-                                        src={img}
-                                        autoPlay={true}
-                                        loop={true}
-                                        muted={true}
-                                        playsInline={true}
-                                        preload="auto"
-                                        style={{
-                                            height: '100%',
-                                            width: 'auto',
-                                            objectFit: 'contain',
-                                            display: 'block'
-                                        }}
-                                        ref={(el) => {
-                                            if (el) {
-                                                el.defaultMuted = true;
-                                                el.muted = true;
-                                                el.play().catch(e => console.log('Autoplay prevented:', e));
-                                            }
-                                        }}
-                                    />
-                                ) : (
-                                    <img
-                                        src={img}
-                                        alt={`Gallery ${i}`}
-                                        style={{
-                                            height: '100%',
-                                            width: 'auto',
-                                            objectFit: 'contain',
-                                            display: 'block'
-                                        }}
-                                    />
-                                )}
-                            </div>
-                        );
-                    })}
-                </motion.div>
-            </div>
-        );
-    }
-
     const currentItem = images[index];
     const isCurrentVideo = isVideoUrl(currentItem);
 
-    return (
-        <>
-            <div style={{ position: 'relative', width: '100%', height: '70vh', overflow: 'hidden', borderRadius: 'var(--radius-lg)', background: 'transparent' }}>
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={index}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        style={{ width: '100%', height: '100%', position: 'relative' }}
-                    >
-                        {isCurrentVideo ? (
-                            <video
-                                src={currentItem}
-                                autoPlay={true}
-                                loop={true}
-                                muted={true}
-                                playsInline={true}
-                                preload="auto"
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'contain',
-                                    borderRadius: 'var(--radius-lg)',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-                                }}
-                                ref={(el) => {
-                                    if (el) {
-                                        el.defaultMuted = true;
-                                        el.muted = true;
-                                        el.play().catch(e => console.log('Autoplay prevented:', e));
-                                    }
-                                }}
-                            />
-                        ) : (
-                            <img
-                                src={currentItem}
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'contain',
-                                    borderRadius: 'var(--radius-lg)',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-                                }}
-                            />
-                        )}
-                    </motion.div>
-                </AnimatePresence>
-
-                {/* Navigation and Controls */}
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    zIndex: 10,
+    const mainCarouselContent = images.length > 2 ? (
+        // Triple the images to ensure no gaps on wide screens and smooth looping
+        <div
+            style={{
+                width: '100%',
+                height: 'auto',
+                overflowX: 'hidden',
+                overflowY: 'visible',
+                position: 'relative',
+                padding: '30px 0'
+            }}
+        >
+            <motion.div
+                animate={{ x: ["0%", "-33.333%"] }}
+                transition={{
+                    x: {
+                        repeat: Infinity,
+                        repeatType: "loop",
+                        duration: images.length * 30, // Faster as requested
+                        ease: "linear",
+                    },
+                }}
+                style={{
                     display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center'
-                }}>
-                    {/* Fullscreen Toggle (Top Right) */}
-                    <div style={{ position: 'absolute', top: '20px', right: '20px', pointerEvents: 'auto' }}>
+                    gap: '40px',
+                    width: 'max-content',
+                    padding: '0 20px',
+                    alignItems: 'center',
+                    willChange: 'transform'
+                }}
+            >
+                {[...images, ...images, ...images].map((img, i) => {
+                    const isVideo = isVideoUrl(img);
+                    return (
+                        <div
+                            key={i}
+                            onClick={() => {
+                                setIndex(i % images.length);
+                                setIsFullscreen(true);
+                            }}
+                            className="clickable project-card"
+                            style={{
+                                flex: '0 0 auto',
+                                height: 'clamp(300px, 50vh, 600px)',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                position: 'relative',
+                                background: 'transparent',
+                                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.06)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {isVideo ? (
+                                <video
+                                    src={img}
+                                    autoPlay={true}
+                                    loop={true}
+                                    muted={true}
+                                    playsInline={true}
+                                    preload="auto"
+                                    style={{
+                                        height: '100%',
+                                        width: 'auto',
+                                        objectFit: 'contain',
+                                        display: 'block'
+                                    }}
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.defaultMuted = true;
+                                            el.muted = true;
+                                            el.play().catch(e => console.log('Autoplay prevented:', e));
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <img
+                                    src={img}
+                                    alt={`Gallery ${i}`}
+                                    style={{
+                                        height: '100%',
+                                        width: 'auto',
+                                        objectFit: 'contain',
+                                        display: 'block'
+                                    }}
+                                />
+                            )}
+                        </div>
+                    );
+                })}
+            </motion.div>
+        </div>
+    ) : (
+        <div style={{ position: 'relative', width: '100%', height: '70vh', overflow: 'hidden', borderRadius: 'var(--radius-lg)', background: 'transparent' }}>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    style={{ width: '100%', height: '100%', position: 'relative' }}
+                >
+                    {isCurrentVideo ? (
+                        <video
+                            src={currentItem}
+                            autoPlay={true}
+                            loop={true}
+                            muted={true}
+                            playsInline={true}
+                            preload="auto"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                borderRadius: 'var(--radius-lg)',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                            }}
+                            ref={(el) => {
+                                if (el) {
+                                    el.defaultMuted = true;
+                                    el.muted = true;
+                                    el.play().catch(e => console.log('Autoplay prevented:', e));
+                                }
+                            }}
+                        />
+                    ) : (
+                        <img
+                            src={currentItem}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                borderRadius: 'var(--radius-lg)',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                            }}
+                        />
+                    )}
+                </motion.div>
+            </AnimatePresence>
+
+            {/* Navigation and Controls */}
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center'
+            }}>
+                {/* Fullscreen Toggle (Top Right) */}
+                <div style={{ position: 'absolute', top: '20px', right: '20px', pointerEvents: 'auto' }}>
+                    <button
+                        onClick={() => setIsFullscreen(true)}
+                        className="clickable"
+                        style={{
+                            background: 'var(--surface-color)', // Solid background for AAA contrast
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-color)', // High contrast text/icon
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        <Maximize2 size={20} />
+                    </button>
+                </div>
+
+                {/* Arrows (Closer to center) */}
+                {images.length > 1 && (
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        maxWidth: '960px', // Constrain width to bring arrows closer
+                        margin: '0 auto',
+                        padding: '0 20px'
+                    }}>
                         <button
-                            onClick={() => setIsFullscreen(true)}
+                            onClick={prev}
                             className="clickable"
                             style={{
+                                pointerEvents: 'auto',
                                 background: 'var(--surface-color)', // Solid background for AAA contrast
                                 border: '1px solid var(--border-color)',
-                                color: 'var(--text-color)', // High contrast text/icon
-                                width: '40px',
-                                height: '40px',
+                                color: 'var(--text-color)', // High contrast
+                                width: '48px',
+                                height: '48px',
                                 borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                cursor: 'pointer',
                                 transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.1)';
+                                e.currentTarget.style.borderColor = 'var(--accent-color)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.borderColor = 'var(--border-color)';
                             }}
                         >
-                            <Maximize2 size={20} />
+                            <ChevronLeft size={24} />
                         </button>
-                    </div>
-
-                    {/* Arrows (Closer to center) */}
-                    {images.length > 1 && (
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            width: '100%',
-                            maxWidth: '960px', // Constrain width to bring arrows closer
-                            margin: '0 auto',
-                            padding: '0 20px'
-                        }}>
-                            <button
-                                onClick={prev}
-                                className="clickable"
-                                style={{
-                                    pointerEvents: 'auto',
-                                    background: 'var(--surface-color)', // Solid background for AAA contrast
-                                    border: '1px solid var(--border-color)',
-                                    color: 'var(--text-color)', // High contrast
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.3s ease',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'scale(1.1)';
-                                    e.currentTarget.style.borderColor = 'var(--accent-color)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'scale(1)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
-                            >
-                                <ChevronLeft size={24} />
-                            </button>
-                            <button
-                                onClick={next}
-                                className="clickable"
-                                style={{
-                                    pointerEvents: 'auto',
-                                    background: 'var(--surface-color)',
-                                    border: '1px solid var(--border-color)',
-                                    color: 'var(--text-color)',
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.3s ease',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'scale(1.1)';
-                                    e.currentTarget.style.borderColor = 'var(--accent-color)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'scale(1)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}
-                            >
-                                <ChevronRight size={24} />
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Indicators */}
-                {images.length > 1 && (
-                    <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
-                        {images.map((_, i) => (
-                            <div
-                                key={i}
-                                style={{
-                                    width: i === index ? '24px' : '8px',
-                                    height: '8px',
-                                    borderRadius: '10px',
-                                    background: i === index ? '#fff' : 'rgba(255,255,255,0.3)',
-                                    transition: 'all 0.3s ease',
-                                    cursor: 'pointer'
-                                }}
-                                onClick={() => setIndex(i)}
-                            />
-                        ))}
+                        <button
+                            onClick={next}
+                            className="clickable"
+                            style={{
+                                pointerEvents: 'auto',
+                                background: 'var(--surface-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-color)',
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.3s ease',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.1)';
+                                e.currentTarget.style.borderColor = 'var(--accent-color)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                            }}
+                        >
+                            <ChevronRight size={24} />
+                        </button>
                     </div>
                 )}
             </div>
+
+            {/* Indicators */}
+            {images.length > 1 && (
+                <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
+                    {images.map((_, i) => (
+                        <div
+                            key={i}
+                            style={{
+                                width: i === index ? '24px' : '8px',
+                                height: '8px',
+                                borderRadius: '10px',
+                                background: i === index ? '#fff' : 'rgba(255,255,255,0.3)',
+                                transition: 'all 0.3s ease',
+                                cursor: 'pointer'
+                            }}
+                            onClick={() => setIndex(i)}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    return (
+        <>
+            {mainCarouselContent}
 
             {/* Fullscreen Modal */}
             <AnimatePresence>
@@ -470,18 +474,30 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                     >
                         <button
                             onClick={() => setIsFullscreen(false)}
+                            className="clickable"
                             style={{
                                 position: 'absolute',
                                 top: '30px',
                                 right: '30px',
-                                background: 'transparent',
+                                background: 'var(--accent-color)',
                                 border: 'none',
                                 color: '#fff',
                                 cursor: 'pointer',
-                                zIndex: 10000
+                                zIndex: 10000,
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: 0.7,
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
                             }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                            onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
                         >
-                            <X size={32} />
+                            <X size={24} />
                         </button>
 
                         {/* Fullscreen Navigation */}
@@ -489,31 +505,67 @@ const ImageCarousel = ({ images }: { images: string[] }) => {
                             <>
                                 <button
                                     onClick={prev}
+                                    className="clickable"
                                     style={{
                                         position: 'absolute',
                                         left: '30px',
-                                        background: 'transparent',
+                                        background: 'var(--accent-color)',
                                         border: 'none',
                                         color: '#fff',
                                         cursor: 'pointer',
-                                        zIndex: 10000
+                                        zIndex: 10000,
+                                        width: '56px',
+                                        height: '56px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        opacity: 0.7,
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.opacity = '1';
+                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.opacity = '0.7';
+                                        e.currentTarget.style.transform = 'scale(1)';
                                     }}
                                 >
-                                    <ChevronLeft size={48} />
+                                    <ChevronLeft size={32} />
                                 </button>
                                 <button
                                     onClick={next}
+                                    className="clickable"
                                     style={{
                                         position: 'absolute',
                                         right: '30px',
-                                        background: 'transparent',
+                                        background: 'var(--accent-color)',
                                         border: 'none',
                                         color: '#fff',
                                         cursor: 'pointer',
-                                        zIndex: 10000
+                                        zIndex: 10000,
+                                        width: '56px',
+                                        height: '56px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        opacity: 0.7,
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.opacity = '1';
+                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.opacity = '0.7';
+                                        e.currentTarget.style.transform = 'scale(1)';
                                     }}
                                 >
-                                    <ChevronRight size={48} />
+                                    <ChevronRight size={32} />
                                 </button>
                             </>
                         )}
