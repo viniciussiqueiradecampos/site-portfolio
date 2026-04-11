@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useScroll, useTransform, motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mouse, ChevronDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ProjectModal from '../components/ProjectModal';
@@ -317,7 +317,7 @@ export default function Home() {
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
             {/* HERO SECTION - Sticky Scrollytelling */}
-            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? 'auto' : '550vh', marginBottom: isMobile ? '20px' : '0', position: 'relative' }}>
+            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? '100vh' : '550vh', marginBottom: isMobile ? '20px' : '0', position: 'relative' }}>
                 <div className="sticky-wrapper" style={{
                     position: 'sticky', top: 0, height: '100vh',
                     overflow: 'hidden', display: 'flex', flexDirection: 'column',
@@ -376,6 +376,41 @@ export default function Home() {
                         </div>
                     </div>
 
+                    {/* Keep Scrolling Indicator */}
+                    <motion.div
+                        style={{
+                            position: 'absolute',
+                            bottom: isMobile ? '30px' : '40px',
+                            left: '50%',
+                            x: '-50%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '8px',
+                            opacity: useTransform(heroProgress, [0, 0.03], [1, 0]),
+                            pointerEvents: 'none',
+                            zIndex: 10
+                        }}
+                    >
+                        <motion.div
+                            animate={{ y: [0, 4, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+                        >
+                            <Mouse size={isMobile ? 18 : 20} color="var(--accent-color)" strokeWidth={1.5} />
+                            <ChevronDown size={isMobile ? 14 : 16} color="var(--accent-color)" strokeWidth={2} />
+                        </motion.div>
+                        <span style={{ 
+                            fontSize: isMobile ? '8px' : '9px', 
+                            letterSpacing: '4px', 
+                            color: 'var(--text-muted)', 
+                            fontWeight: '800',
+                            textTransform: 'uppercase',
+                            marginLeft: '4px'
+                        }}>
+                            KEEP SCROLLING
+                        </span>
+                    </motion.div>
 
                 </div>
             </section>
