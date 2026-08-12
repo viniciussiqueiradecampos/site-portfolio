@@ -9,23 +9,6 @@ import { contentAPI, projectsAPI, type Project } from '../lib/supabase';
 import { trackPageView, trackProjectClick } from '../lib/analytics';
 import { parseTranslatable } from '../lib/i18n-utils';
 
-// Helper component to fix Rule of Hooks (useTransform inside loop)
-const ScrollyWord = ({ word, progress, start, end, style }: { word: string, progress: any, start: number, end: number, style?: any }) => {
-    const opacity = useTransform(progress, [start, end], [0.1, 1]);
-
-    return (
-        <motion.span style={{
-            ...style,
-            opacity,
-            display: 'inline-block',
-            marginRight: '0.25em',
-            willChange: 'opacity'
-        }}>
-            {word}
-        </motion.span>
-    );
-};
-
 
 export default function Home() {
     const { t, i18n } = useTranslation();
@@ -33,7 +16,6 @@ export default function Home() {
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
-    const [maxX, setMaxX] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -139,21 +121,6 @@ export default function Home() {
         target: heroRef,
         offset: ["start start", "end end"]
     });
-
-    // Storytelling Section Scroll Progress
-    const { scrollYProgress: storyProgress } = useScroll({
-        target: storyRef,
-        offset: isMobile ? ["0.3 0.5", "1 1"] : ["start start", "end end"]
-    });
-
-    const [showPitch, setShowPitch] = useState(false);
-
-    useEffect(() => {
-        const unsubscribe = storyProgress.on("change", (latest) => {
-            setShowPitch(latest > 0.8);
-        });
-        return () => unsubscribe();
-    }, [storyProgress]);
 
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
 
@@ -280,196 +247,106 @@ export default function Home() {
         };
     }, [isMobile]);
 
-    // Calculate Dynamic Marquee Translation
-    useEffect(() => {
-        const calculateMaxX = () => {
-            if (titleRef.current) {
-                const titleWidth = titleRef.current.scrollWidth;
-                const windowWidth = window.innerWidth;
-                const padding = windowWidth * 0.1; // 5% each side
-                const visibleWidth = windowWidth - padding;
-
-                if (titleWidth > visibleWidth) {
-                    // Move the title left until its end aligns with the right padding
-                    setMaxX(-(titleWidth - visibleWidth));
-                } else {
-                    setMaxX(0);
-                }
-            }
-        };
-
-        // Initial calculation with a slight delay to ensure fonts/layout are ready
-        const timer = setTimeout(calculateMaxX, 100);
-        window.addEventListener('resize', calculateMaxX);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('resize', calculateMaxX);
-        };
-    }, [heroTitle, isMobile]);
-
-    // Marquee scrolls left dynamically based on content width
-    const heroTextX = useTransform(heroProgress, [0, 0.7], [0, isMobile ? 0 : maxX]);
-    const descriptionText = heroDesc.split(" ");
     const storyWords = storyText.split(" ");
 
     return (
         <div ref={containerRef} style={{ position: 'relative' }}>
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-            {/* HERO SECTION - Sticky Scrollytelling */}
-            <section ref={heroRef} className="hero-section" style={{ height: isMobile ? '100vh' : '550vh', marginBottom: isMobile ? '20px' : '0', position: 'relative' }}>
-                <div className="sticky-wrapper" style={{
-                    position: 'sticky', top: 0, height: '100vh',
-                    overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                    justifyContent: 'center', alignItems: 'flex-start',
-                    paddingRight: '5%', paddingLeft: '5%'
+            {/* HERO SECTION - Static with fade-in */}
+            <section ref={heroRef} className="hero-section" style={{ height: '100vh', position: 'relative' }}>
+                <div style={{
+                    height: '100vh',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingRight: '8%',
+                    paddingLeft: '8%',
+                    textAlign: 'center',
+                    gap: isMobile ? '20px' : '28px'
                 }}>
 
-                    {/* Main Title - Horizontal Scroll Animation */}
-                    <motion.div
-                        initial={{ opacity: 1 }}
+                    {/* Main Title - like "Designer especializado" */}
+                    <motion.h1
+                        ref={titleRef}
+                        className="hero-title"
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.1 }}
                         style={{
-                            width: 'max-content',
-                            textAlign: 'left',
-                            x: isMobile ? 0 : heroTextX,
-                            opacity: 1,
-                            marginBottom: isMobile ? '20px' : '40px',
-                            whiteSpace: isMobile ? 'normal' : 'nowrap',
-                            maxWidth: isMobile ? '100%' : 'none'
+                            fontSize: isMobile ? 'clamp(28px, 9vw, 38px)' : 'clamp(36px, 5.5vw, 72px)',
+                            lineHeight: '1.1',
+                            margin: 0,
+                            textAlign: 'center',
+                            wordBreak: isMobile ? 'break-word' : 'normal',
+                            maxWidth: isMobile ? '100%' : '820px'
                         }}
                     >
-                        <h1 ref={titleRef} className="hero-title" style={{
-                            fontSize: isMobile ? 'clamp(32px, 12vw, 42px)' : '11vw',
-                            lineHeight: '0.9',
-                            margin: 0,
-                            textAlign: isMobile ? 'center' : 'left',
-                            wordBreak: isMobile ? 'break-word' : 'normal'
-                        }}>
-                            {heroTitle}
-                        </h1>
-                    </motion.div>
+                        {heroTitle}
+                    </motion.h1>
 
-                    {/* Description */}
-                    <div style={{
-                        maxWidth: isMobile ? '100%' : '450px',
-                        width: '100%',
-                        alignSelf: isMobile ? 'center' : 'flex-end',
-                        textAlign: isMobile ? 'center' : 'right',
-                        marginTop: isMobile ? '20px' : '0'
-                    }}>
-                        <div style={{
-                            fontSize: isMobile ? '16px' : 'clamp(14px, 2vw, 20px)',
-                            lineHeight: '1.6',
+                    {/* Description below - like "Oi, eu sou" */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.45 }}
+                        style={{
+                            fontSize: isMobile ? '14px' : 'clamp(13px, 1.2vw, 17px)',
+                            lineHeight: '1.7',
                             color: 'var(--text-muted)',
                             fontFamily: 'var(--font-body)',
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            justifyContent: isMobile ? 'center' : 'flex-end',
-                            gap: '6px'
-                        }}>
-                            {isMobile ? heroDesc : descriptionText.map((word, i) => {
-                                const step = 0.45 / descriptionText.length;
-                                const start = 0.5 + (i * step);
-                                const end = start + step;
-                                return <ScrollyWord key={`hero-${i}`} word={word} progress={heroProgress} start={start} end={end} />;
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Keep Scrolling Indicator */}
-                    <motion.div
-                        style={{
-                            position: 'absolute',
-                            bottom: isMobile ? '30px' : '40px',
-                            left: '50%',
-                            x: '-50%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '8px',
-                            opacity: useTransform(heroProgress, [0, 0.03], [1, 0]),
-                            pointerEvents: 'none',
-                            zIndex: 10
+                            maxWidth: isMobile ? '90%' : '520px',
+                            textAlign: 'center'
                         }}
                     >
-                        <motion.div
-                            animate={{ y: [0, 4, 0] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-                        >
-                            <Mouse size={isMobile ? 18 : 20} color="var(--accent-color)" strokeWidth={1.5} />
-                            <ChevronDown size={isMobile ? 14 : 16} color="var(--accent-color)" strokeWidth={2} />
-                        </motion.div>
-                        <span style={{ 
-                            fontSize: isMobile ? '8px' : '9px', 
-                            letterSpacing: '4px', 
-                            color: 'var(--text-muted)', 
-                            fontWeight: '800',
-                            textTransform: 'uppercase',
-                            marginLeft: '4px'
-                        }}>
-                            KEEP SCROLLING
-                        </span>
+                        {heroDesc}
                     </motion.div>
 
                 </div>
             </section>
 
             {/* SECTION 2: STORYTELLING */}
-            <section ref={storyRef} className="story-section" style={{ height: isMobile ? '180vh' : '250vh', position: 'relative', background: 'var(--bg-color)', zIndex: 10 }}>
-                <div className="sticky-wrapper" style={{
-                    position: 'sticky', top: 'var(--header-height)', height: 'calc(100vh - var(--header-height))',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: isMobile ? '0 20px' : '0'
-                }}>
-                    <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center' }}>
-                        <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            justifyContent: 'center',
-                            gap: isMobile ? '8px' : '12px',
-                            maxWidth: isMobile ? '260px' : 'none',
-                            margin: '0 auto',
-                            transition: 'all 0.5s ease',
-                            opacity: showPitch ? 1 : 1,
-                            transform: `translateY(${showPitch ? '-20px' : '0'})`
-                        }}>
-                            {storyWords.map((word, i) => {
-                                const step = 0.6 / storyWords.length;
-                                const start = isMobile ? (i * step) : 0.1 + (i * step);
-                                const end = start + step;
-                                return (
-                                    <ScrollyWord
-                                        key={`story-${i}`}
-                                        word={word}
-                                        progress={storyProgress}
-                                        start={start}
-                                        end={end}
-                                        style={{
-                                            fontSize: isMobile ? 'clamp(20px, 6vw, 32px)' : 'clamp(40px, 5vw, 90px)',
-                                            fontWeight: 900,
-                                            fontFamily: 'var(--font-display)',
-                                            lineHeight: 1.1,
-                                            textAlign: isMobile ? 'center' : 'left'
-                                        }}
-                                    />
-                                );
-                            })}
-                        </div>
+            <section ref={storyRef} className="story-section" style={{ padding: isMobile ? '80px 20px' : '140px 0', background: 'var(--bg-color)', zIndex: 10 }}>
+                <div className="container" style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '40px'
+                    }}>
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-10%" }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            style={{
+                                maxWidth: isMobile ? '100%' : '800px',
+                                margin: '0 auto',
+                                fontSize: isMobile ? 'clamp(24px, 7vw, 36px)' : 'clamp(32px, 5vw, 64px)',
+                                fontWeight: 800,
+                                fontFamily: 'var(--font-display)',
+                                lineHeight: 1.2,
+                                textAlign: 'center',
+                                color: 'var(--text-color)'
+                            }}
+                        >
+                            {storyText}
+                        </motion.div>
 
-                        {/* FADE IN PITCH CONTENT - DELAYED UNTIL SCROLLY WORDS FINISH */}
-                        <AnimatePresence>
-                            {showPitch && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 30 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 30 }}
-                                    transition={{ duration: 0.8, ease: "easeOut" }}
-                                    style={{
-                                        marginTop: '40px',
-                                        paddingBottom: isMobile ? '60px' : '120px'
-                                    }}
-                                >
+                        {/* FADE IN PITCH CONTENT */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-10%" }}
+                            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                            style={{
+                                maxWidth: '600px',
+                                margin: '0 auto'
+                            }}
+                        >
                                     <p style={{ fontSize: '20px', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 40px', lineHeight: 1.6 }}>
                                         {pitchData.description}
                                     </p>
@@ -489,10 +366,6 @@ export default function Home() {
                                         {pitchData.btnText} →
                                     </a>
                                 </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Removed Scroll Indicator as requested */}
                     </div>
                 </div>
             </section>

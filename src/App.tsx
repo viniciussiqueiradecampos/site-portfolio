@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ArrowUpRight, MousePointer2, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import './i18n';
 import './App.css'; // Global Styles
 import './index.css';
@@ -45,84 +45,6 @@ const PageLoader = () => (
     </motion.div>
   </div>
 );
-
-// New Premium Global Intro Loader
-const GlobalLoader = () => {
-  return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0, y: -20, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999999,
-        background: 'var(--bg-color)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '30px'
-      }}
-    >
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          style={{
-            fontFamily: 'var(--font-logo)',
-            fontSize: '24px',
-            letterSpacing: '8px',
-            color: 'var(--text-color)',
-            marginBottom: '10px'
-          }}
-        >
-          VINICIUS CAMPOS
-        </motion.div>
-
-        <div style={{
-          width: '200px',
-          height: '1px',
-          background: 'rgba(255,255,255,0.1)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <motion.div
-            initial={{ left: '-100%' }}
-            animate={{ left: '100%' }}
-            transition={{
-              repeat: Infinity,
-              duration: 1.5,
-              ease: "easeInOut"
-            }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              width: '50%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, var(--accent-color), transparent)'
-            }}
-          />
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.8 }}
-          style={{
-            marginTop: '20px',
-            fontSize: '10px',
-            letterSpacing: '4px',
-            color: 'var(--text-muted)',
-            fontWeight: '600'
-          }}
-        >
-          INITIALIZING EXPERIENCE
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
 
 // Custom Cursor Component
 const CustomCursor = () => {
@@ -248,22 +170,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function AppContent() {
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-
-  useEffect(() => {
-    // Force a minimum loading time to ensure smooth entrance and data settling
-    const timer = setTimeout(() => {
-      setIsInitialLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <>
-      <AnimatePresence mode="wait">
-        {isInitialLoading && <GlobalLoader key="global-loader" />}
-      </AnimatePresence>
-
       <ScrollToTop />
       <CustomCursor />
       <Suspense fallback={<PageLoader />}>
