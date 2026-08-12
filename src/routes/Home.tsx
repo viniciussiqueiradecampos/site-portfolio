@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useScroll, useTransform, motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Mouse, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ProjectModal from '../components/ProjectModal';
@@ -116,11 +116,7 @@ export default function Home() {
         if (ft) setFooterText(parseTranslatable(ft, lang));
     };
 
-    // Hero Section Scroll Progress
-    const { scrollYProgress: heroProgress } = useScroll({
-        target: heroRef,
-        offset: ["start start", "end end"]
-    });
+    // Hero Section references and scrolling were simplified
 
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
 
@@ -246,8 +242,6 @@ export default function Home() {
             slider.removeEventListener('mousemove', handleMouseMove);
         };
     }, [isMobile]);
-
-    const storyWords = storyText.split(" ");
 
     return (
         <div ref={containerRef} style={{ position: 'relative' }}>
