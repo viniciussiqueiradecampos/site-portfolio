@@ -95,6 +95,7 @@ export default function AdminDashboard() {
     const [heroTitle, setHeroTitle] = useState('');
     const [heroDesc, setHeroDesc] = useState('');
     const [storyText, setStoryText] = useState('');
+    const [storytellingVisible, setStorytellingVisible] = useState(true);
     const [pitchDesc, setPitchDesc] = useState('');
     const [pitchBtnText, setPitchBtnText] = useState('');
     const [pitchBtnLink, setPitchBtnLink] = useState('');
@@ -187,6 +188,7 @@ export default function AdminDashboard() {
         setHeroTitle(getV('hero.title') || '');
         setHeroDesc(getV('hero.description') || '');
         setStoryText(getV('storytelling.main') || '');
+        setStorytellingVisible(getV('storytelling.visible') !== 'false');
         setPitchDesc(getV('storytelling.description') || '');
         setPitchBtnText(getV('storytelling.button_text') || '');
         setPitchBtnLink(getV('storytelling.button_link') || '');
@@ -312,6 +314,7 @@ export default function AdminDashboard() {
                 contentAPI.update('hero.title', heroTitle, 'hero'),
                 contentAPI.update('hero.description', heroDesc, 'hero'),
                 contentAPI.update('storytelling.main', storyText, 'storytelling'),
+                contentAPI.update('storytelling.visible', storytellingVisible ? 'true' : 'false', 'storytelling'),
                 contentAPI.update('storytelling.description', pitchDesc, 'storytelling'),
                 contentAPI.update('storytelling.button_text', pitchBtnText, 'storytelling'),
                 contentAPI.update('storytelling.button_link', pitchBtnLink, 'storytelling')
@@ -1095,8 +1098,24 @@ export default function AdminDashboard() {
                             </div>
 
                             <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '32px', border: '1px solid var(--border-color)' }}>
-                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)', display: 'flex', justifyContent: 'space-between' }}>
+                                <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     Storytelling
+                                    <button
+                                        onClick={() => setStorytellingVisible(!storytellingVisible)}
+                                        style={{
+                                            padding: '8px 20px',
+                                            borderRadius: '100px',
+                                            border: 'none',
+                                            fontSize: '12px',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            background: storytellingVisible ? '#22c55e' : '#ef4444',
+                                            color: '#fff',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        {storytellingVisible ? '● Visible' : '○ Hidden'}
+                                    </button>
                                 </h3>
                                 <div style={{ display: 'grid', gap: '24px' }}>
                                     <div>

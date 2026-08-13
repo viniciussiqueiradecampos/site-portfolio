@@ -29,6 +29,7 @@ export default function Home() {
     const [heroTitle, setHeroTitle] = useState('figma • UI DESIGN • AI • WEB DESIGN');
     const [heroDesc, setHeroDesc] = useState(' ');
     const [storyText, setStoryText] = useState('Experience designing products for ambitious companies');
+    const [storytellingVisible, setStorytellingVisible] = useState(true);
     const [pitchData, setPitchData] = useState({
         description: '',
         btnText: "LET'S WORK TOGETHER",
@@ -88,6 +89,9 @@ export default function Home() {
 
         const story = getV('storytelling.main');
         if (story) setStoryText(parseTranslatable(story, lang));
+
+        const storyVisible = getV('storytelling.visible');
+        setStorytellingVisible(storyVisible !== 'false');
 
         setPitchData({
             description: parseTranslatable(getV('storytelling.description') || '', lang),
@@ -302,6 +306,7 @@ export default function Home() {
             </section>
 
             {/* SECTION 2: STORYTELLING */}
+            {storytellingVisible && (
             <section ref={storyRef} className="story-section" style={{ padding: isMobile ? '40px 20px' : '140px 0', background: 'var(--bg-color)', zIndex: 10 }}>
                 <div className="container" style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
                     <div style={{
@@ -363,6 +368,7 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+            )}
 
 
             {/* SECTION 3: PORTFOLIO */}
