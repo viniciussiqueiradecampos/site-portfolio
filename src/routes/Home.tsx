@@ -302,14 +302,14 @@ export default function Home() {
             </section>
 
             {/* SECTION 2: STORYTELLING */}
-            <section ref={storyRef} className="story-section" style={{ padding: isMobile ? '80px 20px' : '140px 0', background: 'var(--bg-color)', zIndex: 10 }}>
+            <section ref={storyRef} className="story-section" style={{ padding: isMobile ? '40px 20px' : '140px 0', background: 'var(--bg-color)', zIndex: 10 }}>
                 <div className="container" style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '40px'
+                        gap: isMobile ? '20px' : '40px'
                     }}>
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
@@ -366,7 +366,7 @@ export default function Home() {
 
 
             {/* SECTION 3: PORTFOLIO */}
-            <section id="portfolio" className="portfolio-section" style={{ padding: '60px 0 120px', background: 'var(--bg-color)', position: 'relative', zIndex: 10 }}>
+            <section id="portfolio" className="portfolio-section" style={{ padding: isMobile ? '20px 0 80px' : '60px 0 120px', background: 'var(--bg-color)', position: 'relative', zIndex: 10 }}>
                 <div className="container" style={{ maxWidth: '100%', padding: '0 5%', position: 'relative' }}>
                     <div className="portfolio-title-row" style={{
                         display: 'flex',
