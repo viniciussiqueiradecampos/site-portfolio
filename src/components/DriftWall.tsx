@@ -5,7 +5,7 @@ interface DriftWallProps {
     projects: Project[];
     columns?: number;
     speed?: number; // seconds per cycle (larger = slower)
-    rotateAngle?: number; // angle in degrees (e.g. -45)
+    rotateAngle?: number; // angle in degrees (default 0)
     onProjectClick?: (project: Project) => void;
     className?: string;
     style?: React.CSSProperties;
@@ -14,8 +14,8 @@ interface DriftWallProps {
 export const DriftWall: React.FC<DriftWallProps> = ({
     projects,
     columns = 3,
-    speed = 45,
-    rotateAngle = -45,
+    speed = 100,
+    rotateAngle = 0,
     onProjectClick,
     style
 }) => {
@@ -57,30 +57,28 @@ export const DriftWall: React.FC<DriftWallProps> = ({
                 width: '100%',
                 height: '100%',
                 overflow: 'hidden',
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
+                padding: '48px 0 24px',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
                 ...style
             }}
         >
             <div
-                className="drift-wall-inner-transformed"
+                className="drift-wall-inner"
                 style={{
-                    position: 'absolute',
-                    top: '-30%',
-                    left: '-30%',
-                    width: '160%',
-                    height: '160%',
+                    width: '100%',
+                    height: '100%',
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columns}, 1fr)`,
-                    gap: '20px',
-                    padding: '20px',
-                    transform: `rotate(${rotateAngle}deg)`,
+                    gap: '16px',
+                    padding: '0 8px',
+                    transform: rotateAngle !== 0 ? `rotate(${rotateAngle}deg)` : 'none',
                     transformOrigin: 'center center'
                 }}
             >
                 {columnData.map((colProjects, colIndex) => {
                     const isReverse = colIndex % 2 === 1;
-                    const duration = speed + colIndex * 6; // slow, smooth variations
+                    const duration = speed + colIndex * 12; // ultra smooth, subtle speed variance
                     const duplicatedProjects = [...colProjects, ...colProjects, ...colProjects, ...colProjects];
 
                     return (
@@ -97,7 +95,7 @@ export const DriftWall: React.FC<DriftWallProps> = ({
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    gap: '20px',
+                                    gap: '16px',
                                     animationName: isReverse ? 'driftDown' : 'driftUp',
                                     animationDuration: `${duration}s`,
                                     animationTimingFunction: 'linear',
@@ -116,7 +114,7 @@ export const DriftWall: React.FC<DriftWallProps> = ({
                                             overflow: 'hidden',
                                             cursor: onProjectClick ? 'pointer' : 'default',
                                             backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                                            boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                                             aspectRatio: (itemIdx + colIndex) % 2 === 0 ? '4/5' : '3/4',
                                             transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), boxShadow 0.4s ease'
                                         }}
