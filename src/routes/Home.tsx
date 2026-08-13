@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ProjectModal from '../components/ProjectModal';
 import RevealText from '../components/RevealText';
+import DriftWall from '../components/DriftWall';
 import { contentAPI, projectsAPI, type Project } from '../lib/supabase';
 import { trackPageView, trackProjectClick } from '../lib/analytics';
 import { parseTranslatable } from '../lib/i18n-utils';
@@ -192,7 +193,7 @@ export default function Home() {
     }, [currentProjectIndex, projects.length]);
 
     // Modal State
-    const [selectedProject] = useState<Project | null>(null);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // --- RESPONSIVE --- (Listeners already set up above)
@@ -251,57 +252,93 @@ export default function Home() {
         <div ref={containerRef} style={{ position: 'relative' }}>
             <ProjectModal project={selectedProject} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-            {/* HERO SECTION - Static with fade-in */}
-            <section ref={heroRef} className="hero-section" style={{ height: '100vh', position: 'relative' }}>
+            {/* HERO SECTION - Drift Wall Left, Text Right */}
+            <section ref={heroRef} className="hero-section" style={{
+                height: isMobile ? 'auto' : '100vh',
+                minHeight: isMobile ? '100vh' : 'auto',
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                padding: isMobile ? '100px 20px 60px' : '0 5%'
+            }}>
                 <div style={{
-                    height: '100vh',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingRight: '8%',
-                    paddingLeft: '8%',
-                    textAlign: 'center',
-                    gap: isMobile ? '20px' : '28px'
+                    width: '100%',
+                    maxWidth: '1400px',
+                    margin: '0 auto',
+                    height: '100%',
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : '1.1fr 0.9fr',
+                    gap: isMobile ? '32px' : '60px',
+                    alignItems: 'center'
                 }}>
+                    {/* Left Column: Drift Wall */}
+                    <div style={{
+                        height: isMobile ? '45vh' : 'calc(100vh - 120px)',
+                        width: '100%',
+                        position: 'relative',
+                        borderRadius: '24px',
+                        overflow: 'hidden'
+                    }}>
+                        <DriftWall
+                            projects={projects}
+                            columns={3}
+                            speed={22}
+                            onProjectClick={(proj) => {
+                                if (proj.slug || proj.id) {
+                                    navigate(`/project/${proj.slug || proj.id}`);
+                                } else {
+                                    setSelectedProject(proj);
+                                    setIsModalOpen(true);
+                                }
+                            }}
+                        />
+                    </div>
 
-                    {/* Main Title - like "Designer especializado" */}
-                    <motion.h1
-                        ref={titleRef}
-                        className="hero-title"
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.1 }}
-                        style={{
-                            fontSize: isMobile ? 'clamp(28px, 9vw, 38px)' : 'clamp(36px, 5.5vw, 72px)',
-                            lineHeight: '1.1',
-                            margin: 0,
-                            textAlign: 'center',
-                            wordBreak: isMobile ? 'break-word' : 'normal',
-                            maxWidth: isMobile ? '100%' : '820px'
-                        }}
-                    >
-                        {heroTitle}
-                    </motion.h1>
+                    {/* Right Column: Hero Text */}
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: isMobile ? 'center' : 'flex-start',
+                        textAlign: isMobile ? 'center' : 'left',
+                        gap: isMobile ? '16px' : '24px',
+                        paddingRight: isMobile ? '0' : '20px'
+                    }}>
+                        {/* Main Title */}
+                        <motion.h1
+                            ref={titleRef}
+                            className="hero-title"
+                            initial={{ opacity: 0, y: 24 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.9, ease: 'easeOut', delay: 0.1 }}
+                            style={{
+                                fontSize: isMobile ? 'clamp(26px, 7vw, 36px)' : 'clamp(32px, 4.2vw, 58px)',
+                                lineHeight: '1.15',
+                                margin: 0,
+                                wordBreak: isMobile ? 'break-word' : 'normal',
+                                maxWidth: '650px'
+                            }}
+                        >
+                            {heroTitle}
+                        </motion.h1>
 
-                    {/* Description below - like "Oi, eu sou" */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.45 }}
-                        style={{
-                            fontSize: isMobile ? '14px' : 'clamp(13px, 1.2vw, 17px)',
-                            lineHeight: '1.7',
-                            color: 'var(--text-muted)',
-                            fontFamily: 'var(--font-body)',
-                            maxWidth: isMobile ? '90%' : '520px',
-                            textAlign: 'center'
-                        }}
-                    >
-                        {heroDesc}
-                    </motion.div>
-
+                        {/* Description below */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+                            style={{
+                                fontSize: isMobile ? '14px' : 'clamp(14px, 1.1vw, 17px)',
+                                lineHeight: '1.7',
+                                color: 'var(--text-muted)',
+                                fontFamily: 'var(--font-body)',
+                                maxWidth: '520px'
+                            }}
+                        >
+                            {heroDesc}
+                        </motion.div>
+                    </div>
                 </div>
             </section>
 
