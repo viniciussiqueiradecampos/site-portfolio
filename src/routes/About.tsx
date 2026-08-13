@@ -1,5 +1,5 @@
 // Last updated: 2026-02-19 16:20
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 import { motion } from 'framer-motion';
 import {
@@ -7,15 +7,10 @@ import {
     Layers, Layout, Palette, PenTool,
     Code2, Monitor, Brush
 } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from '@studio-freight/lenis';
 import { aboutAPI, contentAPI, type AboutTestimonial, type AboutMemory } from '../lib/supabase';
 import { trackPageView } from '../lib/analytics';
 import { useTranslation } from 'react-i18next';
 import { parseTranslatable } from '../lib/i18n-utils';
-
-gsap.registerPlugin(ScrollTrigger);
 
 // Physics Tags Component (Com Matter.js para Simulacao Real 2D)
 const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) => {
@@ -141,30 +136,37 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
         // Trigger re-render so JSX picks up the new items
         setRenderItems(items.map(({ body: _body, ...rest }) => rest));
 
-        const mouse = Matter.Mouse.create(sceneRef.current);
-        const mouseConstraint = Matter.MouseConstraint.create(engine, {
-            mouse: mouse,
-            constraint: {
-                stiffness: 0.2,
-                render: { visible: false }
-            }
-        });
-        Matter.World.add(world, mouseConstraint);
-
-        mouseConstraint.mouse.element.removeEventListener("mousewheel", (mouseConstraint.mouse as any).mousewheel);
-        mouseConstraint.mouse.element.removeEventListener("DOMMouseScroll", (mouseConstraint.mouse as any).mousewheel);
-
-        const update = () => {
-            Matter.Engine.update(engine, 1000 / 60);
-
-            bodiesRef.current.forEach((b: any, idx: number) => {
-                const el = containersRef.current[idx];
-                if (el && b.body) {
-                    const { x, y } = b.body.position;
-                    const angle = b.body.angle;
-                    el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) rotate(${angle}rad)`;
+        try {
+            const mouse = Matter.Mouse.create(sceneRef.current);
+            const mouseConstraint = Matter.MouseConstraint.create(engine, {
+                mouse: mouse,
+                constraint: {
+                    stiffness: 0.2,
+                    render: { visible: false }
                 }
             });
+            Matter.World.add(world, mouseConstraint);
+        } catch (err) {
+            console.warn('PhysicsTags mouse constraint error:', err);
+        }
+
+        const update = () => {
+            try {
+                Matter.Engine.update(engine, 1000 / 60);
+
+                if (bodiesRef.current && containersRef.current) {
+                    bodiesRef.current.forEach((b: any, idx: number) => {
+                        const el = containersRef.current[idx];
+                        if (el && b && b.body && b.body.position) {
+                            const { x, y } = b.body.position;
+                            const angle = b.body.angle || 0;
+                            el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) rotate(${angle}rad)`;
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('PhysicsTags update error:', err);
+            }
             requestRef.current = requestAnimationFrame(update);
         };
         requestRef.current = requestAnimationFrame(update);
@@ -172,8 +174,10 @@ const PhysicsTags = ({ isMobile, tags }: { isMobile: boolean; tags: string[] }) 
         return () => {
             window.removeEventListener('resize', handleResize);
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
-            Matter.World.clear(world, false);
-            Matter.Engine.clear(engine);
+            try {
+                Matter.World.clear(world, false);
+                Matter.Engine.clear(engine);
+            } catch (e) {}
         };
     }, [isMobile, tags]);
 
@@ -244,7 +248,6 @@ export default function About() {
     const [bioText, setBioText] = useState<string[]>([]);
     const [testimonials, setTestimonials] = useState<AboutTestimonial[]>([]);
     const [memories, setMemories] = useState<AboutMemory[]>([]);
-    // Build Fix: Ensure line 246 is not problematic
     const [spotifyUrl, setSpotifyUrl] = useState("");
     const [testimonialIndex, setTestimonialIndex] = useState(0);
     const [pageVisible, setPageVisible] = useState(true);
@@ -288,7 +291,7 @@ export default function About() {
                 if (pTitle) setNameTitle(parseTranslatable(pTitle, lang));
                 if (pSub) setSubtitle(parseTranslatable(pSub, lang));
                 if (pBio) setBioText([parseTranslatable(pBio, lang)]);
-                if (pVisible) setPageVisible(pVisible === 'true');
+                if (pVisible !== undefined && pVisible !== null) setPageVisible(pVisible !== 'false');
                 if (pSpotify) setSpotifyUrl(pSpotify);
 
                 setTestimonials(testimonialsData.map(t => ({
@@ -298,25 +301,22 @@ export default function About() {
                     quote: parseTranslatable(t.quote, lang)
                 })));
                 setMemories(memoriesData);
-            } catch (e) { console.error(e); } finally { setIsLoading(false); }
+            } catch (e) { console.error('About loadData error:', e); } finally { setIsLoading(false); }
         };
         loadData();
     }, [i18n.language]);
 
-    useLayoutEffect(() => {
-        if (isLoading || isMobile) return;
-        const lenis = new Lenis();
-        function raf(time: number) { lenis.raf(time); requestAnimationFrame(raf); }
-        requestAnimationFrame(raf);
+    if (!pageVisible) return (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-color)', color: 'var(--text-color)' }}>
+            Page is hidden
+        </div>
+    );
 
-        return () => {
-            lenis.destroy();
-            ScrollTrigger.getAll().forEach(t => t.kill());
-        };
-    }, [isLoading, isMobile]);
-
-    if (!pageVisible) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Page is hidden</div>;
-    if (isLoading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    if (isLoading) return (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-color)', color: 'var(--text-color)', fontFamily: 'var(--font-display)', fontSize: '18px' }}>
+            Loading...
+        </div>
+    );
 
     return (
         <div ref={containerRef} style={{ background: 'var(--bg-color)', minHeight: '100vh', overflowX: 'hidden' }}>

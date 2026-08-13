@@ -163,8 +163,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
     const sanitizePhone = (phone: string) => {
-        if (!phone) return '';
-        return phone.replace(/[^\d+]/g, '').replace('+', '');
+        if (!phone) return '351920196634';
+        const cleaned = phone.replace(/[^\d]/g, '');
+        return cleaned || '351920196634';
     };
 
     const renderDesktopNav = () => {
