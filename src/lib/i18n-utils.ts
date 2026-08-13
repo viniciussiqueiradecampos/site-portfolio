@@ -7,7 +7,8 @@ export const parseTranslatable = (text: string, lang: string) => {
     if (!text) return '';
     const parts = text.split(' || ');
     if (parts.length < 2) return text;
-    return lang === 'pt' ? parts[1] : parts[0];
+    const isPt = lang && lang.toLowerCase().startsWith('pt');
+    return isPt ? (parts[1] || parts[0]) : parts[0];
 };
 
 export const getTranslationParts = (text: string) => {

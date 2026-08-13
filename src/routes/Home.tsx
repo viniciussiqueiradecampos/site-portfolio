@@ -9,7 +9,7 @@ import { trackPageView } from '../lib/analytics';
 import { parseTranslatable } from '../lib/i18n-utils';
 
 export default function Home() {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const containerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
@@ -199,7 +199,8 @@ export default function Home() {
                                 to="/projects"
                                 className="clickable"
                                 style={{
-                                    padding: isMobile ? '12px 28px' : '16px 36px',
+                                    height: isMobile ? '46px' : '54px',
+                                    padding: isMobile ? '0 24px' : '0 36px',
                                     backgroundColor: 'var(--text-color)',
                                     color: 'var(--bg-color)',
                                     borderRadius: '100px',
@@ -211,16 +212,19 @@ export default function Home() {
                                     transition: 'transform 0.3s ease, opacity 0.3s ease',
                                     display: 'inline-flex',
                                     alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxSizing: 'border-box',
                                     gap: '8px'
                                 }}
                             >
-                                VIEW PORTFOLIO →
+                                {t('hero.view_portfolio', 'VIEW PORTFOLIO →')}
                             </Link>
                             <Link
                                 to="/cv"
                                 className="clickable"
                                 style={{
-                                    padding: isMobile ? '12px 28px' : '16px 36px',
+                                    height: isMobile ? '46px' : '54px',
+                                    padding: isMobile ? '0 24px' : '0 36px',
                                     backgroundColor: 'transparent',
                                     color: 'var(--text-color)',
                                     border: '1.5px solid var(--text-color)',
@@ -233,10 +237,12 @@ export default function Home() {
                                     transition: 'all 0.3s ease',
                                     display: 'inline-flex',
                                     alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxSizing: 'border-box',
                                     gap: '8px'
                                 }}
                             >
-                                VIEW CV
+                                {t('hero.view_cv', 'VIEW CV')}
                             </Link>
                         </motion.div>
                     </div>

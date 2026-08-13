@@ -5,19 +5,17 @@ const resources = {
     en: {
         translation: {
             "nav": {
-                "home": "HOME",
-                "about": "WHO I AM",
-                "cv": "CV",
-                "portfolio": "PORTFOLIO",
-                "blog": "BLOG",
-                "contact": "GET IN TOUCH"
+                "home": "home",
+                "about_me": "about me",
+                "about": "about",
+                "cv": "cv",
+                "portfolio": "portfolio",
+                "blog": "blog",
+                "get_in_touch": "get in touch"
             },
             "hero": {
-                "description": "Lorem ipsum dolor sit amet consectetur. Lorem morbi adipiscing netus nibh ut vel ipsum fringilla cursus. Neque blandit vestibulum sem eu viverra. Massa lorem nisl ultrices ultricies diam vitae nunc. Tristique in blandit imperdiet ante viverra tempus. Sem porttitor urna faucibus lacus. Velit lorem eu morbi vel diam etiam tincidunt dictum nunc. Accumsan varius purus auctor ullamcorper in neque orci ultrices. Purus rhoncus viverra massa sed justo."
-            },
-            "storytelling": {
-                "main": "Storytelling has always been essential in shaping our understanding of the world around us.",
-                "secondary": "With the rapid evolution of technology, the way we tell stories has been completely transformed. It not only amplifies their impact but also makes them more accessible to everyone, opening up new possibilities for immersion and interaction. At Soleil Noir, we take storytelling to the next level by blending creativity and technology. Immersive storytelling is our specialty—crafting experiences where audiences don’t just follow a narrative, they become part of it."
+                "view_portfolio": "VIEW PORTFOLIO →",
+                "view_cv": "VIEW CV"
             },
             "portfolio": {
                 "title": "SELECTED WORKS",
@@ -34,7 +32,6 @@ const resources = {
                 "colleagues_title": "Colleagues who<br />worked with me"
             },
             "footer": {
-                "touch": "GET IN TOUCH",
                 "rights": "© 2026, Vinicius Campos ⏤ All rights reserved"
             },
             "common": {
@@ -42,14 +39,55 @@ const resources = {
                 "read_less": "READ LESS"
             }
         }
+    },
+    pt: {
+        translation: {
+            "nav": {
+                "home": "home",
+                "about_me": "sobre mim",
+                "about": "sobre",
+                "cv": "cv",
+                "portfolio": "portfólio",
+                "blog": "blog",
+                "get_in_touch": "get in touch"
+            },
+            "hero": {
+                "view_portfolio": "ACESSAR PORTFÓLIO →",
+                "view_cv": "VER CV"
+            },
+            "portfolio": {
+                "title": "TRABALHOS SELECIONADOS",
+                "filter_by": "FILTRAR POR:",
+                "learn_more": "SAIBA MAIS →",
+                "view_all": "VER TODOS",
+                "view_project": "VER PROJETO"
+            },
+            "about": {
+                "hero_subtitle": "Conheça um pouco mais sobre mim!",
+                "personal_label": "Pessoal",
+                "hobbies_title": "Hobbies &<br />Interesses",
+                "collaboration_label": "Colaboração",
+                "colleagues_title": "Colegas que<br />trabalharam comigo"
+            },
+            "footer": {
+                "rights": "© 2026, Vinicius Campos ⏤ Todos os direitos reservados"
+            },
+            "common": {
+                "read_all": "LER TUDO",
+                "read_less": "LER MENOS"
+            }
+        }
     }
 };
+
+const savedLng = typeof localStorage !== 'undefined' ? localStorage.getItem('i18nextLng') : null;
 
 i18n
     .use(initReactI18next)
     .init({
         resources,
-        lng: "en",
+        lng: savedLng || "en",
+        fallbackLng: "en",
         interpolation: {
             escapeValue: false
         }

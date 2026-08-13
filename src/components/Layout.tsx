@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, Mail, Linkedin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -59,8 +59,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }
         return 'light';
     });
-    const { t } = useTranslation();
-    const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
+    const currentLang = (i18n.language || 'en').toLowerCase();
+    const isPt = currentLang.startsWith('pt');
+
+    const toggleLanguage = () => {
+        const newLang = isPt ? 'en' : 'pt';
+        i18n.changeLanguage(newLang);
+        localStorage.setItem('i18nextLng', newLang);
+    };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
@@ -87,7 +94,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             logoImageUrl: '',
             navOrder: ['navHome', 'navCV', 'navPortfolio', 'navAbout', 'navBlog', 'navGetInTouch'],
             socialEmail: '',
-            socialPhone: '',
+            socialPhone: '+351920196634',
             socialLinkedin: ''
         };
     });
@@ -119,7 +126,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             logoImageUrl: getV('general.logo_image_url') || '',
             navOrder: (getV('nav.order') || 'navHome,navCV,navPortfolio,navAbout,navBlog,navGetInTouch').split(','),
             socialEmail: getV('social.footer_email') || '',
-            socialPhone: getV('social.phone') || '',
+            socialPhone: getV('social.phone') || '+351920196634',
             socialLinkedin: getV('social.linkedin') || ''
         };
 
@@ -195,7 +202,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     style={{ display: 'flex', alignItems: 'center', gap: '5px', textTransform: 'lowercase', cursor: 'pointer' }}
                 >
-                    about me
+                    {t('nav.about_me', 'about me')}
                     <ChevronDown
                         size={14}
                         style={{
@@ -220,26 +227,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </li>
         );
 
-        if (branding.navGetInTouch) {
-            items.push(
-                <li key="contact">
-                    <button
-                        className="clickable menu-link"
-                        onClick={() => {
-                            if (window.location.pathname === '/') {
-                                const s = document.getElementById('contact');
-                                if (s) s.scrollIntoView({ behavior: 'smooth' });
-                            } else {
-                                navigate('/#contact');
-                            }
-                        }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textTransform: 'lowercase' }}
-                    >
-                        {t('nav.contact')}
-                    </button>
-                </li>
-            );
-        }
+
 
         if (branding.navBlog) {
             items.push(
@@ -247,6 +235,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <NavLink to="/blog" className={({ isActive }) => `clickable menu-link ${isActive ? 'active' : ''}`} style={{ textTransform: 'lowercase' }}>
                         {t('nav.blog')}
                     </NavLink>
+                </li>
+            );
+        }
+
+        if (branding.navGetInTouch) {
+            items.push(
+                <li key="getintouch">
+                    <a
+                        href={`https://wa.me/${sanitizePhone(branding.socialPhone || '+351920196634')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="clickable menu-link"
+                        style={{ textTransform: 'lowercase' }}
+                    >
+                        {t('nav.get_in_touch', 'get in touch')}
+                    </a>
                 </li>
             );
         }
@@ -286,7 +290,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             gap: '10px'
                         }}
                     >
-                        ABOUT ME
+                        {t('nav.about_me', 'about me').toUpperCase()}
                         <ChevronDown
                             size={24}
                             style={{
@@ -313,29 +317,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         {branding.navPortfolio && <NavLink onClick={() => { toggleMenu(); setIsMobileDropdownOpen(false); }} to="/projects" className="mobile-submenu-link">{t('nav.portfolio')}</NavLink>}
                     </div>
                 </div>
-                {branding.navGetInTouch && (
-                    <button
-                        onClick={() => {
-                            toggleMenu();
-                            if (window.location.pathname === '/') {
-                                setTimeout(() => {
-                                    const s = document.getElementById('contact');
-                                    if (s) s.scrollIntoView({ behavior: 'smooth' });
-                                }, 300);
-                            } else {
-                                navigate('/#contact');
-                            }
-                        }}
-                        className="mobile-link"
-                        style={{ ...style, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                    >
-                        {t('nav.contact')}
-                    </button>
-                )}
+
                 {branding.navBlog && (
                     <NavLink onClick={toggleMenu} to="/blog" className="mobile-link" style={style}>
                         {t('nav.blog')}
                     </NavLink>
+                )}
+
+                {branding.navGetInTouch && (
+                    <a
+                        href={`https://wa.me/${sanitizePhone(branding.socialPhone || '+351920196634')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={toggleMenu}
+                        className="mobile-link get-in-touch-mobile"
+                        style={style}
+                    >
+                        {t('nav.get_in_touch', 'get in touch').toUpperCase()}
+                    </a>
                 )}
 
                 <div style={{ marginTop: '20px', display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
@@ -472,6 +471,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             </SocialButton>
                         )}
                     </div>
+
+                    {/* Language Toggle Button */}
+                    <button
+                        onClick={toggleLanguage}
+                        className="clickable"
+                        aria-label="Toggle Language"
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '100px',
+                            padding: '6px 14px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            fontFamily: 'var(--font-display)',
+                            color: 'var(--text-color)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            letterSpacing: '0.5px',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        <span style={{ opacity: isPt ? 1 : 0.4, color: isPt ? 'var(--accent-color)' : 'inherit' }}>PT-BR</span>
+                        <span style={{ opacity: 0.3 }}>|</span>
+                        <span style={{ opacity: !isPt ? 1 : 0.4, color: !isPt ? 'var(--accent-color)' : 'inherit' }}>EN</span>
+                    </button>
 
                     <button
                         onClick={toggleTheme}

@@ -149,7 +149,7 @@ export default function AdminDashboard() {
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
-    const [editLang] = useState<'en' | 'pt'>('en');
+    const [editLang, setEditLang] = useState<'en' | 'pt'>('en');
 
     useEffect(() => {
         loadAllData();
@@ -1077,6 +1077,51 @@ export default function AdminDashboard() {
 
                     {activeTab === 'content' && (
                         <div style={{ display: 'grid', gap: '32px' }}>
+                            {/* Language Switcher Bar */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-color)', padding: '20px 30px', borderRadius: '24px', border: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '16px' }}>
+                                <div>
+                                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800 }}>Editing Language / Idioma de Edição</h4>
+                                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                        Current Editing Mode: <strong style={{ color: 'var(--accent-color)' }}>{editLang === 'en' ? 'English (en)' : 'Português PT-BR (pt)'}</strong>
+                                    </p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.25)', padding: '6px', borderRadius: '100px' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditLang('en')}
+                                        style={{
+                                            padding: '8px 20px',
+                                            borderRadius: '100px',
+                                            border: 'none',
+                                            background: editLang === 'en' ? 'var(--accent-color)' : 'transparent',
+                                            color: editLang === 'en' ? '#000' : 'var(--text-color)',
+                                            fontWeight: 800,
+                                            fontSize: '12px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        🇬🇧 English
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditLang('pt')}
+                                        style={{
+                                            padding: '8px 20px',
+                                            borderRadius: '100px',
+                                            border: 'none',
+                                            background: editLang === 'pt' ? 'var(--accent-color)' : 'transparent',
+                                            color: editLang === 'pt' ? '#000' : 'var(--text-color)',
+                                            fontWeight: 800,
+                                            fontSize: '12px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        🇧🇷 PT-BR
+                                    </button>
+                                </div>
+                            </div>
                             <div style={{ background: 'var(--surface-color)', padding: '40px', borderRadius: '32px', border: '1px solid var(--border-color)' }}>
                                 <h3 style={{ fontSize: '18px', marginBottom: '32px', color: 'var(--accent-color)', display: 'flex', justifyContent: 'space-between' }}>
                                     Hero Experience
