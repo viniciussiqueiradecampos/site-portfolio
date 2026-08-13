@@ -59,15 +59,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }
         return 'light';
     });
-    const { t, i18n } = useTranslation();
-    const currentLang = (i18n.language || 'en').toLowerCase();
-    const isPt = currentLang.startsWith('pt');
-
-    const toggleLanguage = () => {
-        const newLang = isPt ? 'en' : 'pt';
-        i18n.changeLanguage(newLang);
-        localStorage.setItem('i18nextLng', newLang);
-    };
+    const { t } = useTranslation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
@@ -473,32 +465,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         )}
                     </div>
 
-                    {/* Language Toggle Button */}
-                    <button
-                        onClick={toggleLanguage}
-                        className="clickable"
-                        aria-label="Toggle Language"
-                        style={{
-                            background: 'transparent',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '100px',
-                            padding: '6px 14px',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            fontFamily: 'var(--font-display)',
-                            color: 'var(--text-color)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            cursor: 'pointer',
-                            letterSpacing: '0.5px',
-                            transition: 'all 0.3s ease'
-                        }}
-                    >
-                        <span style={{ opacity: isPt ? 1 : 0.4, color: isPt ? 'var(--accent-color)' : 'inherit' }}>PT-BR</span>
-                        <span style={{ opacity: 0.3 }}>|</span>
-                        <span style={{ opacity: !isPt ? 1 : 0.4, color: !isPt ? 'var(--accent-color)' : 'inherit' }}>EN</span>
-                    </button>
+                    {/* Language Toggle Button (Hidden for now as requested) */}
 
                     <button
                         onClick={toggleTheme}

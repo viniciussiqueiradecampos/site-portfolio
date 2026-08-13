@@ -814,27 +814,43 @@ body {
   color: var(--accent-contrast);
 }
 
-/* --- Drift Wall Animations & Styles --- */
+/* --- Drift Wall Animations & Styles (GPU Optimized) --- */
 @keyframes driftUp {
   0% {
-    transform: translateY(0%);
+    transform: translate3d(0, 0%, 0);
   }
   100% {
-    transform: translateY(-50%);
+    transform: translate3d(0, -50%, 0);
   }
 }
 
 @keyframes driftDown {
   0% {
-    transform: translateY(-50%);
+    transform: translate3d(0, -50%, 0);
   }
   100% {
-    transform: translateY(0%);
+    transform: translate3d(0, 0%, 0);
   }
 }
 
+.drift-wall-wrapper {
+  contain: paint;
+  transform: translateZ(0);
+}
+
+.drift-col-inner {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.drift-card-hover {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 .drift-card-hover:hover {
-  transform: scale(1.03);
+  transform: translate3d(0, 0, 0) scale(1.03);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25) !important;
 }
 

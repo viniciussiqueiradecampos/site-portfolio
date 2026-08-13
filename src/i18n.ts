@@ -80,13 +80,11 @@ const resources = {
     }
 };
 
-const savedLng = typeof localStorage !== 'undefined' ? localStorage.getItem('i18nextLng') : null;
-
 i18n
     .use(initReactI18next)
     .init({
         resources,
-        lng: savedLng || "en",
+        lng: "en",
         fallbackLng: "en",
         interpolation: {
             escapeValue: false

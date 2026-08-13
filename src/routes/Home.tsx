@@ -123,7 +123,7 @@ export default function Home() {
                     }}>
                         <DriftWall
                             projects={projects}
-                            columns={3}
+                            columns={isMobile ? 2 : 3}
                             speed={100}
                             rotateAngle={0}
                             onProjectClick={(proj) => {

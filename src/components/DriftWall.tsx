@@ -40,12 +40,13 @@ export const DriftWall: React.FC<DriftWallProps> = ({
         });
 
         return cols.map(col => {
-            if (col.length === 0) return displayProjects;
+            if (col.length === 0) return displayProjects.slice(0, 3);
             let filled = [...col];
-            while (filled.length < 4) {
+            while (filled.length < 3) {
                 filled = [...filled, ...col];
             }
-            return filled;
+            // Duplicate exactly once for smooth infinite loop (0% to -50%)
+            return [...filled, ...filled];
         });
     }, [displayProjects, columns]);
 
@@ -58,11 +59,38 @@ export const DriftWall: React.FC<DriftWallProps> = ({
                 height: '100%',
                 overflow: 'hidden',
                 padding: '48px 0 24px',
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+                contain: 'layout paint',
                 ...style
             }}
         >
+            {/* Top Fade Gradient Overlay */}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '60px',
+                    background: 'linear-gradient(to bottom, var(--bg-color) 0%, transparent 100%)',
+                    zIndex: 10,
+                    pointerEvents: 'none'
+                }}
+            />
+
+            {/* Bottom Fade Gradient Overlay */}
+            <div
+                style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '60px',
+                    background: 'linear-gradient(to top, var(--bg-color) 0%, transparent 100%)',
+                    zIndex: 10,
+                    pointerEvents: 'none'
+                }}
+            />
+
             <div
                 className="drift-wall-inner"
                 style={{
@@ -76,10 +104,9 @@ export const DriftWall: React.FC<DriftWallProps> = ({
                     transformOrigin: 'center center'
                 }}
             >
-                {columnData.map((colProjects, colIndex) => {
+                {columnData.map((duplicatedProjects, colIndex) => {
                     const isReverse = colIndex % 2 === 1;
                     const duration = speed + colIndex * 12; // ultra smooth, subtle speed variance
-                    const duplicatedProjects = [...colProjects, ...colProjects, ...colProjects, ...colProjects];
 
                     return (
                         <div
@@ -124,13 +151,15 @@ export const DriftWall: React.FC<DriftWallProps> = ({
                                             <img
                                                 src={proj.image_url}
                                                 alt={proj.title || 'Project preview'}
-                                                loading="lazy"
+                                                decoding="async"
+                                                loading={itemIdx < 3 ? 'eager' : 'lazy'}
                                                 style={{
                                                     width: '100%',
                                                     height: '100%',
                                                     objectFit: 'cover',
                                                     display: 'block',
-                                                    transition: 'transform 0.5s ease'
+                                                    transition: 'transform 0.5s ease',
+                                                    pointerEvents: 'none'
                                                 }}
                                             />
                                         ) : (
