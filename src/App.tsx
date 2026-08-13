@@ -8,9 +8,9 @@ import './index.css';
 
 import Layout from './components/Layout';
 import ScrollToTop from './ScrollToTop';
+import Home from './routes/Home';
 
 // Lazy Loaded Routes
-const Home = lazy(() => import('./routes/Home'));
 const CV = lazy(() => import('./routes/CV'));
 const About = lazy(() => import('./routes/About'));
 const Projects = lazy(() => import('./routes/Projects'));

@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ProjectModal from '../components/ProjectModal';
@@ -22,10 +21,30 @@ export default function Home() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Data State
-    const [heroTitle, setHeroTitle] = useState('figma • UI DESIGN • AI • WEB DESIGN');
-    const [heroDesc, setHeroDesc] = useState(' ');
-    const [projects, setProjects] = useState<Project[]>([]);
+    // Data State with Instant Cache Fallbacks
+    const [heroTitle, setHeroTitle] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('cache_hero_title');
+            if (cached) return cached;
+        }
+        return '10+ years in Design. 8 years as CEO.';
+    });
+    const [heroDesc, setHeroDesc] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('cache_hero_desc');
+            if (cached) return cached;
+        }
+        return 'More than creating visuals, I understand business. Having run an agency for 8 years taught me that strategic design goes far beyond aesthetics. Today, I combine that executive mindset with my background in UI, Digital, and Branding to pinpoint the actual challenge and deliver design solutions that move the needle.';
+    });
+    const [projects, setProjects] = useState<Project[]>(() => {
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('cache_hero_projects');
+            if (cached) {
+                try { return JSON.parse(cached); } catch (e) {}
+            }
+        }
+        return [];
+    });
 
     // Helper to add line break for "8 years" or "8 anos" in main title only
     const formatWithLineBreaks = (text: string) => {
@@ -70,18 +89,28 @@ export default function Home() {
         const getV = (key: string) => allContent.find(c => c.key === key)?.value;
 
         const title = getV('hero.title');
-        if (title) setHeroTitle(parseTranslatable(title, lang));
+        if (title) {
+            const parsed = parseTranslatable(title, lang);
+            setHeroTitle(parsed);
+            localStorage.setItem('cache_hero_title', parsed);
+        }
 
         const desc = getV('hero.description');
-        if (desc) setHeroDesc(parseTranslatable(desc, lang));
+        if (desc) {
+            const parsed = parseTranslatable(desc, lang);
+            setHeroDesc(parsed);
+            localStorage.setItem('cache_hero_desc', parsed);
+        }
 
-        setProjects(projs.slice(0, 8).map(p => ({
+        const mappedProjects = projs.slice(0, 8).map(p => ({
             ...p,
             title: parseTranslatable(p.title, lang),
             description: parseTranslatable(p.description || '', lang),
             summary: parseTranslatable(p.summary || '', lang),
             short_description: parseTranslatable(p.short_description || '', lang)
-        })));
+        }));
+        setProjects(mappedProjects);
+        localStorage.setItem('cache_hero_projects', JSON.stringify(mappedProjects));
     };
 
     // Modal State
@@ -147,13 +176,10 @@ export default function Home() {
                         gap: isMobile ? '16px' : '24px',
                         paddingRight: isMobile ? '0' : '20px'
                     }}>
-                        {/* Main Title - line breaks only here */}
-                        <motion.h1
+                        {/* Main Title */}
+                        <h1
                             ref={titleRef}
                             className="hero-title"
-                            initial={{ opacity: 0, y: 24 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.9, ease: 'easeOut', delay: 0.1 }}
                             style={{
                                 fontSize: isMobile ? 'clamp(26px, 7vw, 36px)' : 'clamp(32px, 4.2vw, 58px)',
                                 lineHeight: '1.15',
@@ -163,13 +189,10 @@ export default function Home() {
                             }}
                         >
                             {formatWithLineBreaks(heroTitle)}
-                        </motion.h1>
+                        </h1>
 
                         {/* Description below */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+                        <div
                             style={{
                                 fontSize: isMobile ? '14px' : 'clamp(14px, 1.1vw, 17px)',
                                 lineHeight: '1.7',
@@ -179,13 +202,10 @@ export default function Home() {
                             }}
                         >
                             {heroDesc}
-                        </motion.div>
+                        </div>
 
                         {/* CTA Buttons */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.45 }}
+                        <div
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -244,7 +264,7 @@ export default function Home() {
                             >
                                 {t('hero.view_cv', 'VIEW CV')}
                             </Link>
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
             </section>
