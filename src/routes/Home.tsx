@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -30,6 +30,27 @@ export default function Home() {
     const [heroTitle, setHeroTitle] = useState('figma • UI DESIGN • AI • WEB DESIGN');
     const [heroDesc, setHeroDesc] = useState(' ');
     const [storyText, setStoryText] = useState('Experience designing products for ambitious companies');
+
+    const formatWithLineBreaks = (text: string) => {
+        if (!text) return text;
+        const regex = /(8\s*(?:years|anos|YEARS|ANOS))/gi;
+        if (regex.test(text)) {
+            const parts = text.split(regex);
+            return parts.map((part, index) => {
+                if (regex.test(part)) {
+                    return (
+                        <React.Fragment key={index}>
+                            <br />
+                            <span style={{ display: 'inline-block' }}>{part}</span>
+                        </React.Fragment>
+                    );
+                }
+                return part;
+            });
+        }
+        return text;
+    };
+
     const [storytellingVisible, setStorytellingVisible] = useState(true);
     const [pitchData, setPitchData] = useState({
         description: '',
@@ -283,7 +304,8 @@ export default function Home() {
                         <DriftWall
                             projects={projects}
                             columns={3}
-                            speed={22}
+                            speed={45}
+                            rotateAngle={-45}
                             onProjectClick={(proj) => {
                                 if (proj.slug || proj.id) {
                                     navigate(`/project/${proj.slug || proj.id}`);
@@ -320,7 +342,7 @@ export default function Home() {
                                 maxWidth: '650px'
                             }}
                         >
-                            {heroTitle}
+                            {formatWithLineBreaks(heroTitle)}
                         </motion.h1>
 
                         {/* Description below */}
@@ -336,7 +358,66 @@ export default function Home() {
                                 maxWidth: '520px'
                             }}
                         >
-                            {heroDesc}
+                            {formatWithLineBreaks(heroDesc)}
+                        </motion.div>
+
+                        {/* CTA Buttons */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.45 }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '16px',
+                                flexWrap: 'wrap',
+                                marginTop: '8px',
+                                justifyContent: isMobile ? 'center' : 'flex-start'
+                            }}
+                        >
+                            <a
+                                href="#portfolio"
+                                className="clickable"
+                                style={{
+                                    padding: isMobile ? '12px 28px' : '16px 36px',
+                                    backgroundColor: 'var(--text-color)',
+                                    color: 'var(--bg-color)',
+                                    borderRadius: '100px',
+                                    fontSize: isMobile ? '12px' : '14px',
+                                    fontWeight: 800,
+                                    fontFamily: 'var(--font-display)',
+                                    textDecoration: 'none',
+                                    letterSpacing: '0.5px',
+                                    transition: 'transform 0.3s ease, opacity 0.3s ease',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                VIEW PORTFOLIO ↓
+                            </a>
+                            <Link
+                                to="/cv"
+                                className="clickable"
+                                style={{
+                                    padding: isMobile ? '12px 28px' : '16px 36px',
+                                    backgroundColor: 'transparent',
+                                    color: 'var(--text-color)',
+                                    border: '1.5px solid var(--text-color)',
+                                    borderRadius: '100px',
+                                    fontSize: isMobile ? '12px' : '14px',
+                                    fontWeight: 800,
+                                    fontFamily: 'var(--font-display)',
+                                    textDecoration: 'none',
+                                    letterSpacing: '0.5px',
+                                    transition: 'all 0.3s ease',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                VIEW CV
+                            </Link>
                         </motion.div>
                     </div>
                 </div>
